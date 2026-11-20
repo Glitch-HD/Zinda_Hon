@@ -3,13 +3,15 @@ import { getSessionUser } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { rateLimit } from "@/lib/ratelimit";
 
-// Urdu text-to-speech via Azure AI Speech (free F0 tier). Audio is cached by the browser for a week,
+// Urdu (and English) text-to-speech via Azure AI Speech (free F0 tier). Audio is cached by the browser for a week,
 // so repeated prompts cost nothing and work on a weak connection.
 // Two Urdu (Pakistan) neural voices; the person picks one in the top bar.
-const VOICES: Record<string, string> = {
-  female: process.env.AZURE_TTS_VOICE ?? "ur-PK-UzmaNeural",
-  male: process.env.AZURE_TTS_VOICE_MALE ?? "ur-PK-AsadNeural",
+// English uses Azure's Indian English voices, the closest accent to Pakistani English that Azure offers.
+const VOICES: Record<string, Record<string, string>> = {
+  ur: { female: process.env.AZURE_TTS_VOICE ?? "ur-PK-UzmaNeural", male: process.env.AZURE_TTS_VOICE_MALE ?? "ur-PK-AsadNeural" },
+  en: { female: process.env.AZURE_TTS_VOICE_EN ?? "en-IN-NeerjaNeural", male: process.env.AZURE_TTS_VOICE_EN_MALE ?? "en-IN-PrabhatNeural" },
 };
+const XML_LANG: Record<string, string> = { ur: "ur-PK", en: "en-IN" };
 const memoryCache = new Map<string, ArrayBuffer>();
 
 function escapeXml(s: string) {
@@ -26,12 +28,14 @@ export const GET = handle(async (req: Request) => {
   const region = process.env.AZURE_SPEECH_REGION;
   if (!key || !region) return NextResponse.json({ error: "Voice service not configured" }, { status: 503 });
 
-  const voiceName = VOICES[new URL(req.url).searchParams.get("voice") ?? "female"] ?? VOICES.female;
+  const params = new URL(req.url).searchParams;
+  const lang = params.get("lang") === "en" ? "en" : "ur";
+  const voiceName = VOICES[lang][params.get("voice") ?? "female"] ?? VOICES[lang].female;
   const cacheKey = `${voiceName}|${text}`;
   let audio = memoryCache.get(cacheKey);
   if (!audio) {
     await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 15, 60);
-    const ssml = `<speak version="1.0" xml:lang="ur-PK"><voice name="${voiceName}"><prosody rate="-10%">${escapeXml(text)}</prosody></voice></speak>`;
+    const ssml = `<speak version="1.0" xml:lang="${XML_LANG[lang]}"><voice name="${voiceName}"><prosody rate="-10%">${escapeXml(text)}</prosody></voice></speak>`;
     const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: "POST",
       headers: { "Ocp-Apim-Subscription-Key": key, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "audio-16khz-32kbitrate-mono-mp3", "User-Agent": "zinda-hon-prototype" },

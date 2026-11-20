@@ -41,7 +41,7 @@ export default function FaceCapture({ withLiveness = true, onDone }: { withLiven
         setPhase("challenge");
         for (const ch of randomChallenges()) {
           setCurrent(ch);
-          void speakUrdu(PROMPT[ch].ur);
+          void speakUrdu(PROMPT[ch].ur, PROMPT[ch].en);
           const r = await waitForChallenge(v, ch);
           results.push({ action: ch, ...r });
           if (!r.done) break;
@@ -49,7 +49,7 @@ export default function FaceCapture({ withLiveness = true, onDone }: { withLiven
       }
       setCurrent(null);
       setPhase("capturing");
-      void speakUrdu("کیمرے کی طرف سیدھا دیکھیں");
+      void speakUrdu("کیمرے کی طرف سیدھا دیکھیں", "Look straight at the camera");
       const sample = await captureDescriptor(v);
       (v.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
       if (!sample) {

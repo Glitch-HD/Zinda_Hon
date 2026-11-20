@@ -5,10 +5,10 @@ import VoiceCommand from "./ui/VoiceCommand";
 export default function PensionerVoice({ caseHref }: { caseHref: string | null }) {
   const go = (href: string) => () => { window.location.href = href; };
   const commands = [
-    ...(caseHref ? [{ id: "start", words: ["شروع", "ثبوت", "زندہ", "تصویر", "start", "shuru", "saboot"], confirmUr: "ثبوتِ حیات شروع ہو رہا ہے۔", run: go(caseHref) }] : []),
-    { id: "message", words: ["پیغام", "میسج", "مسیج", "دھوکہ", "message", "sms", "paigham"], confirmUr: "پیغام جانچنے کا صفحہ کھل رہا ہے۔", run: go("/check-message") },
-    { id: "ask", words: ["سوال", "پوچھ", "مدد", "ask", "sawal", "question"], confirmUr: "سوال پوچھنے کا صفحہ کھل رہا ہے۔", run: go("/ask") },
-    { id: "data", words: ["ڈیٹا", "اجازت", "معلومات", "data", "ijazat"], confirmUr: "آپ کی معلومات کا صفحہ کھل رہا ہے۔", run: go("/consent") },
+    ...(caseHref ? [{ id: "start", words: ["شروع", "ثبوت", "زندہ", "تصویر", "start", "shuru", "saboot"], confirmUr: "ثبوتِ حیات شروع ہو رہا ہے۔", confirmEn: "Starting your proof of life.", run: go(caseHref) }] : []),
+    { id: "message", words: ["پیغام", "میسج", "مسیج", "دھوکہ", "message", "sms", "paigham"], confirmUr: "پیغام جانچنے کا صفحہ کھل رہا ہے۔", confirmEn: "Opening the message checker.", run: go("/check-message") },
+    { id: "ask", words: ["سوال", "پوچھ", "مدد", "ask", "sawal", "question"], confirmUr: "سوال پوچھنے کا صفحہ کھل رہا ہے۔", confirmEn: "Opening ask a question.", run: go("/ask") },
+    { id: "data", words: ["ڈیٹا", "اجازت", "معلومات", "data", "ijazat"], confirmUr: "آپ کی معلومات کا صفحہ کھل رہا ہے۔", confirmEn: "Opening your data.", run: go("/consent") },
   ];
   return (
     <VoiceCommand

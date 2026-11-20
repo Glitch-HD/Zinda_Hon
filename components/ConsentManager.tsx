@@ -31,7 +31,7 @@ export default function ConsentManager() {
     <div className="space-y-4">
       <div className="card">
         <h2 className="text-xl font-bold">🔐 Who can see my data <span className="ur">میرا ڈیٹا کون دیکھ سکتا ہے</span></h2>
-        <button className="btn btn-ghost mt-2" onClick={() => speakUrdu("یہاں آپ دیکھ سکتے ہیں کہ آپ کا ڈیٹا کس کے پاس ہے۔ آپ اجازت واپس لے سکتے ہیں۔")}>🔊 <span className="ur">سنیں</span></button>
+        <button className="btn btn-ghost mt-2" onClick={() => speakUrdu("یہاں آپ دیکھ سکتے ہیں کہ آپ کا ڈیٹا کس کے پاس ہے۔ آپ اجازت واپس لے سکتے ہیں۔", "Here you can see who has your data. You can take back permission.")}>🔊 <span className="ur">سنیں</span></button>
       </div>
       {data.consents.map((c) => (
         <div key={c.id} className="card space-y-2">

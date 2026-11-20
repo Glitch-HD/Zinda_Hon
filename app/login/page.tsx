@@ -15,6 +15,8 @@ type View = "choose" | "pensioner" | "helper" | "shopkeeper" | "staff";
 
 const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا سبز بٹن دبائیں، یا مائیک دبا کر بولیں۔";
 
+const GREETING_EN = "Welcome to Zinda Hon. If you receive a pension, press the big green button, or press the mic and speak.";
+
 const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner">, { en: string; ur: string; icon: string }> = {
   helper: { en: "Helper login", ur: "مددگار لاگ اِن", icon: "🤝" },
   shopkeeper: { en: "Shopkeeper login", ur: "دکاندار لاگ اِن", icon: "🏪" },
@@ -80,7 +82,7 @@ export default function LoginPage() {
   function openPensioner() {
     setPrefsRole("PENSIONER");
     open("pensioner");
-    void speakUrdu("اپنی پنشن بک کھولیں اور اس کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔");
+    void speakUrdu("اپنی پنشن بک کھولیں اور اس کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔", "Open your pension book and hold its QR code in front of the camera.");
   }
 
   return (
@@ -95,7 +97,7 @@ export default function LoginPage() {
         </div>
         <p className="ur text-xl md:text-2xl relative">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
         <p className="en muted md:text-lg relative" style={{ fontFamily: "Fraunces, Georgia, serif" }}>Yearly pension proof-of-life from home. No forms, no queues, no fingerprints.</p>
-        <button className="btn relative" style={{ background: "rgba(255,255,255,.95)", color: "#0b5446" }} onClick={() => speakUrdu(GREETING)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+        <button className="btn relative" style={{ background: "rgba(255,255,255,.95)", color: "#0b5446" }} onClick={() => speakUrdu(GREETING, GREETING_EN)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
         <div className="hero-steps ornament relative" style={{ color: "#f6c66f" }}>✦</div>
         <div className="hero-steps relative grid grid-cols-3 gap-2 sm:gap-3">
           {HOW.map((h, i) => (
@@ -136,9 +138,9 @@ export default function LoginPage() {
               promptUr="بولیں: پنشن، مددگار، یا دکان۔"
               promptEn='Say "pension", "helper" or "shop".'
               commands={[
-                { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", run: openPensioner },
-                { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", run: () => open("helper") },
-                { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", run: () => open("shopkeeper") },
+                { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", confirmEn: "Okay.", run: openPensioner },
+                { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening helper login.", run: () => open("helper") },
+                { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening shopkeeper login.", run: () => open("shopkeeper") },
               ]}
             />
 

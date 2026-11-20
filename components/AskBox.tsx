@@ -12,7 +12,7 @@ export default function AskBox() {
     setBusy(true); setA(null);
     const res = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question }) });
     const d = await res.json(); setBusy(false);
-    if (res.ok) { setA(d); void speakUrdu(d.answerUr); }
+    if (res.ok) { setA(d); void speakUrdu(d.answerUr, d.answerEn); }
   }
   return (
     <div className="max-w-xl mx-auto space-y-3">
@@ -28,7 +28,7 @@ export default function AskBox() {
         <div className="card space-y-2">
           <p className="ur text-xl">{a.answerUr}</p>
           <p className="muted">{a.answerEn}</p>
-          <button className="btn btn-ghost" onClick={() => speakUrdu(a.answerUr)}>🔊 <span className="ur">سنیں</span></button>
+          <button className="btn btn-ghost" onClick={() => speakUrdu(a.answerUr, a.answerEn)}>🔊 <span className="ur">سنیں</span></button>
           {a.sources.length > 0 && <div className="text-sm"><b>Sources (mock rulebook):</b>{a.sources.map((s) => <p key={s.id}><b>[{s.id}] {s.title}:</b> {s.text}</p>)}</div>}
         </div>
       )}

@@ -20,7 +20,7 @@ export default function MessageChecker() {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
       setR(d);
-      void speakUrdu(d.explanationUr);
+      void speakUrdu(d.explanationUr, d.explanationEn);
     } catch (e) { setErr(e instanceof Error ? e.message : "Failed"); } finally { setBusy(false); }
   }
 
@@ -48,7 +48,7 @@ export default function MessageChecker() {
           <p className="ur text-lg">{r.explanationUr}</p>
           <p className="en muted text-sm">{r.explanationEn}</p>
           {r.signs.length > 0 && <ul className="text-sm text-left">{r.signs.map((s) => <li key={s.id}>⚠️ <span className="en">{s.en}</span><span className="both-only"> · </span><span className="ur">{s.ur}</span></li>)}</ul>}
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(r.explanationUr)}>🔊 <span className="ur">سنیں</span></button>
+          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(r.explanationUr, r.explanationEn)}>🔊 <span className="ur">سنیں</span></button>
         </div>
       )}
     </div>

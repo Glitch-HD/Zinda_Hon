@@ -12,6 +12,8 @@ type Props = {
   hintUr?: string;
   info: { en: string; ur: string };
   say?: string;
+  /** English version of `say`. Defaults to the English title (with `say`) or the English info text. */
+  sayEn?: string;
   href?: string;
   onClick?: () => void;
   variant?: "hero" | "normal" | "compact";
@@ -20,7 +22,8 @@ type Props = {
   disabled?: boolean;
 };
 
-export default function Option({ icon, ur, en, hintEn, hintUr, info, say, href, onClick, variant = "normal", disabled, tone = "green" }: Props) {
+export default function Option({ icon, ur, en, hintEn, hintUr, info, say, sayEn, href, onClick, variant = "normal", disabled, tone = "green" }: Props) {
+  const sayEnText = sayEn ?? (say ? en : info.en);
   const cls = `tile tone-${tone} ${variant === "hero" ? "tile-hero" : ""} ${variant === "compact" ? "tile-compact" : ""} ${variant === "normal" ? "tile-col" : ""}`;
   const body = (
     <>
@@ -41,9 +44,9 @@ export default function Option({ icon, ur, en, hintEn, hintUr, info, say, href, 
   return (
     <div className="tile-wrap">
       {href ? (
-        <Link href={href} className={cls} data-say={say ?? info.ur} aria-disabled={disabled}>{body}</Link>
+        <Link href={href} className={cls} data-say={say ?? info.ur} data-say-en={sayEnText} aria-disabled={disabled}>{body}</Link>
       ) : (
-        <button type="button" className={cls} data-say={say ?? info.ur} onClick={onClick} disabled={disabled}>{body}</button>
+        <button type="button" className={cls} data-say={say ?? info.ur} data-say-en={sayEnText} onClick={onClick} disabled={disabled}>{body}</button>
       )}
       <span className="tile-info"><Info en={info.en} ur={info.ur} /></span>
     </div>

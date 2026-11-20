@@ -29,7 +29,7 @@ export default function Info({ en, ur, align = "right" }: { en: string; ur: stri
           e.stopPropagation();
           const next = !open;
           setOpen(next);
-          if (next && voiceOn()) void speakUrdu(ur);
+          if (next && voiceOn()) void speakUrdu(ur, en);
         }}
       >
         i
@@ -38,7 +38,7 @@ export default function Info({ en, ur, align = "right" }: { en: string; ur: stri
         <span role="tooltip" className={`info-pop ${align === "left" ? "info-pop-left" : ""}`} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
           <span className="ur block text-base" style={{ lineHeight: 2 }}>{ur}</span>
           <span className="en block text-sm">{en}</span>
-          <button type="button" className="btn btn-ghost btn-sm mt-2 w-full" onClick={(e) => { e.preventDefault(); e.stopPropagation(); void speakUrdu(ur); }}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button type="button" className="btn btn-ghost btn-sm mt-2 w-full" onClick={(e) => { e.preventDefault(); e.stopPropagation(); void speakUrdu(ur, en); }}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
         </span>
       )}
     </span>

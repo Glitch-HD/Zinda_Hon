@@ -6,7 +6,7 @@ import { speakUrdu, stopSpeaking } from "@/lib/client/voice";
 // Big microphone button: the person SAYS what they want instead of reading the screen.
 // Tap once to start listening (it starts straight away), tap again to finish. Each command has words
 // in Urdu script, Roman Urdu and English.
-export type Command = { id: string; words: string[]; confirmUr: string; run: () => void };
+export type Command = { id: string; words: string[]; confirmUr: string; confirmEn?: string; run: () => void };
 
 export default function VoiceCommand({ promptUr, promptEn, commands }: { promptUr: string; promptEn: string; commands: Command[] }) {
   const [state, setState] = useState<"idle" | "listening" | "thinking">("idle");
@@ -32,11 +32,12 @@ export default function VoiceCommand({ promptUr, promptEn, commands }: { promptU
     if (!cmd) {
       const p = r.error ? LISTEN_ERROR[r.error] : { en: `Heard "${r.text}", but that is not one of the choices. Try again.`, ur: "سمجھ نہیں آیا۔ دوبارہ بولیں۔" };
       setProblem(p);
-      void speakUrdu(`${p.ur} ${promptUr}`);
+      void speakUrdu(`${p.ur} ${promptUr}`, `${p.en} ${promptEn}`);
       return;
     }
-    void speakUrdu(cmd.confirmUr);
-    setTimeout(cmd.run, 1300);
+    // Run once the confirmation has been said (or after 4 s at most), so it is not cut off.
+    await Promise.race([speakUrdu(cmd.confirmUr, cmd.confirmEn), new Promise((r) => setTimeout(r, 4000))]);
+    cmd.run();
   }
 
   const listening = state === "listening";

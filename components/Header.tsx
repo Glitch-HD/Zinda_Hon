@@ -21,7 +21,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
   const role = ROLE_LABEL[user.role];
   return (
     <header className="card mb-6 flex flex-wrap items-center justify-between gap-3" style={{ padding: "12px 16px" }}>
-      <Link href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }} data-say="ہوم">
+      <Link href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }} data-say="ہوم" data-say-en="Home">
         <Logo size={44} />
         <div className="leading-tight">
           <div className="flex items-baseline gap-2">
@@ -40,7 +40,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
       <nav className="flex flex-wrap gap-2 items-center">
         {links.map((l) => (
           <span key={l.href} className="inline-flex items-center gap-1">
-            <Link href={l.href} className="btn btn-ghost btn-sm" data-say={l.info?.ur ?? l.ur}>
+            <Link href={l.href} className="btn btn-ghost btn-sm" data-say={l.info?.ur ?? l.ur} data-say-en={l.info?.en ?? (typeof l.label === "string" ? l.label : undefined)}>
               <span className={l.ur ? "en" : ""}>{l.label}</span>
               {l.ur && <span className="ur">{l.ur}</span>}
             </Link>

@@ -51,7 +51,7 @@ export default function TopBar() {
             onClick={() => {
               const next = !voice;
               setVoice(next);
-              if (next) void speakUrdu("آواز کی مدد چالو ہے۔ جس بٹن کو دبائیں گے، وہ بتائے گا کہ وہ کیا کرتا ہے۔");
+              if (next) void speakUrdu("آواز کی مدد چالو ہے۔ جس بٹن کو دبائیں گے، وہ بتائے گا کہ وہ کیا کرتا ہے۔", "Voice help is on. Any button you press will tell you what it does.");
               else stopSpeaking();
             }}
           >
@@ -66,7 +66,7 @@ export default function TopBar() {
               const next: VoiceChoice = who === "female" ? "male" : "female";
               setVoiceChoice(next);
               setWho(next);
-              void speakUrdu(next === "female" ? "یہ عورت کی آواز ہے۔" : "یہ مرد کی آواز ہے۔");
+              void speakUrdu(next === "female" ? "یہ عورت کی آواز ہے۔" : "یہ مرد کی آواز ہے۔", next === "female" ? "This is the woman's voice." : "This is the man's voice.");
             }}
           >
             {who === "female" ? "👩" : "👨"}
@@ -77,7 +77,7 @@ export default function TopBar() {
       {noVoice && (
         <div className="topbar-inner" role="status">
           <p className="text-sm" style={{ color: "var(--warn)" }}>
-            🔇 <span className="en">This device has no Urdu voice, so nothing can be read aloud here. On a laptop, open the site in <b>Microsoft Edge</b> (it has Urdu voices built in), or ask the team to add the voice key.</span>
+            🔇 <span className="en">This device has no Urdu voice, so Urdu cannot be read aloud here (English still works: pick English at the top). On a laptop, open the site in <b>Microsoft Edge</b> (it has Urdu voices built in), or ask the team to add the voice key.</span>
             <span className="ur"> اس ڈیوائس میں اردو آواز نہیں ہے۔</span>
           </p>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNoVoice(false)}>OK</button>

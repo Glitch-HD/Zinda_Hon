@@ -18,6 +18,12 @@ const SAY = {
   document: "اب اپنی پنشن بک کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔",
   submit: "شکریہ۔ اب بھیجیں کا بٹن دبائیں۔",
 };
+const SAY_EN: Record<keyof typeof SAY, string> = {
+  intro: "Hello. There are three easy steps to keep your pension going. First your photo, then your pension book, then send.",
+  face: "Now look at the camera and do what it asks.",
+  document: "Now hold the QR code of your pension book in front of the camera.",
+  submit: "Thank you. Now press the send button.",
+};
 
 export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatus }: { caseId: string; pensionerName: string; enrolled: boolean; initialStatus: string }) {
   const storageKey = `zh_case_step_${caseId}`;
@@ -44,7 +50,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
   const go = useCallback((s: Step) => {
     setStep(s);
     try { localStorage.setItem(storageKey, s); } catch { /* ignore */ }
-    if (s in SAY) void speakUrdu(SAY[s as keyof typeof SAY]);
+    if (s in SAY) void speakUrdu(SAY[s as keyof typeof SAY], SAY_EN[s as keyof typeof SAY]);
   }, [storageKey]);
 
   async function onFace(r: FaceResult) {
@@ -79,7 +85,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
       if (!res.ok) throw new Error(data.error ?? "Failed");
       setResult(data);
       go("result");
-      void speakUrdu(data.reasonUr);
+      void speakUrdu(data.reasonUr, data.reasonEn);
     } catch (e) {
       setNote(e instanceof Error ? e.message : "Could not send. Try again.");
     } finally {
@@ -125,7 +131,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
           <div className="text-7xl">👵🏽</div>
           <p className="ur text-2xl">{pensionerName}، اپنی پنشن جاری رکھنے کے لیے ثبوتِ حیات دیں</p>
           <p className="en muted">Prove you are alive so your pension continues. 3 short steps.</p>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.intro)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.intro, SAY_EN.intro)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
           {!enrolled && <p style={{ color: "var(--warn)" }}><span className="en">Your face is not enrolled yet. Please visit the pension office once (mock), or ask an officer to enrol you.</span><span className="ur">آپ کا چہرہ ابھی رجسٹر نہیں۔ ایک بار پنشن آفس جائیں۔</span></p>}
           <button className="btn btn-big" data-no-voice disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start</span></span></button>
         </div>
@@ -137,7 +143,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
             <p className="text-xl"><span className="ur">قدم ۱: اپنی تصویر</span><span className="both-only"> · </span><span className="en font-semibold">Step 1: your photo</span></p>
             <Info en="Look at the camera. You will be asked to blink or turn your head so we know it is really you and not a printed photo. Only 128 numbers about your face are sent, never the photo." ur="کیمرے میں دیکھیں۔ آنکھ جھپکانے یا سر موڑنے کو کہا جائے گا تاکہ پتا چلے یہ آپ ہی ہیں۔ تصویر فون سے باہر نہیں جاتی۔" />
           </div>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.face)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.face, SAY_EN.face)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
           <FaceCapture onDone={onFace} />
           {busy && <p><span className="en">Saving…</span> <span className="ur">محفوظ ہو رہا ہے</span></p>}
         </div>
@@ -149,7 +155,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
             <p className="text-xl"><span className="ur">قدم ۲: پنشن بک</span><span className="both-only"> · </span><span className="en font-semibold">Step 2: pension book</span></p>
             <Info en="Open your pension book and hold its QR code in front of the back camera. The QR is signed by the pension office, so a changed or fake book is caught." ur="پنشن بک کھول کر اس کا کیو آر فون کے پیچھے والے کیمرے کے سامنے رکھیں۔ جعلی یا بدلی ہوئی بک پکڑی جاتی ہے۔" />
           </div>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.document)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.document, SAY_EN.document)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
           <QrScanner onResult={onQr} />
         </div>
       )}
@@ -171,7 +177,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
           <div className="text-7xl">{result.outcome === "APPROVE" ? "✅" : result.outcome === "ASK_MORE_PROOF" ? "📷" : "🧑‍💼"}</div>
           <p className="ur text-2xl">{result.reasonUr}</p>
           <p className="en muted">{result.reasonEn}</p>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(result.reasonUr)}>🔊 <span className="ur">دوبارہ سنیں</span><span className="en">Listen again</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(result.reasonUr, result.reasonEn)}>🔊 <span className="ur">دوبارہ سنیں</span><span className="en">Listen again</span></button>
           {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" data-no-voice onClick={() => restartFor(result.askFor)}><span className="text-3xl">🔁</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">دوبارہ کریں</span><span className="en text-sm font-semibold opacity-90">Try again</span></span></button>}
         </div>
       )}

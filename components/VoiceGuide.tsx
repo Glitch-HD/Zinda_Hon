@@ -3,7 +3,8 @@ import { useEffect } from "react";
 import { speakUrdu } from "@/lib/client/voice";
 import { voiceOn } from "@/lib/client/prefs";
 
-// The voice guide: when it is on, tapping anything that has a data-say text reads that text in Urdu.
+// The voice guide: when it is on, tapping anything that has a data-say text reads it out, in Urdu,
+// English or both, following the language switch.
 // For links to another page we wait a moment so the person hears it before the page changes.
 export default function VoiceGuide() {
   useEffect(() => {
@@ -14,7 +15,9 @@ export default function VoiceGuide() {
       const el = target.closest<HTMLElement>("[data-say]");
       const say = el?.dataset.say;
       if (!el || !say) return;
-      void speakUrdu(say);
+      // English: an explicit data-say-en, else the English words shown on the element itself.
+      const en = el.dataset.sayEn || [...el.querySelectorAll(".en")].map((n) => n.textContent?.trim()).filter(Boolean).join(". ") || el.getAttribute("aria-label") || undefined;
+      void speakUrdu(say, en);
       const a = el.closest("a");
       if (a && a.href && a.origin === location.origin && !a.target) {
         e.preventDefault();

@@ -34,6 +34,7 @@ export default async function PensionerHome() {
               hintEn="3 easy steps: photo, pension book, send"
               info={{ en: "Once a year you must prove you are alive so your pension continues. This takes about 2 minutes: a photo with a small movement, a scan of your pension book, then send.", ur: "سال میں ایک بار ثبوتِ حیات دینا ہوتا ہے تاکہ پنشن جاری رہے۔ دو منٹ لگتے ہیں: تصویر، پنشن بک، پھر بھیجیں۔" }}
               say="ابھی شروع کریں۔ ثبوتِ حیات کے تین آسان قدم۔"
+              sayEn="Start now. Three easy steps for proof of life."
               href={`/case/${c.id}`}
             />
           )}
