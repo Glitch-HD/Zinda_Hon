@@ -193,3 +193,4 @@ check(hdr.headers.get("x-frame-options") === "DENY" && Boolean(hdr.headers.get("
 console.log(out.join("\n"));
 console.log(`\n${n} attacks, ${holes} hole(s)`);
 await db.end();
+process.exit(holes ? 1 : 0);
