@@ -41,3 +41,30 @@ export async function publishRuleVersion(tenantId: string, config: unknown, crea
     data: { tenantId, ruleKey: RULE_KEY, version: (latest?.version ?? 0) + 1, config: parsed, createdBy, note },
   });
 }
+
+/**
+ * Lists every way a new rule config is LOOSER than the current one: it would let more cases through
+ * without an officer. A looser change needs a second admin to approve it, so one admin (or one stolen
+ * admin password) cannot quietly open the gate. Tighter changes apply at once.
+ */
+export function loosenings(oldC: RuleConfig, newC: RuleConfig): string[] {
+  const out: string[] = [];
+  const up = (label: string, a: number, b: number) => { if (b > a + 1e-12) out.push(`${label}: ${a} → ${b}`); };
+  const down = (label: string, a: number, b: number) => { if (b < a - 1e-12) out.push(`${label}: ${a} → ${b}`); };
+  // A lower required confidence means more automatic approvals.
+  const req = (c: RuleConfig) => 1 - c.costs.humanReviewPkr / c.costs.wrongApprovalPkr;
+  down("Confidence needed to auto-approve", Math.round(req(oldC) * 1e6) / 1e6, Math.round(req(newC) * 1e6) / 1e6);
+  up("Face distance for auto-approve", oldC.face.strictDistance, newC.face.strictDistance);
+  up("Face distance for a mismatch", oldC.face.looseDistance, newC.face.looseDistance);
+  up("Trust in a strict face match", oldC.face.reliabilityWhenStrict, newC.face.reliabilityWhenStrict);
+  up("Trust in a passed liveness check", oldC.liveness.reliabilityWhenPassed, newC.liveness.reliabilityWhenPassed);
+  up("Trust in a valid pension book", oldC.document.reliabilityWhenValid, newC.document.reliabilityWhenValid);
+  if (oldC.document.required && !newC.document.required) out.push("Pension book no longer required");
+  down("Name similarity to auto-approve", oldC.identity.autoMinSimilarity, newC.identity.autoMinSimilarity);
+  down("Name similarity before an officer", oldC.identity.askMinSimilarity, newC.identity.askMinSimilarity);
+  up("Trust in a NADRA match", oldC.identity.reliabilityWhenMatched, newC.identity.reliabilityWhenMatched);
+  up("Trust in a clear death registry", oldC.deathRegistry.reliabilityWhenClear, newC.deathRegistry.reliabilityWhenClear);
+  up("Age before a flag", oldC.anomaly.maxAgeYears, newC.anomaly.maxAgeYears);
+  up("Retakes allowed", oldC.maxAttempts, newC.maxAttempts);
+  return out;
+}

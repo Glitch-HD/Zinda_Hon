@@ -6,6 +6,8 @@ import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 import { lookupIdentity } from "@/lib/case-service";
 import { audit } from "@/lib/audit";
+import { helperForCase, helperTrust } from "@/lib/helper-trust";
+import HelperTrustCard from "@/components/HelperTrustCard";
 
 export default async function OfficerCase({ params }: { params: Promise<{ id: string }> }) {
   const user = await pageUser(["OFFICER"]);
@@ -15,6 +17,8 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
   // Need-to-know: every time staff open a widow's file is on the record (she can see it on her My data page).
   await audit({ tenantId: user.tenantId, actorType: "USER", actorId: user.id, actorRole: user.role, action: "case_viewed", targetType: "pensioner", targetId: c.pensionerId, details: { caseId: c.id } });
   const identity = await lookupIdentity(c.pensionerId);
+  const helperId = await helperForCase(c.id);
+  const trust = helperId ? await helperTrust(helperId) : null;
   // The AI panel shows the latest AI run, not an officer's later decision (which has no checks).
   const latest = c.decisions.find((d) => d.decidedBy === "ai");
   const lastRun = await prisma.agentRun.findFirst({ where: { caseId: c.id, status: "done" }, orderBy: { createdAt: "desc" } });
@@ -33,6 +37,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
           <p className="muted">{c.pensioner.pensionNo} · {c.pensioner.pensionType === "family" ? "Family (widow) pension" : "Own pension"} · Rs {c.pensioner.monthlyAmount.toLocaleString()} / month (mock)</p>
           <p>Status: <b>{c.status.replaceAll("_", " ").toLowerCase()}</b> · Year {c.year}</p>
           {c.riskFlags.length > 0 && <p className="mt-2">{c.riskFlags.map((f) => <span key={f} className="badge badge-danger mr-1">{f.replaceAll("_", " ")}</span>)}</p>}
+          {trust && <HelperTrustCard t={trust} />}
           <h3 className="font-semibold mt-4">Records compared (mock services)</h3>
           <table className="data">
             <tbody>

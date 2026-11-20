@@ -46,10 +46,11 @@ export default function RuleEditor({ initial }: { initial: RuleConfig }) {
           </label>
         ))}
       </div>
+      <p className="text-sm muted">Stricter changes apply at once. A change that makes any check looser needs a second admin to approve it.</p>
       <input className="input" placeholder="Why are you changing this? (saved in the audit log)" value={note} onChange={(e) => setNote(e.target.value)} />
       <div className="flex flex-wrap gap-2">
         <button className="btn btn-ghost" onClick={async () => { const r = await post("/api/admin/simulate", { config: cfg }); if (r.ok) setSim(r.data); else setMsg(r.data.error); }}>🧪 Test on past cases first (Digital Twin)</button>
-        <button className="btn" onClick={async () => { const r = await post("/api/admin/rules", { config: cfg, note }); setMsg(r.ok ? `Published version ${r.data.version}. It applies to the next decision.` : r.data.error); if (r.ok) setTimeout(() => location.reload(), 800); }}>Publish new version</button>
+        <button className="btn" onClick={async () => { const r = await post("/api/admin/rules", { config: cfg, note }); setMsg(!r.ok ? r.data.error : r.data.pending ? `This makes the checks looser (${r.data.loosened.join("; ")}). It now waits for a second admin to approve it.` : `Published version ${r.data.version}. It applies to the next decision.`); if (r.ok) setTimeout(() => location.reload(), r.data.pending ? 2500 : 800); }}>Publish new version</button>
       </div>
       {msg && <p role="status">{msg}</p>}
       {sim && (

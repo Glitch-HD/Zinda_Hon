@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import FaceCapture, { type FaceResult } from "./FaceCapture";
+import FaceCapture, { type FaceResult, type Ticket } from "./FaceCapture";
+import { isSlowNetwork } from "@/lib/client/prefetch";
 import QrScanner from "./QrScanner";
 import { enqueue, flush, newActionId, pendingCount } from "@/lib/client/queue";
 import { speakUrdu } from "@/lib/client/voice";
@@ -25,7 +26,7 @@ const SAY_EN: Record<keyof typeof SAY, string> = {
   submit: "Thank you. Now press the send button.",
 };
 
-export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatus }: { caseId: string; pensionerName: string; enrolled: boolean; initialStatus: string }) {
+export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatus, initialTicket }: { caseId: string; pensionerName: string; enrolled: boolean; initialStatus: string; initialTicket?: Ticket | null }) {
   const storageKey = `zh_case_step_${caseId}`;
   const [step, setStep] = useState<Step>("intro");
   const [busy, setBusy] = useState(false);
@@ -33,6 +34,33 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
   const [result, setResult] = useState<Result | null>(null);
   const [online, setOnline] = useState(true);
   const [queued, setQueued] = useState(0);
+  const [slow, setSlow] = useState(false);
+  const [visit, setVisit] = useState<"no" | "asking" | "asked">("no");
+  const [usedTickets] = useState(() => new Set<string>());
+
+  useEffect(() => { setSlow(isSlowNetwork()); }, []);
+
+  // The liveness order comes from the server. Ask for a fresh one; with no signal, use the one that
+  // came with the page (valid 24 hours, once).
+  const getTicket = useCallback(async (): Promise<Ticket | null> => {
+    try {
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 5000);
+      const res = await fetch(`/api/cases/${caseId}/challenge`, { method: "POST", signal: ac.signal });
+      clearTimeout(t);
+      if (res.ok) return (await res.json()) as Ticket;
+    } catch { /* offline: fall back below */ }
+    if (initialTicket && !usedTickets.has(initialTicket.token)) return initialTicket;
+    return null;
+  }, [caseId, initialTicket, usedTickets]);
+
+  async function askVisit() {
+    setVisit("asking");
+    await enqueue(`/api/cases/${caseId}/request-visit`, { reason: slow ? "slow_network" : "download_failed", clientActionId: newActionId() });
+    setQueued(pendingCount());
+    setVisit("asked");
+    void speakUrdu("ٹھیک ہے۔ پنشن افسر آپ سے رابطہ کرے گا۔ آپ کی پنشن بند نہیں ہو گی۔", "All right. A pension officer will contact you. Your pension will not be stopped.");
+  }
 
   useEffect(() => {
     try {
@@ -55,8 +83,10 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
 
   async function onFace(r: FaceResult) {
     setBusy(true);
-    await enqueue(`/api/cases/${caseId}/evidence`, { type: "liveness", clientActionId: newActionId(), passed: r.liveness.passed, challenges: r.liveness.challenges });
-    await enqueue(`/api/cases/${caseId}/evidence`, { type: "face_match", clientActionId: newActionId(), descriptor: r.descriptor, quality: r.quality });
+    if (r.ticket) usedTickets.add(r.ticket);
+    const ticket = r.ticket ?? undefined;
+    await enqueue(`/api/cases/${caseId}/evidence`, { type: "liveness", clientActionId: newActionId(), passed: r.liveness.passed, challenges: r.liveness.challenges, ticket });
+    await enqueue(`/api/cases/${caseId}/evidence`, { type: "face_match", clientActionId: newActionId(), descriptor: r.descriptor, quality: r.quality, ticket });
     setBusy(false);
     setQueued(pendingCount());
     go("document");
@@ -144,8 +174,18 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
             <Info en="Look at the camera. You will be asked to blink or turn your head so we know it is really you and not a printed photo. Only 128 numbers about your face are sent, never the photo." ur="کیمرے میں دیکھیں۔ آنکھ جھپکانے یا سر موڑنے کو کہا جائے گا تاکہ پتا چلے یہ آپ ہی ہیں۔ تصویر فون سے باہر نہیں جاتی۔" />
           </div>
           <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.face, SAY_EN.face)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
-          <FaceCapture onDone={onFace} />
-          {busy && <p><span className="en">Saving…</span> <span className="ur">محفوظ ہو رہا ہے</span></p>}
+          {visit === "asked" ? (
+            <div className="text-center space-y-2" role="status"><div className="text-6xl">🧑‍💼</div><p className="ur text-xl">پنشن افسر آپ سے رابطہ کرے گا۔ آپ کی پنشن بند نہیں ہو گی۔</p><p className="en">A pension officer will contact you to check in person. Your pension is not stopped.</p></div>
+          ) : (
+            <>
+              <FaceCapture onDone={onFace} getTicket={getTicket} onSlow={() => setSlow(true)} />
+              {busy && <p><span className="en">Saving…</span> <span className="ur">محفوظ ہو رہا ہے</span></p>}
+              <div className={slow ? "card card-soft space-y-2" : "space-y-2"}>
+                {slow && <p className="text-sm"><span className="en">📶 The signal is weak or the face check could not load. You can ask a pension officer to check you in person instead.</span> <span className="ur">سگنل کمزور ہے؟ افسر کو گھر بلانے کی درخواست کریں۔</span></p>}
+                <button className={slow ? "btn w-full" : "btn btn-ghost btn-sm"} disabled={visit === "asking"} onClick={askVisit}>🏠 <span className="en">Weak signal or no camera? Ask an officer to visit</span> <span className="ur">افسر کو بلائیں</span></button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

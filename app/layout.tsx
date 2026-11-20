@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import RegisterSW from "@/components/RegisterSW";
+import ErrorReporter from "@/components/ErrorReporter";
 import TopBar from "@/components/TopBar";
 import VoiceGuide from "@/components/VoiceGuide";
 import { PREFS_BOOT_SCRIPT } from "@/lib/prefs-boot";
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="mx-auto max-w-6xl px-4 py-5 md:px-8 md:py-8">{children}</main>
         <VoiceGuide />
         <RegisterSW />
+        <ErrorReporter />
       </body>
     </html>
   );

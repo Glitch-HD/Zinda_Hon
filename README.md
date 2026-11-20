@@ -80,9 +80,10 @@ investigation and the officer watches each step live:
 
 ## Security and insider fraud
 
-`npm run test:attack -- <url> <database-url>` runs 39 attacks against a fresh local copy (forged login tokens,
+`npm run test:attack -- <url> <database-url>` runs 50 attacks against a fresh local copy (forged login tokens,
 other roles, other offices, helpers outside their families, staff faking proof, face swaps, replays, PIN
-guessing, forged pension books, API keys, audit tampering). All are blocked. Controls against insiders:
+guessing, forged pension books, forged or replayed liveness tickets, one admin loosening the rules alone,
+API keys, audit tampering, crash-report flooding). All are blocked. Controls against insiders:
 
 - **Helper:** only sees families the office linked and who gave consent; cannot change bank account or CNIC;
   10% of helper-done proofs go to an officer at random; a helper doing more than 15 proofs a year has every
@@ -94,9 +95,37 @@ guessing, forged pension books, API keys, audit tampering). All are blocked. Con
 - **Replays:** the exact same face numbers twice, or numbers almost identical to the enrolment photo, go to an officer.
 - **Audit log:** append-only in the database itself (a trigger refuses UPDATE, DELETE and TRUNCATE).
   To wipe demo data, drop the database or disable the trigger as the database owner.
-- **Limits we state openly:** face and liveness checks run on the phone, so a skilled attacker could send
-  made-up results; the record checks, replay checks, random spot checks and separation of duties are there
-  because of that. Production would use a certified liveness service.
+- **Liveness ticket:** the server picks the random order of movements (blink, turn left, turn right) and signs
+  it with the case and a one-time number. The phone must do exactly that order and send the ticket back; a
+  missing, forged, reused or other-case ticket fails. The selfie carries the same ticket, so a selfie sent on
+  its own goes to an officer. Tickets last 24 hours so the check still works offline.
+- **Admins (four-eyes rule):** a rule change that makes any check looser (higher face distance, lower required
+  confidence, higher age limit, book not required...) waits until a different admin approves it. Stricter
+  changes apply at once. Both names are in the audit log.
+- **Helper trust score:** officers see the record of the helper who sent a proof (stopped pensions, replayed
+  selfies, refused bank or CNIC changes, withdrawn consent, passed spot checks); admins see all helpers.
+- **Limits we state openly:** the face and movement detection itself still runs on the phone, so a skilled
+  attacker with a modified app could fake the camera; the ticket, record checks, replay checks, random spot
+  checks and separation of duties are there because of that. Production would use a certified liveness service.
+
+## Reliability and monitoring
+
+- **CI:** `.github/workflows/ci.yml` runs on every push: type check, unit tests, production build, then starts
+  the app on a fresh Postgres and runs the smoke test and the attack suite. A red check means do not demo that commit.
+- **Error monitoring in the app:** every unexpected server error and every crash on a person's phone is stored
+  (scrubbed of numbers) and shown on the admin's System health card, grouped by message, with counts of AI
+  fallbacks. `/api/health` reports errors in the last hour for an uptime monitor.
+
+## Weak network and offline
+
+- The face check files (about 20 MB) download ahead of time into a cache that survives app updates: by
+  themselves on Wi-Fi or 4G, or when the person taps "Get ready", with progress and a time estimate for
+  their connection. After that the face check works with no signal, and steps are queued until it returns.
+- On 2G, data saver, or if the download fails, the photo step offers "Ask an officer to visit": the case goes
+  to an officer with the reason. Nothing is approved or stopped automatically.
+- Urdu voice: device voice when it has Urdu; otherwise Azure if configured; otherwise a free online Urdu voice
+  (turn off with `FREE_TTS=off`); otherwise on-screen text.
+- Area scam warning: pensioners and helpers see and hear which scam trick was reported in their area this week.
 
 ## Evaluation
 
@@ -119,6 +148,7 @@ All people are invented. The phone numbers are never contacted (SMS is simulated
 | Pension officer (Karachi) | Bilal Ahmed | 03332290615 | Bilal#Korangi7 | |
 | Pension officer (Hyderabad) | Naveed Memon | 03003108847 | Naveed!Hyd52 | |
 | Admin | Kamran Siddiqui | 03452876104 | Kamran$Admin9 | |
+| Admin (second approver) | Hira Farooq | 03000000012 | Hira@Rules5 | |
 | Auditor | Nadia Hussain | 03127739025 | Nadia&Audit3 | |
 | Helper (Lyari) | Rubina Shaikh | 03012654398 | Rubina@Lyari8 | |
 | Helper (Korangi) | Farhan Ali | 03349182746 | Farhan%Help6 | |
@@ -156,5 +186,5 @@ npm run test:smoke        # end-to-end checks against a running server
 
 - Liveness stops a printed photo but not a skilled video replay; low scores go to an officer.
 - Face thresholds are starting values; we measure them on our test faces and show the results on `/evaluation`.
-- The face check downloads about 10 MB of models once; after that they are saved on the phone.
+- The face check needs about 20 MB of files once; on 2G that is slow, so the app offers a home visit instead.
 - Small test sets mean wide error margins on the evaluation page.

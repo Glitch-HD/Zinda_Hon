@@ -3,6 +3,9 @@ import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 import Info from "@/components/ui/Info";
+import FacePrep from "@/components/FacePrep";
+import AreaWarning from "@/components/AreaWarning";
+import { areaScamWarning } from "@/lib/area-warning";
 
 // Helper Mode: one shared phone, many families. Each family has its own consent; the helper sees
 // only families whose consent is active, and every action is logged against that family.
@@ -13,6 +16,8 @@ export default async function HelperHome() {
     include: { pensioner: { include: { cases: { orderBy: { year: "desc" }, take: 1 }, consents: { where: { granteeId: user.id, withdrawnAt: null } } } } },
     orderBy: { createdAt: "asc" },
   });
+  const me = await prisma.user.findUnique({ where: { id: user.id }, select: { area: true } });
+  const warning = await areaScamWarning(user.tenantId, me?.area);
   return (
     <div>
       <Header user={user} links={[{ href: "/check-message", label: "🛡️ Check a message", ur: "پیغام جانچیں", info: { en: "Check if an SMS or WhatsApp message a family received is a scam.", ur: "جانچیں کہ کسی خاندان کو آیا پیغام دھوکہ تو نہیں۔" } }]} />
@@ -23,6 +28,8 @@ export default async function HelperHome() {
         </div>
         <Info en="Helper Mode: one phone, many families. You only see a family while their permission is active. Everything you do is recorded under that family's name, and they can withdraw permission at any time." ur="ایک فون، کئی خاندان۔ آپ صرف وہ خاندان دیکھ سکتے ہیں جنہوں نے اجازت دی ہے۔ ہر کام ریکارڈ ہوتا ہے اور خاندان کسی بھی وقت اجازت واپس لے سکتا ہے۔" />
       </div>
+      {warning && <div className="mb-4"><AreaWarning w={warning} /></div>}
+      <div className="mb-4"><FacePrep who="families" /></div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {links.map(({ pensioner: p }) => {
           const consent = p.consents[0];

@@ -133,6 +133,7 @@ function caseDraw(caseId: string) {
  * - face_numbers_reused: exactly the same face numbers were sent before (a replay of an old submission).
  * - face_too_identical_possible_replay: a live selfie is never almost identical to the enrolment photo;
  *   a replayed photo or copied numbers are.
+ * - face_not_from_liveness_check: the selfie does not carry the one-time ticket of a passed liveness check.
  * - face_reenrolled_this_year: someone replaced the enrolled face this year.
  * - helper_spot_check: a random 10% of proofs done through a helper.
  * - helper_high_volume: the helper has done unusually many proofs this year.
@@ -141,6 +142,8 @@ function caseDraw(caseId: string) {
 async function fraudSignals(c: { id: string; pensionerId: string; tenantId: string; year: number }, faceDistanceNow: number | null, faceDetails: unknown) {
   const flags: string[] = [];
   if ((faceDetails as { reusedFrom?: string | null } | null)?.reusedFrom) flags.push("face_numbers_reused");
+  // The selfie did not come from the server-issued liveness check (sent on its own, or with a used ticket).
+  if ((faceDetails as { livenessLinked?: boolean } | null)?.livenessLinked === false) flags.push("face_not_from_liveness_check");
   if (faceDistanceNow !== null && faceDistanceNow < 0.08) flags.push("face_too_identical_possible_replay");
   const yearStart = new Date(Date.UTC(c.year, 0, 1));
   const reenrol = await prisma.auditLog.findFirst({ where: { action: "face_reenrolled", targetId: c.pensionerId, createdAt: { gte: yearStart } } });

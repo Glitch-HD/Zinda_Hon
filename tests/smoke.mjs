@@ -35,8 +35,12 @@ ok((await officer.call(`/api/pensioners/${pid}/enroll-face`, { method: "POST", b
 
 // Different face → mismatch → ask again.
 const ev = (body) => widow.call(`/api/cases/${caseId}/evidence`, { method: "POST", body: JSON.stringify(body) });
-await ev({ type: "liveness", clientActionId: id(), passed: true, challenges: [{ action: "blink", done: true, ms: 900 }, { action: "turn_left", done: true, ms: 1200 }] });
-await ev({ type: "face_match", clientActionId: id(), descriptor: vec(7) });
+// The server chooses the order of movements and signs it (one-time ticket).
+const t1 = await (await widow.call(`/api/cases/${caseId}/challenge`, { method: "POST" })).json();
+ok(Array.isArray(t1.sequence) && t1.sequence.length >= 2 && typeof t1.token === "string", "server issues a liveness ticket");
+const live1 = await (await ev({ type: "liveness", clientActionId: id(), passed: true, challenges: t1.sequence.map((a, i) => ({ action: a, done: true, ms: 800 + i * 150 })), ticket: t1.token })).json();
+ok(live1.passed === true, "liveness in the server's order passes");
+await ev({ type: "face_match", clientActionId: id(), descriptor: vec(7), ticket: t1.token });
 let r = await (await widow.call(`/api/cases/${caseId}/submit`, { method: "POST" })).json();
 ok(r.outcome === "ASK_MORE_PROOF" && r.askFor.includes("selfie"), `different face asks for a new selfie (got ${r.outcome})`);
 
@@ -84,6 +88,26 @@ ok(final && !(final.report.recommendation === "approve" && final.report.findings
 
 // Public API needs a key.
 ok((await fetch(`${BASE}/api/v1/mock/nadra/0000010000012`)).status === 401, "public API rejects requests without a key");
+
+// Four-eyes rule: a looser rule change waits for a second admin.
+const kamran = await login("03452876104", "Kamran$Admin9");
+const hira = await login("03000000012", "Hira@Rules5");
+const RULES = { costs: { wrongApprovalPkr: 360000, humanReviewPkr: 2000 }, face: { strictDistance: 0.4, looseDistance: 0.55, reliabilityWhenStrict: 0.998 }, liveness: { reliabilityWhenPassed: 0.999 }, document: { reliabilityWhenValid: 0.9995, required: true }, identity: { autoMinSimilarity: 0.92, askMinSimilarity: 0.8, reliabilityWhenMatched: 0.9995 }, deathRegistry: { reliabilityWhenClear: 0.9995 }, anomaly: { maxAgeYears: 100 }, maxAttempts: 2 };
+const looser = structuredClone(RULES); looser.face.strictDistance = 0.45;
+const prop = await kamran.call("/api/admin/rules", { method: "POST", body: JSON.stringify({ config: looser, note: "smoke: looser face" }) });
+const propD = await prop.json();
+ok(prop.status === 202 && propD.pending === true, "a looser rule change waits for a second admin");
+ok((await kamran.call(`/api/admin/rules/requests/${propD.requestId}`, { method: "POST", body: JSON.stringify({ action: "approve" }) })).status === 403, "an admin cannot approve their own looser change");
+const appr = await hira.call(`/api/admin/rules/requests/${propD.requestId}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "smoke" }) });
+ok(appr.ok && (await appr.json()).version > 0, "a second admin approves it and it becomes active");
+const stricter = structuredClone(looser); stricter.face.strictDistance = 0.4;
+const strictRes = await kamran.call("/api/admin/rules", { method: "POST", body: JSON.stringify({ config: stricter, note: "smoke: back to stricter" }) });
+ok(strictRes.ok && (await strictRes.json()).version > 0, "a stricter change applies at once");
+
+// Error monitoring: a phone's crash report is stored and the health check counts errors.
+ok((await fetch(`${BASE}/api/client-error`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "smoke test crash", page: "/smoke" }) })).ok, "a phone can report a crash");
+const health = await (await fetch(`${BASE}/api/health`)).json();
+ok(typeof health.errorsLastHour === "number", "health check reports recent errors");
 
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll smoke checks passed");
 process.exit(failures ? 1 : 0);

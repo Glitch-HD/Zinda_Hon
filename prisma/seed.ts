@@ -86,6 +86,7 @@ const ACCOUNTS: { legacy?: string; phone: string; password: string; pin?: string
   { phone: "03332290615", password: "Bilal#Korangi7", role: "OFFICER", name: "Bilal Ahmed", tenant: "karachi" },
   { legacy: "03000000011", phone: "03003108847", password: "Naveed!Hyd52", role: "OFFICER", name: "Naveed Memon", tenant: "hyderabad" },
   { legacy: "03000000002", phone: "03452876104", password: "Kamran$Admin9", role: "ADMIN", name: "Kamran Siddiqui", tenant: "karachi" },
+  { phone: "03000000012", password: "Hira@Rules5", role: "ADMIN", name: "Hira Farooq", tenant: "karachi" },
   { legacy: "03000000003", phone: "03127739025", password: "Nadia&Audit3", role: "AUDITOR", name: "Nadia Hussain", tenant: "karachi" },
   { legacy: "03000000004", phone: "03012654398", password: "Rubina@Lyari8", role: "HELPER", name: "Rubina Shaikh", area: "Lyari", tenant: "karachi" },
   { phone: "03349182746", password: "Farhan%Help6", role: "HELPER", name: "Farhan Ali", area: "Korangi", tenant: "karachi" },
@@ -193,6 +194,35 @@ async function ensureHistory() {
   }
 }
 
+// A few scam reports from the helpers in the last days, so the area early warning on the pensioner and
+// helper home pages has something to show in the demo. All senders are mock numbers. Added again only
+// when there are no such demo reports in the last 7 days.
+async function ensureReportedScams() {
+  const karachi = await prisma.tenant.findFirst({ where: { name: "Mock Pension Office, Karachi" } });
+  const rubina = await prisma.user.findUnique({ where: { phone: "03012654398" } });
+  const farhan = await prisma.user.findUnique({ where: { phone: "03349182746" } });
+  if (!karachi || !rubina || !farhan) return;
+  const week = new Date(Date.now() - 7 * 86400_000);
+  const recent = await prisma.checkedMessage.count({ where: { tenantId: karachi.id, createdAt: { gte: week }, reasons: { path: ["demoReport"], equals: true } } });
+  if (recent) return;
+  const reports = [
+    { by: rubina, area: "Lyari", days: 1, sender: "03000000731", text: "Aap ki pension rok di gayi hai. Dobara shuru karwane ke liye 6 digit code is number par bhejein: 03000000731", type: "otp_theft", signs: [{ id: "asks_pin_otp", en: "Asks for a PIN, OTP or code", ur: "پن یا کوڈ مانگ رہا ہے" }] },
+    { by: rubina, area: "Lyari", days: 2, sender: "03000000732", text: "مبارک ہو! آپ کی پنشن میں 15000 روپے کا اضافہ ہوا ہے۔ وصول کرنے کے لیے اپنا پن کوڈ بتائیں۔", type: "otp_theft", signs: [{ id: "asks_pin_otp", en: "Asks for a PIN, OTP or code", ur: "پن یا کوڈ مانگ رہا ہے" }] },
+    { by: rubina, area: "Lyari", days: 3, sender: "03000000733", text: "Pension verification fees Rs 500 JazzCash par bhejein warna pension band. Foran rabta karein 03000000733", type: "advance_fee", signs: [{ id: "fee_to_release", en: "Asks you to send money to receive money", ur: "رقم لینے کے لیے پیسے بھیجنے کا کہہ رہا ہے" }, { id: "urgency", en: "Creates panic or urgency", ur: "جلدی کرنے کا دباؤ ڈال رہا ہے" }] },
+    { by: farhan, area: "Korangi", days: 2, sender: "8XXX", text: "Ehsaas imdad 25000 aap ke naam. Apna CNIC ki tasveer is number par bhejein.", type: "fake_relief", signs: [{ id: "relief_payment", en: "Mentions a relief payment", ur: "امدادی رقم کا ذکر ہے" }, { id: "cnic_photo", en: "Asks for a photo of your CNIC", ur: "شناختی کارڈ کی تصویر مانگ رہا ہے" }] },
+  ];
+  for (const r of reports) {
+    await prisma.checkedMessage.create({
+      data: {
+        tenantId: karachi.id, submittedById: r.by.id, text: r.text, sender: r.sender, area: r.area, label: "scam", confidence: 0.9, route: "warn_user",
+        createdAt: new Date(Date.now() - r.days * 86400_000),
+        reasons: { source: "signs_only", demoReport: true, signs: r.signs, ai: { scam_type: r.type } },
+      },
+    });
+  }
+  console.log(`Added ${reports.length} demo scam reports for the area warning.`);
+}
+
 async function main() {
   const existing = await prisma.tenant.count();
   if (existing > 0) {
@@ -201,6 +231,7 @@ async function main() {
     await ensureAccounts();
     await ensurePensionerPins();
     await ensureHistory();
+    await ensureReportedScams();
     return;
   }
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -305,6 +336,7 @@ async function main() {
   await ensureAccounts();
   await ensurePensionerPins();
   await ensureHistory();
+  await ensureReportedScams();
   console.log(`Seeded 2 tenants and ${people.length} pensioner records. Demo accounts: see README.`);
 }
 

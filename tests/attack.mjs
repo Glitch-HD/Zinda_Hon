@@ -22,6 +22,8 @@ const db = { query: async (sql) => execFileSync("psql", [DB, "-v", "ON_ERROR_STO
 const caseOf = async (no) => (await q(`select c.id, c."pensionerId" from "Case" c join "Pensioner" p on p.id=c."pensionerId" where p."pensionNo"=$1 and c.year=$2`, [no, new Date().getFullYear()]))[0];
 const vec = (s) => Array.from({ length: 128 }, (_, i) => Math.sin(s * 31 + i) * 0.1);
 const rid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+const ticketFor = async (u, caseId) => (await u.post(`/api/cases/${caseId}/challenge`)).json();
+const doneAll = (t, ms = 900) => t.sequence.map((a, i) => ({ action: a, done: true, ms: ms + i * 100 }));
 
 const widow = await login("03026619470", "Zainab786");
 const sakinaU = await login("03154407218", "Sakina4321");
@@ -91,11 +93,29 @@ check(bilalApprove.status === 403, "Officer who replaced the face then approves 
 
 // --- Replays and fake liveness, through the pensioner's own login (Sakina, face = vec(12) now)
 const ev = (body) => sakinaU.post(`/api/cases/${sakina.id}/evidence`, body);
-await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: [{ action: "blink", done: true, ms: 0 }, { action: "turn_left", done: true, ms: 0 }] });
-const live = (await q(`select passed from "Evidence" where "caseId"=$1 and type='liveness' order by "createdAt" desc limit 1`, [sakina.id]))[0];
-check(live?.passed === false, "Script claims the blink and head-turn were done in 0 ms");
+const lastLive = async (cid) => (await q(`select passed, details from "Evidence" where "caseId"=$1 and type='liveness' order by "createdAt" desc limit 1`, [cid]))[0];
+let tk = await ticketFor(sakinaU, sakina.id);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tk, 0), ticket: tk.token });
+check((await lastLive(sakina.id))?.passed === false, "Script claims the blink and head-turn were done in 0 ms");
 await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: [{ action: "blink", done: true, ms: 900 }, { action: "turn_left", done: true, ms: 1100 }] });
-await ev({ type: "face_match", clientActionId: rid(), descriptor: vec(12) });
+check((await lastLive(sakina.id))?.passed === false, "Liveness 'passed' with no server ticket (script picks its own easy moves)");
+tk = await ticketFor(sakinaU, sakina.id);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tk).reverse(), ticket: tk.token });
+check((await lastLive(sakina.id))?.passed === false, "Do the movements in a different order than the server asked");
+const tkOther = await ticketFor(widow, zainab.id);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tkOther), ticket: tkOther.token });
+check((await lastLive(sakina.id))?.passed === false, "Use another case's liveness ticket");
+const fakeTk = tk.token.split(".")[0] + "." + "A".repeat(43);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tk), ticket: fakeTk });
+check((await lastLive(sakina.id))?.passed === false, "Forge the signature on a liveness ticket");
+tk = await ticketFor(sakinaU, sakina.id);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tk), ticket: tk.token });
+const goodLive = await lastLive(sakina.id);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tk), ticket: tk.token });
+check(goodLive?.passed === true && (await lastLive(sakina.id))?.passed === false, "Replay a passed liveness ticket a second time");
+tk = await ticketFor(sakinaU, sakina.id);
+await ev({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tk), ticket: tk.token });
+await ev({ type: "face_match", clientActionId: rid(), descriptor: vec(12), ticket: tk.token });
 let d = await (await sakinaU.post(`/api/cases/${sakina.id}/submit`)).json();
 check(d.outcome !== "APPROVE", "Send the exact enrolled face numbers (a copied photo)", d.outcome);
 const flags = (await q(`select "riskFlags" from "Case" where id=$1`, [sakina.id]))[0].riskFlags;
@@ -106,12 +126,32 @@ const w = (body) => widow.post(`/api/cases/${zainab.id}/evidence`, body);
 const pid = zainab.pensionerId;
 await enrol(sana, pid, vec(1), "test reenrol for replay check");
 const face = vec(1).map((x, i) => x + (i % 2 ? 0.02 : -0.02));
-await w({ type: "liveness", clientActionId: rid(), passed: true, challenges: [{ action: "blink", done: true, ms: 800 }, { action: "turn_right", done: true, ms: 1300 }] });
-await w({ type: "face_match", clientActionId: rid(), descriptor: face });
+const tz = await ticketFor(widow, zainab.id);
+await w({ type: "liveness", clientActionId: rid(), passed: true, challenges: doneAll(tz), ticket: tz.token });
+await w({ type: "face_match", clientActionId: rid(), descriptor: face, ticket: tz.token });
 await w({ type: "face_match", clientActionId: rid(), descriptor: face });
 d = await (await widow.post(`/api/cases/${zainab.id}/submit`)).json();
 const zf = (await q(`select "riskFlags" from "Case" where id=$1`, [zainab.id]))[0].riskFlags;
 check(zf.includes("face_numbers_reused"), "Replay the same selfie numbers twice", zf.join(","));
+check(zf.includes("face_not_from_liveness_check"), "Send a selfie on its own, without a liveness check", zf.join(","));
+
+// --- Four-eyes rule on safety settings
+const hira = await login("03000000012", "Hira@Rules5");
+const RULES = { costs: { wrongApprovalPkr: 360000, humanReviewPkr: 2000 }, face: { strictDistance: 0.4, looseDistance: 0.55, reliabilityWhenStrict: 0.998 }, liveness: { reliabilityWhenPassed: 0.999 }, document: { reliabilityWhenValid: 0.9995, required: true }, identity: { autoMinSimilarity: 0.92, askMinSimilarity: 0.8, reliabilityWhenMatched: 0.9995 }, deathRegistry: { reliabilityWhenClear: 0.9995 }, anomaly: { maxAgeYears: 100 }, maxAttempts: 2 };
+const lax = structuredClone(RULES); lax.costs.wrongApprovalPkr = 4000; lax.face.looseDistance = 0.9;
+const before = (await q(`select max(version) v from "RuleVersion" rv join "Tenant" t on t.id=rv."tenantId" where t.name ilike '%karachi%'`))[0].v;
+const pr = await (await admin.post("/api/admin/rules", { config: lax, note: "attack: open the gate" })).json();
+const after = (await q(`select max(version) v from "RuleVersion" rv join "Tenant" t on t.id=rv."tenantId" where t.name ilike '%karachi%'`))[0].v;
+check(pr.pending === true && after === before, "One admin makes the checks much looser on their own", `pending=${pr.pending}`);
+check((await admin.post(`/api/admin/rules/requests/${pr.requestId}`, { action: "approve" })).status === 403, "The same admin approves their own looser rule");
+check((await hira.post(`/api/admin/rules/requests/${pr.requestId}`, { action: "cancel" })).status === 403, "A second admin cancels someone else's change silently");
+await hira.post(`/api/admin/rules/requests/${pr.requestId}`, { action: "reject", note: "attack test" });
+
+// --- Light path abuse and crash-report flooding
+check([403, 404].includes((await widow.post(`/api/cases/${sakina.id}/request-visit`, { reason: "slow_network" })).status), "Ask for a home visit on someone else's case");
+let flood = null;
+for (let i = 0; i < 25; i++) { const r3 = await fetch(`${B}/api/client-error`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": "10.9.9.9" }, body: JSON.stringify({ message: `flood ${i}` }) }); if (r3.status === 429) { flood = i; break; } }
+check(flood !== null && flood <= 20, "Flood the crash-report endpoint", `blocked after ${flood}`);
 
 // --- PIN guessing for a pensioner
 const book = await (await fetch(`${B}/api/auth/pensioner/demo-book?no=PEN-K-1012`)).json();

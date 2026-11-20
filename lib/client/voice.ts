@@ -5,6 +5,7 @@ import { getLang } from "./prefs";
 
 let current: HTMLAudioElement | null = null;
 let serverVoice: boolean | null = null; // null = not tried yet; false = not set up, stop asking
+let serverIsFree = false; // the server is using the free fallback voice (no Azure key)
 
 export type VoiceChoice = "female" | "male";
 export function getVoiceChoice(): VoiceChoice {
@@ -53,12 +54,15 @@ function waitForAudio(a: HTMLAudioElement) {
 
 /** Says one piece of text and resolves when it has finished. Returns false if nothing could say it. */
 async function sayOne(lang: SpokenLang, text: string, my: number): Promise<boolean> {
-  if (serverVoice !== false) {
+  // With only the free server voice, a voice already on the device is faster and works offline, so use it first.
+  const deviceFirst = serverIsFree && "speechSynthesis" in window && (await loadVoices()).some((v) => v.lang.toLowerCase().startsWith(lang));
+  if (serverVoice !== false && !deviceFirst) {
     try {
       const res = await fetch(`/api/voice/tts?lang=${lang}&voice=${getVoiceChoice()}&text=${encodeURIComponent(text)}`);
       if (my !== token) return true;
       if (res.ok) {
         serverVoice = true;
+        serverIsFree = res.headers.get("x-voice") === "free-fallback";
         const blob = await res.blob();
         if (my !== token) return true;
         current = new Audio(URL.createObjectURL(blob));

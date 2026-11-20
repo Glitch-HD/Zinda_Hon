@@ -1,6 +1,9 @@
 import Header from "@/components/Header";
 import Option from "@/components/ui/Option";
 import PensionerVoice from "@/components/PensionerVoice";
+import FacePrep from "@/components/FacePrep";
+import AreaWarning from "@/components/AreaWarning";
+import { areaScamWarning } from "@/lib/area-warning";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 
@@ -8,6 +11,7 @@ export default async function PensionerHome() {
   const user = await pageUser(["PENSIONER"]);
   const p = await prisma.pensioner.findUnique({ where: { userId: user.id }, include: { cases: { orderBy: { year: "desc" }, take: 1 } } });
   const c = p?.cases[0];
+  const warning = await areaScamWarning(user.tenantId, p?.area);
   const canStart = c && c.status !== "VERIFIED" && c.status !== "WITH_OFFICER" && c.status !== "STOPPED";
   const statusUr = c?.status === "VERIFIED" ? "اس سال کا ثبوتِ حیات مکمل ہے" : c?.status === "WITH_OFFICER" ? "پنشن افسر آپ کا کیس دیکھ رہا ہے" : "اس سال کا ثبوتِ حیات باقی ہے";
   const statusEn = c?.status === "VERIFIED" ? "This year's proof-of-life is done." : c?.status === "WITH_OFFICER" ? "A pension officer is looking at your case." : "This year's proof-of-life is still due.";
@@ -38,6 +42,10 @@ export default async function PensionerHome() {
               href={`/case/${c.id}`}
             />
           )}
+
+          {warning && <AreaWarning w={warning} />}
+
+          {canStart && <FacePrep />}
 
           <PensionerVoice caseHref={canStart ? `/case/${c.id}` : null} />
 

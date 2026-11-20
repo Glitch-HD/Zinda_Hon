@@ -9,6 +9,7 @@ import { faceDistance } from "@/lib/case-service";
 import { verifyPensionBookQr } from "@/lib/qr";
 import { nameSimilarity, normalizeCnic } from "@/lib/names";
 import { createHash } from "node:crypto";
+import { followedSequence, verifyTicket } from "@/lib/liveness";
 
 /** A fingerprint of the face numbers (not reversible to a face). A real selfie never repeats exactly. */
 const faceFingerprint = (d: number[]) => createHash("sha256").update(d.map((x) => x.toFixed(3)).join(",")).digest("hex").slice(0, 24);
@@ -17,10 +18,11 @@ const faceFingerprint = (d: number[]) => createHash("sha256").update(d.map((x) =
 // so if a weak connection makes the phone send it twice, the second copy is ignored (no duplicates).
 
 const Body = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("face_match"), clientActionId: z.string().min(8).max(64), descriptor: z.array(z.number().finite()).length(128), quality: z.number().min(0).max(1).optional() }),
+  z.object({ type: z.literal("face_match"), clientActionId: z.string().min(8).max(64), descriptor: z.array(z.number().finite()).length(128), quality: z.number().min(0).max(1).optional(), ticket: z.string().max(600).optional() }),
   z.object({
     type: z.literal("liveness"), clientActionId: z.string().min(8).max(64), passed: z.boolean(),
     challenges: z.array(z.object({ action: z.enum(["blink", "turn_left", "turn_right", "smile"]), done: z.boolean(), ms: z.number().nonnegative() })).max(6),
+    ticket: z.string().max(600).optional(),
   }),
   z.object({ type: z.literal("document"), clientActionId: z.string().min(8).max(64), qrText: z.string().max(500).nullable(), ocrName: z.string().max(200).optional() }),
 ]);
@@ -47,13 +49,33 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
     score = faceDistance(enrolled, body.descriptor);
     const fp = faceFingerprint(body.descriptor);
     const reused = await prisma.evidence.findFirst({ where: { type: "face_match", case: { pensionerId: c.pensionerId }, details: { path: ["fp"], equals: fp } }, select: { caseId: true } });
+    // The selfie must come from the same server-issued liveness check as the movements, not from
+    // a separate photo sent later: both carry the same one-time ticket.
+    const t = verifyTicket(body.ticket, id);
+    let livenessLinked = false;
+    if (t.ok) {
+      const [live, faceBefore] = await Promise.all([
+        prisma.evidence.findFirst({ where: { caseId: id, type: "liveness", passed: true, details: { path: ["nonce"], equals: t.nonce } }, select: { id: true } }),
+        prisma.evidence.findFirst({ where: { caseId: id, type: "face_match", details: { path: ["nonce"], equals: t.nonce } }, select: { id: true } }),
+      ]);
+      livenessLinked = Boolean(live) && !faceBefore;
+    }
     details = {
-      fp, reusedFrom: reused?.caseId ?? null, distance: score, quality: body.quality ?? null, note: "Only the 128-number face descriptor was received; no photo stored." };
+      fp, reusedFrom: reused?.caseId ?? null, distance: score, quality: body.quality ?? null, nonce: t.ok ? t.nonce : null, livenessLinked,
+      note: "Only the 128-number face descriptor was received; no photo stored." };
   } else if (body.type === "liveness") {
     // A person needs time to blink or turn; a script that just says "done" usually does not wait.
     const allDone = body.challenges.length >= 2 && body.challenges.every((ch) => ch.done && ch.ms >= 150);
-    passed = body.passed && allDone;
-    details = { challenges: body.challenges, clientReported: body.passed };
+    // The order of movements was chosen and signed by the server; each ticket can be used once.
+    const t = verifyTicket(body.ticket, id);
+    let ticket: string = t.ok ? "ok" : t.reason;
+    if (t.ok) {
+      const used = await prisma.evidence.findFirst({ where: { caseId: id, type: "liveness", details: { path: ["nonce"], equals: t.nonce } }, select: { id: true } });
+      if (used) ticket = "reused";
+      else if (!followedSequence(t.sequence, body.challenges)) ticket = "wrong_order";
+    }
+    passed = body.passed && allDone && ticket === "ok";
+    details = { challenges: body.challenges, clientReported: body.passed, ticket, nonce: t.ok ? t.nonce : null, asked: t.ok ? t.sequence : null };
   } else {
     const qr = verifyPensionBookQr(body.qrText);
     if (!qr.readable) {

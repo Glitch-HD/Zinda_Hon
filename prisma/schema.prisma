@@ -354,3 +354,37 @@ model AgentRun {
 
   @@index([caseId, createdAt])
 }
+
+// Errors from the server and from people's phones, kept in our own database so the admin can see
+// what broke without opening the hosting logs. Messages are cut short and never hold form data.
+model ErrorEvent {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  source    String // "server" or "client"
+  route     String?
+  message   String
+  stack     String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// A rule change that makes the checks looser (for example a higher face distance or a lower required
+// confidence) waits here until a second, different admin approves it. Tighter changes apply at once.
+model RuleChangeRequest {
+  id          String    @id @default(cuid())
+  tenantId    String
+  baseVersion Int // the active version it was proposed against
+  config      Json
+  note        String?
+  loosened    String[]
+  proposedBy  String
+  status      String    @default("pending") // pending, approved, rejected, cancelled
+  decidedBy   String?
+  decidedNote String?
+  decidedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([tenantId, status])
+}
