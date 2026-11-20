@@ -32,7 +32,7 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | Decision engine, rule versions, Digital Twin replay | **Real** |
 | Face match (face-api, 128-number descriptors) and liveness (MediaPipe blink / head turn) | **Real**, runs in the browser. Not bank-grade anti-spoofing. |
 | Pension book QR signature check (HMAC) | **Real** |
-| Scam classifier (Claude + warning signs) | **Real** AI calls |
+| Scam classifier, rulebook answers, explanations (Groq gpt-oss-120b, or Claude when its key is set, plus warning signs) | **Real** AI calls |
 | Urdu speech-to-text (Whisper on Groq) and text-to-speech (Azure neural voice) | **Real** services when keys are set; falls back to the phone's own voice |
 | NADRA, bank / Raast, death registry | **Simulated** mock services with deliberately messy data |
 | Pension program, amounts, rulebook | **Simulated** (our own invented rules) |
