@@ -22,9 +22,9 @@ export default async function PensionerHome() {
             <p className="muted">{c.year} proof-of-life: {c.status.replaceAll("_", " ").toLowerCase()}</p>
           </div>
           {c.status !== "VERIFIED" && c.status !== "WITH_OFFICER" && c.status !== "STOPPED" && (
-            <Link href={`/case/${c.id}`} className="btn btn-big">▶️ <span className="ur">ابھی شروع کریں</span> · Start now</Link>
+            <Link href={`/case/${c.id}`} className="btn btn-big"><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">ابھی شروع کریں</span><span className="text-sm font-semibold opacity-90">Start now</span></span></Link>
           )}
-          <Link href="/check-message" className="btn btn-big btn-ghost">🛡️ <span className="ur">کیا یہ پیغام اصلی ہے؟</span> · Is this message real?</Link>
+          <Link href="/check-message" className="btn btn-big btn-ghost"><span className="text-3xl">🛡️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">کیا یہ پیغام اصلی ہے؟</span><span className="text-sm font-semibold opacity-90">Is this message real?</span></span></Link>
         </div>
       )}
     </div>

@@ -10,11 +10,23 @@ import { DEFAULT_RULE_CONFIG } from "../lib/decision";
 const prisma = new PrismaClient();
 const YEAR = 2026;
 const DEMO_PASSWORD = "demo1234";
+const DEMO_PIN = "1234";
+
+// Pensioners log in with their pension book QR + face, or a 4-digit PIN as backup.
+// Runs on every deploy so databases seeded before PINs existed get one too.
+async function ensurePensionerPins() {
+  const users = await prisma.user.findMany({ where: { role: "PENSIONER", pinHash: null }, select: { id: true } });
+  if (!users.length) return;
+  const pinHash = await bcrypt.hash(DEMO_PIN, 10);
+  await prisma.user.updateMany({ where: { id: { in: users.map((u) => u.id) } }, data: { pinHash } });
+  console.log(`Set demo PIN for ${users.length} pensioner account(s).`);
+}
 
 async function main() {
   const existing = await prisma.tenant.count();
   if (existing > 0) {
     console.log("Seed skipped: database already has data.");
+    await ensurePensionerPins();
     return;
   }
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -115,6 +127,7 @@ async function main() {
 
   await prisma.notification.create({ data: { userId: officer.id, title: "Welcome", body: "Proof-of-life season 2026 has started (mock)." } });
 
+  await ensurePensionerPins();
   console.log(`Seeded 2 tenants, 7 users (password: ${DEMO_PASSWORD}), ${people.length} pensioner records.`);
 }
 

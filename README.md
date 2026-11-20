@@ -66,7 +66,9 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | Admin | 03000000002 |
 | Auditor | 03000000003 |
 
-The login page also has one-tap buttons for each role.
+The front page also has one-tap demo buttons for each role (under "For judges").
+
+**Pensioner login needs no typing:** tap "I get a pension", show the QR in the pension book to the camera, then look at the camera (face + movement check). A 4-digit PIN on a big number pad is the backup. For the demo, use "Use the sample pension book" and PIN `1234`.
 
 ## Messy data on purpose (Challenge 03)
 

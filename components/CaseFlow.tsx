@@ -116,7 +116,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
           <p className="muted">Prove you are alive so your pension continues. 3 short steps.</p>
           <button className="btn btn-ghost w-full" onClick={() => speakUrdu(SAY.intro)}>🔊 <span className="ur">سنیں</span> · Listen</button>
           {!enrolled && <p style={{ color: "var(--warn)" }}>Your face is not enrolled yet. Please visit the pension office once (mock), or ask an officer to enrol you.</p>}
-          <button className="btn btn-big" disabled={!enrolled} onClick={() => go("face")}>▶️ <span className="ur">شروع کریں</span> · Start</button>
+          <button className="btn btn-big" disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="text-sm font-semibold opacity-90">Start</span></span></button>
         </div>
       )}
 
@@ -140,7 +140,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
       {step === "submit" && (
         <div className="card space-y-4 text-center">
           <p className="ur text-xl">قدم ۳: بھیج دیں</p>
-          <button className="btn btn-big" disabled={busy} onClick={submit}>📨 <span className="ur">بھیجیں</span> · Send</button>
+          <button className="btn btn-big" disabled={busy} onClick={submit}><span className="text-3xl">📨</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">بھیجیں</span><span className="text-sm font-semibold opacity-90">Send</span></span></button>
           {busy && <p>Checking… <span className="ur">جانچ ہو رہی ہے</span></p>}
           {note && <p role="status" style={{ color: "var(--warn)" }}>{note}</p>}
         </div>
@@ -152,7 +152,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
           <p className="ur text-2xl">{result.reasonUr}</p>
           <p className="muted">{result.reasonEn}</p>
           <button className="btn btn-ghost w-full" onClick={() => speakUrdu(result.reasonUr)}>🔊 <span className="ur">دوبارہ سنیں</span> · Listen again</button>
-          {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" onClick={() => restartFor(result.askFor)}>🔁 <span className="ur">دوبارہ کریں</span> · Try again</button>}
+          {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" onClick={() => restartFor(result.askFor)}><span className="text-3xl">🔁</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">دوبارہ کریں</span><span className="text-sm font-semibold opacity-90">Try again</span></span></button>}
         </div>
       )}
     </div>

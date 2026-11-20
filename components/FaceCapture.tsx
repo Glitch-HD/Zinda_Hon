@@ -81,7 +81,7 @@ export default function FaceCapture({ withLiveness = true, onDone }: { withLiven
         {phase === "capturing" && <div className="absolute inset-x-0 top-0 p-2 text-center text-white" style={{ background: "rgba(0,0,0,.5)" }}>📸 Hold still… <span className="ur">رُکے رہیں</span></div>}
       </div>
       {(phase === "idle" || phase === "error") && (
-        <button className="btn btn-big" onClick={start}>📷 <span className="ur">تصویر شروع کریں</span> · Start camera</button>
+        <button className="btn btn-big" onClick={start}><span className="text-3xl">📷</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">تصویر شروع کریں</span><span className="text-sm font-semibold opacity-90">Start camera</span></span></button>
       )}
       {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
       <p className="muted text-xs">Only 128 numbers describing the face are sent. The photo never leaves this phone.</p>

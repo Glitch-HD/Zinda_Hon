@@ -1,44 +1,142 @@
 @import "tailwindcss";
 
+/* Zinda Hon design tokens. Warm cream + deep green + marigold, chosen to feel calm and familiar
+   (not like a bank or a government form). Every colour has a dark-mode twin. */
 :root {
-  --bg: #f7f5ef;
-  --card: #ffffff;
-  --ink: #1d2433;
-  --muted: #5b6475;
-  --brand: #0f766e;
+  --bg: #f5efe3;
+  --bg-2: #efe5d2;
+  --card: #fffdf8;
+  --card-2: #f8f2e6;
+  --ink: #1b2420;
+  --muted: #5c6a63;
+  --brand: #0d6b5a;
+  --brand-2: #12876f;
+  --brand-soft: #dcefe8;
   --brand-ink: #ffffff;
-  --warn: #b45309;
-  --danger: #b91c1c;
-  --ok: #15803d;
-  --line: #e3ded2;
+  --accent: #e39a2d;
+  --accent-soft: #fbecd2;
+  --warn: #a85a06;
+  --danger: #b42318;
+  --ok: #157f3d;
+  --line: #e6dccb;
+  --shadow: 0 1px 2px rgba(60, 45, 20, .06), 0 8px 24px rgba(60, 45, 20, .08);
+  --shadow-lg: 0 2px 4px rgba(60, 45, 20, .06), 0 18px 40px rgba(60, 45, 20, .14);
+  --ring: 0 0 0 3px rgba(18, 135, 111, .35);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #12161d;
-    --card: #1b212b;
-    --ink: #eef1f6;
-    --muted: #a3acbb;
-    --brand: #2dd4bf;
-    --brand-ink: #062824;
-    --warn: #f59e0b;
+    --bg: #0e1512;
+    --bg-2: #121c18;
+    --card: #17211d;
+    --card-2: #1c2823;
+    --ink: #edf3ef;
+    --muted: #9fb1a9;
+    --brand: #2fbf9f;
+    --brand-2: #46d3b2;
+    --brand-soft: #173a31;
+    --brand-ink: #04211a;
+    --accent: #f2b45a;
+    --accent-soft: #3a2c16;
+    --warn: #f5a524;
     --danger: #f87171;
     --ok: #4ade80;
-    --line: #2c3442;
+    --line: #26332d;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    --shadow-lg: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px rgba(0, 0, 0, .4);
   }
 }
+
 html, body { background: var(--bg); color: var(--ink); }
-body { font-family: system-ui, -apple-system, "Segoe UI", "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", sans-serif; }
-.ur { font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", system-ui, sans-serif; line-height: 2; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 12px; font-weight: 600; background: var(--brand); color: var(--brand-ink); border: none; cursor: pointer; }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-.btn-big { min-height: 72px; font-size: 1.25rem; border-radius: 18px; width: 100%; }
-.input { width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; background: var(--card); color: var(--ink); }
-.muted { color: var(--muted); }
-.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 600; border: 1px solid var(--line); }
-.badge-ok { color: var(--ok); border-color: var(--ok); }
-.badge-warn { color: var(--warn); border-color: var(--warn); }
-.badge-danger { color: var(--danger); border-color: var(--danger); }
-table.data { width: 100%; border-collapse: collapse; font-size: .92rem; }
-table.data th, table.data td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+body {
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(1200px 500px at 85% -10%, var(--brand-soft), transparent 60%),
+    radial-gradient(900px 400px at -10% 0%, var(--accent-soft), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { letter-spacing: -0.01em; }
+:focus-visible { outline: none; box-shadow: var(--ring); border-radius: 12px; }
+a { text-underline-offset: 3px; }
+
+@layer components {
+  .ur { font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", serif; line-height: 2.1; direction: rtl; unicode-bidi: isolate; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 18px; box-shadow: var(--shadow); }
+  .card h2 { font-weight: 700; font-size: 1.15rem; }
+  .card-soft { background: var(--card-2); box-shadow: none; }
+  .card-brand { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--brand-ink); border: none; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 50px; padding: 0 20px; border-radius: 14px; font-weight: 700;
+    background: linear-gradient(180deg, var(--brand-2), var(--brand)); color: var(--brand-ink);
+    border: none; cursor: pointer; text-decoration: none;
+    box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px rgba(13, 107, 90, .25);
+    transition: transform .08s ease, box-shadow .15s ease, filter .15s ease;
+  }
+  .btn:hover { filter: brightness(1.05); }
+  .btn:active { transform: translateY(1px) scale(.99); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .btn-ghost:hover { background: var(--card-2); filter: none; }
+  .btn-accent { background: linear-gradient(180deg, #f0ad43, var(--accent)); color: #2a1a02; box-shadow: 0 6px 16px rgba(227, 154, 45, .3); }
+  .btn-danger { background: var(--danger); color: #fff; box-shadow: none; }
+  .btn-big { min-height: 78px; font-size: 1.3rem; border-radius: 20px; width: 100%; }
+  .btn-sm { min-height: 38px; padding: 0 12px; font-size: .9rem; border-radius: 10px; }
+
+  .input {
+    width: 100%; min-height: 52px; border: 1.5px solid var(--line); border-radius: 14px; padding: 0 14px;
+    background: var(--card); color: var(--ink); font-size: 1.05rem; transition: border-color .15s, box-shadow .15s;
+  }
+  .input:focus { outline: none; border-color: var(--brand-2); box-shadow: var(--ring); }
+  textarea.input { padding: 12px 14px; min-height: 120px; }
+  select.input { appearance: auto; }
+
+  .muted { color: var(--muted); }
+  .eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; border: 1px solid var(--line); background: var(--card-2); }
+  .badge-ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); background: color-mix(in srgb, var(--ok) 10%, var(--card)); }
+  .badge-warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 10%, var(--card)); }
+  .badge-danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); background: color-mix(in srgb, var(--danger) 10%, var(--card)); }
+
+  table.data { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .92rem; }
+  table.data th { text-align: left; padding: 10px; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--card-2); }
+  table.data th:first-child { border-top-left-radius: 12px; }
+  table.data th:last-child { border-top-right-radius: 12px; }
+  table.data td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.data tbody tr:hover td { background: color-mix(in srgb, var(--brand-soft) 45%, transparent); }
+
+  /* Role picker tiles on the front page */
+  .tile {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 22px; padding: 16px;
+    box-shadow: var(--shadow); cursor: pointer; transition: transform .1s ease, box-shadow .15s ease, border-color .15s;
+  }
+  .tile:hover { border-color: var(--brand-2); box-shadow: var(--shadow-lg); }
+  .tile:active { transform: scale(.99); }
+  .tile-icon { flex: none; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 18px; font-size: 2.2rem; background: var(--brand-soft); }
+  .tile-hero { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--brand-ink); border: none; padding: 20px; }
+  .tile-hero .tile-icon { background: rgba(255,255,255,.18); width: 76px; height: 76px; font-size: 2.8rem; }
+  .tile-hero .muted { color: color-mix(in srgb, var(--brand-ink) 80%, transparent); }
+
+  /* Big number pad for the PIN */
+  .pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .pinkey { min-height: 72px; border-radius: 18px; font-size: 1.8rem; font-weight: 800; background: var(--card); border: 1.5px solid var(--line); color: var(--ink); box-shadow: var(--shadow); cursor: pointer; }
+  .pinkey:active { transform: scale(.97); background: var(--brand-soft); }
+  .pindot { width: 20px; height: 20px; border-radius: 999px; border: 2px solid var(--brand); }
+  .pindot.on { background: var(--brand); }
+
+  .stepper { display: flex; gap: 8px; }
+  .stepper > div { flex: 1; height: 8px; border-radius: 999px; background: var(--line); }
+  .stepper > div.done { background: var(--brand-2); }
+}
+
+/* Nastaliq needs tall lines or the words collide. Kept outside the layer so Tailwind's text-size
+   utilities (which also set line-height) cannot squash it. */
+.ur { line-height: 2.1; }
+.btn .ur, .badge .ur { line-height: 1.7; white-space: nowrap; }
+/* Short Urdu labels next to English (names, titles) should never break mid-word. */
+span.ur { white-space: nowrap; }
+.btn-big .ur { line-height: 1.9; }
