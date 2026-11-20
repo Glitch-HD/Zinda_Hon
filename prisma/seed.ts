@@ -54,7 +54,7 @@ async function ensureExtraPeople() {
     if (await prisma.pensioner.findUnique({ where: { pensionNo: p.pensionNo } })) continue;
     let userId: string | undefined;
     if (p.phone && !(await prisma.user.findUnique({ where: { phone: p.phone } }))) {
-      const u = await prisma.user.create({ data: { tenantId: karachi.id, role: "PENSIONER", name: `${p.name} (mock)`, phone: p.phone, passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10), area: p.area } });
+      const u = await prisma.user.create({ data: { tenantId: karachi.id, role: "PENSIONER", name: p.name, phone: p.phone, passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10), area: p.area } });
       userId = u.id;
     }
     const pensioner = await prisma.pensioner.create({
@@ -78,11 +78,67 @@ async function ensureExtraPeople() {
   if (added) console.log(`Added ${added} more example pensioner(s).`);
 }
 
+// Named accounts used in the live demo (all invented people; phone numbers are never contacted:
+// SMS in this prototype is in-app only). Older databases had placeholder numbers (0300000000x);
+// this step renames those accounts in place, so their cases and history are kept.
+const ACCOUNTS: { legacy?: string; phone: string; password: string; pin?: string; role: string; name: string; area?: string; tenant: "karachi" | "hyderabad" }[] = [
+  { legacy: "03000000001", phone: "03214417832", password: "Sana@Pension24", role: "OFFICER", name: "Sana Qureshi", tenant: "karachi" },
+  { phone: "03332290615", password: "Bilal#Korangi7", role: "OFFICER", name: "Bilal Ahmed", tenant: "karachi" },
+  { legacy: "03000000011", phone: "03003108847", password: "Naveed!Hyd52", role: "OFFICER", name: "Naveed Memon", tenant: "hyderabad" },
+  { legacy: "03000000002", phone: "03452876104", password: "Kamran$Admin9", role: "ADMIN", name: "Kamran Siddiqui", tenant: "karachi" },
+  { legacy: "03000000003", phone: "03127739025", password: "Nadia&Audit3", role: "AUDITOR", name: "Nadia Hussain", tenant: "karachi" },
+  { legacy: "03000000004", phone: "03012654398", password: "Rubina@Lyari8", role: "HELPER", name: "Rubina Shaikh", area: "Lyari", tenant: "karachi" },
+  { phone: "03349182746", password: "Farhan%Help6", role: "HELPER", name: "Farhan Ali", area: "Korangi", tenant: "karachi" },
+  { legacy: "03000000005", phone: "03225501987", password: "Imran*Shop4", role: "SHOPKEEPER", name: "Imran Baig", area: "Lyari", tenant: "karachi" },
+  { phone: "03468820431", password: "Saleem+Mart2", role: "SHOPKEEPER", name: "Saleem Jokhio", area: "Malir", tenant: "karachi" },
+  { legacy: "03000000006", phone: "03026619470", password: "Zainab786", pin: "4826", role: "PENSIONER", name: "Zainab Bibi", area: "Lyari", tenant: "karachi" },
+  { legacy: "03000000007", phone: "03154407218", password: "Sakina4321", pin: "1357", role: "PENSIONER", name: "Sakina Baloch", area: "Lyari", tenant: "karachi" },
+  { legacy: "03000000008", phone: "03317065529", password: "Rasool1949", pin: "1949", role: "PENSIONER", name: "Ghulam Rasool", area: "Korangi", tenant: "karachi" },
+];
+
+async function ensureAccounts() {
+  const tenants = {
+    karachi: await prisma.tenant.findFirst({ where: { name: "Mock Pension Office, Karachi" } }),
+    hyderabad: await prisma.tenant.findFirst({ where: { name: "Mock Pension Office, Hyderabad" } }),
+  };
+  let changed = 0;
+  for (const a of ACCOUNTS) {
+    const tenant = tenants[a.tenant];
+    if (!tenant) continue;
+    const existing = (await prisma.user.findUnique({ where: { phone: a.phone } })) ?? (a.legacy ? await prisma.user.findUnique({ where: { phone: a.legacy } }) : null);
+    const passwordOk = existing ? await bcrypt.compare(a.password, existing.passwordHash) : false;
+    const pinOk = !a.pin || (existing?.pinHash ? await bcrypt.compare(a.pin, existing.pinHash) : false);
+    if (existing && existing.phone === a.phone && existing.name === a.name && passwordOk && pinOk) continue;
+    const data = {
+      phone: a.phone, name: a.name, area: a.area,
+      ...(passwordOk ? {} : { passwordHash: await bcrypt.hash(a.password, 10) }),
+      ...(a.pin && !pinOk ? { pinHash: await bcrypt.hash(a.pin, 10) } : {}),
+    };
+    if (existing) await prisma.user.update({ where: { id: existing.id }, data });
+    else await prisma.user.create({ data: { ...data, passwordHash: data.passwordHash ?? (await bcrypt.hash(a.password, 10)), tenantId: tenant.id, role: a.role as never } });
+    changed++;
+  }
+  // The second helper looks after the Korangi families who do not have their own phone.
+  const farhan = await prisma.user.findUnique({ where: { phone: "03349182746" } });
+  const karachi = tenants.karachi;
+  if (farhan && karachi) {
+    const korangi = await prisma.pensioner.findMany({ where: { tenantId: karachi.id, area: "Korangi", userId: null } });
+    for (const p of korangi) {
+      const link = await prisma.helperLink.findUnique({ where: { helperId_pensionerId: { helperId: farhan.id, pensionerId: p.id } } });
+      if (link) continue;
+      await prisma.helperLink.create({ data: { helperId: farhan.id, pensionerId: p.id } });
+      await prisma.consent.create({ data: { pensionerId: p.id, granteeType: "helper", granteeId: farhan.id, granteeName: farhan.name, fields: ["name", "case_status", "face", "cnic"] } });
+    }
+  }
+  if (changed) console.log(`Set up ${changed} named demo account(s).`);
+}
+
 async function main() {
   const existing = await prisma.tenant.count();
   if (existing > 0) {
     console.log("Seed skipped: database already has data.");
     await ensureExtraPeople();
+    await ensureAccounts();
     await ensurePensionerPins();
     return;
   }
@@ -185,8 +241,9 @@ async function main() {
   await prisma.notification.create({ data: { userId: officer.id, title: "Welcome", body: "Proof-of-life season 2026 has started (mock)." } });
 
   await ensureExtraPeople();
+  await ensureAccounts();
   await ensurePensionerPins();
-  console.log(`Seeded 2 tenants, 7 users (password: ${DEMO_PASSWORD}), ${people.length} pensioner records.`);
+  console.log(`Seeded 2 tenants and ${people.length} pensioner records. Demo accounts: see README.`);
 }
 
 main()

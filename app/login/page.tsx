@@ -21,17 +21,7 @@ const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner">, { en: string; ur
   staff: { en: "Pension office staff", ur: "پنشن آفس عملہ", icon: "🏛️" },
 };
 
-// Demo accounts are listed so judges can try every role. All are fake.
-const DEMO = [
-  { phone: "03000000006", label: "Pensioner: Zainab", icon: "👵🏽" },
-  { phone: "03000000007", label: "Pensioner: Sakina", icon: "🧕🏽" },
-  { phone: "03000000008", label: "Pensioner: Ghulam Rasool", icon: "👴🏽" },
-  { phone: "03000000004", label: "Community helper", icon: "🤝" },
-  { phone: "03000000005", label: "Shopkeeper", icon: "🏪" },
-  { phone: "03000000001", label: "Pension officer", icon: "🧑‍💼" },
-  { phone: "03000000002", label: "Admin", icon: "⚙️" },
-  { phone: "03000000003", label: "Auditor", icon: "🔍" },
-];
+
 
 const HOW = [
   { icon: "📖", ur: "پنشن بک دکھائیں", en: "Show your pension book" },
@@ -189,19 +179,7 @@ export default function LoginPage() {
           </form>
         )}
 
-        <details className="card card-soft">
-          <summary className="cursor-pointer font-semibold">🧪 For judges: one-tap demo accounts</summary>
-          <p className="muted text-sm mt-2">All accounts are fake. Password for all: <b>demo1234</b>. To try the no-typing pensioner login, tap “I get a pension”, then pick a sample pension book, then PIN <b>1234</b> (tap it or say it).</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-            {DEMO.map((d) => (
-              <button key={d.phone} className="btn btn-ghost btn-sm justify-start" disabled={busy} onClick={() => login(d.phone, "demo1234")}>
-                <span className="text-lg">{d.icon}</span>
-                <span className="text-left text-sm">{d.label}</span>
-              </button>
-            ))}
-          </div>
-          {error && view === "choose" && <p role="alert" className="mt-2" style={{ color: "var(--danger)" }}>{error}</p>}
-        </details>
+        {error && view === "choose" && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
       </section>
     </div>
   );

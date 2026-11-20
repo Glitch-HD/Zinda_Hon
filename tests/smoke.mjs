@@ -3,20 +3,20 @@ const BASE = process.argv[2] ?? "http://localhost:3000";
 let failures = 0;
 const ok = (cond, msg) => { console.log(`${cond ? "PASS" : "FAIL"} ${msg}`); if (!cond) failures++; };
 
-async function login(phone) {
-  const res = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, password: "demo1234" }) });
+async function login(phone, password) {
+  const res = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, password }) });
   const cookie = res.headers.get("set-cookie")?.split(";")[0];
   return { res, cookie, call: (path, opts = {}) => fetch(`${BASE}${path}`, { ...opts, headers: { "content-type": "application/json", cookie, ...(opts.headers ?? {}) } }) };
 }
 const vec = (seed) => Array.from({ length: 128 }, (_, i) => Math.sin(seed * 31 + i) * 0.1);
 const id = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-const bad = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: "03000000006", password: "wrong" }) });
+const bad = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: "03026619470", password: "wrong" }) });
 ok(bad.status === 401, "wrong password is rejected");
 
-const widow = await login("03000000006");
-const officer = await login("03000000001");
-const helper = await login("03000000004");
+const widow = await login("03026619470", "Zainab786");
+const officer = await login("03214417832", "Sana@Pension24");
+const helper = await login("03012654398", "Rubina@Lyari8");
 ok(widow.res.ok && officer.res.ok && helper.res.ok, "demo users can log in");
 
 // Role enforcement on the server.

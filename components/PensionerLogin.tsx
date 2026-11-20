@@ -151,20 +151,18 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
           </div>
           <QrScanner onResult={onBook} />
           {busy && <p className="text-center"><span className="en">Checking the book…</span> <span className="ur">جانچ ہو رہی ہے</span></p>}
-          <div className="card card-soft text-sm space-y-2">
-            <p><b>For the demo:</b> no printed book? Pick a sample pension book (all fake people). PIN for all: 1234.</p>
-            <div className="grid gap-2 sm:grid-cols-3">
+          <details className="text-sm">
+            <summary className="cursor-pointer muted">No printed pension book with you?</summary>
+            <div className="grid gap-2 sm:grid-cols-3 mt-2">
               {[
-                { no: "PEN-K-1001", name: "Zainab Bibi", note: "widow, Lyari" },
-                { no: "PEN-K-1011", name: "Sakina Baloch", note: "widow, Lyari" },
-                { no: "PEN-K-1012", name: "Ghulam Rasool", note: "retired teacher" },
+                { no: "PEN-K-1001", name: "Zainab Bibi" },
+                { no: "PEN-K-1011", name: "Sakina Baloch" },
+                { no: "PEN-K-1012", name: "Ghulam Rasool" },
               ].map((b) => (
-                <button key={b.no} className="btn btn-accent btn-sm w-full" style={{ minHeight: 52, flexDirection: "column", gap: 0 }} disabled={busy} onClick={() => useSampleBook(b.no)} data-no-voice>
-                  <span>📘 {b.name}</span><span className="text-xs font-medium opacity-80">{b.note}</span>
-                </button>
+                <button key={b.no} className="btn btn-ghost btn-sm w-full" disabled={busy} onClick={() => useSampleBook(b.no)} data-no-voice>📘 {b.name}</button>
               ))}
             </div>
-          </div>
+          </details>
         </div>
       )}
 
@@ -217,7 +215,6 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
               <button className="pinkey" style={{ fontSize: "1.2rem" }} onClick={() => { setPin(""); setError(null); setStep("face"); }} aria-label="Use face instead" data-say="چہرے سے لاگ اِن">🙂</button>
             ) : <span />}
           </div>
-          <p className="muted text-sm text-center">Demo PIN for the sample books: 1234</p>
         </div>
       )}
 

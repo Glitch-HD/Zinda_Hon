@@ -55,24 +55,26 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | Database with migrations | `prisma/schema.prisma`, `prisma/migrations/` |
 | Monitoring, logs, tests | `/api/health`, Vercel logs, `npm test` (unit), `npm run test:smoke` (end-to-end) |
 
-## Demo accounts (password `demo1234`)
+## Demo accounts
 
-| Role | Phone |
-| --- | --- |
-| Pensioner (widow) Zainab Bibi | 03000000006 |
-| Pensioner (widow) Sakina Baloch | 03000000007 |
-| Pensioner (retired teacher) Ghulam Rasool | 03000000008 |
-| Helper | 03000000004 |
-| Shopkeeper | 03000000005 |
-| Pension officer | 03000000001 |
-| Admin | 03000000002 |
-| Auditor | 03000000003 |
+All people are invented. The phone numbers are never contacted (SMS is simulated in-app).
 
-The front page also has one-tap demo buttons for each role (under "For judges").
+| Role | Name | Phone | Password | PIN |
+| --- | --- | --- | --- | --- |
+| Pension officer (Karachi) | Sana Qureshi | 03214417832 | Sana@Pension24 | |
+| Pension officer (Karachi) | Bilal Ahmed | 03332290615 | Bilal#Korangi7 | |
+| Pension officer (Hyderabad) | Naveed Memon | 03003108847 | Naveed!Hyd52 | |
+| Admin | Kamran Siddiqui | 03452876104 | Kamran$Admin9 | |
+| Auditor | Nadia Hussain | 03127739025 | Nadia&Audit3 | |
+| Helper (Lyari) | Rubina Shaikh | 03012654398 | Rubina@Lyari8 | |
+| Helper (Korangi) | Farhan Ali | 03349182746 | Farhan%Help6 | |
+| Shopkeeper | Imran Baig | 03225501987 | Imran*Shop4 | |
+| Shopkeeper | Saleem Jokhio | 03468820431 | Saleem+Mart2 | |
+| Pensioner (widow) | Zainab Bibi | 03026619470 | Zainab786 | 4826 |
+| Pensioner (widow) | Sakina Baloch | 03154407218 | Sakina4321 | 1357 |
+| Pensioner (retired teacher) | Ghulam Rasool | 03317065529 | Rasool1949 | 1949 |
 
-**Pensioner login needs no typing:** tap "I get a pension", show the QR in the pension book to the camera, then look at the camera (face + movement check). A 4-digit PIN on a big number pad is the backup. For the demo, pick one of the three sample pension books and use PIN `1234` (tap it or say it).
-
-**Security:** you are logged out after 10 minutes without activity (a warning appears 1 minute before). One browser holds one login, so to show two people side by side use a private/incognito window for the second.
+Pensioners normally log in without typing: pension book QR (print them from Officer → Pension books), then face, or the PIN.
 
 ## Messy data on purpose (Challenge 03)
 
