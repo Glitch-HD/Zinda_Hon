@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import QrScanner from "./QrScanner";
 import FaceCapture, { type FaceResult } from "./FaceCapture";
-import { speakUrdu, speakUrduAndWait } from "@/lib/client/voice";
-import { listen, spokenDigits } from "@/lib/client/listen";
+import { speakUrdu } from "@/lib/client/voice";
+import { startListening, spokenDigits, LISTEN_ERROR, type Listening } from "@/lib/client/listen";
 import Info from "./ui/Info";
 
 // No-typing login for a pensioner who cannot read:
@@ -30,6 +30,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
   const [pin, setPin] = useState("");
   const [faceKey, setFaceKey] = useState(0);
   const [listening, setListening] = useState(false);
+  const live = useRef<Listening | null>(null);
 
   function fail(data: { error?: string; errorUr?: string }, fallback: string) {
     const e = { en: data.error ?? fallback, ur: data.errorUr };
@@ -60,9 +61,9 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
     }
   }
 
-  async function useSampleBook() {
+  async function useSampleBook(no: string) {
     setBusy(true);
-    const res = await fetch("/api/auth/pensioner/demo-book");
+    const res = await fetch(`/api/auth/pensioner/demo-book?no=${no}`);
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (res.ok) await onBook(data.qrText);
@@ -108,16 +109,19 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
   }
 
   async function sayPin() {
+    if (listening) { live.current?.stop(); return; }
     setError(null);
     setPin("");
-    await speakUrduAndWait("اپنا چار ہندسوں کا پن بولیں، جیسے ایک، دو، تین، چار۔");
     setListening(true);
-    const said = await listen(6000);
+    live.current = startListening(7000);
+    const r = await live.current.result;
+    live.current = null;
     setListening(false);
-    const digits = said ? spokenDigits(said) : "";
+    const digits = r.text ? spokenDigits(r.text) : "";
     if (digits.length !== 4) {
-      setError({ en: said ? `Heard "${said}". Please say exactly four numbers, or tap them.` : "Could not hear you. Please try again or tap the numbers.", ur: "چار ہندسے صاف بولیں، یا نمبر دبائیں۔" });
-      void speakUrdu("سمجھ نہیں آیا۔ چار ہندسے صاف بولیں، یا نمبر دبائیں۔");
+      const p = r.error ? LISTEN_ERROR[r.error] : { en: `Heard "${r.text}". Please say exactly four numbers, or tap them.`, ur: "چار ہندسے صاف بولیں، یا نمبر دبائیں۔" };
+      setError(p);
+      void speakUrdu(p.ur);
       return;
     }
     setPin(digits);
@@ -148,8 +152,18 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
           <QrScanner onResult={onBook} />
           {busy && <p className="text-center"><span className="en">Checking the book…</span> <span className="ur">جانچ ہو رہی ہے</span></p>}
           <div className="card card-soft text-sm space-y-2">
-            <p><b>For the demo:</b> no printed book? Use the sample book of Zainab Bibi (fake person).</p>
-            <button className="btn btn-accent btn-sm w-full" disabled={busy} onClick={useSampleBook} data-no-voice>📘 Use the sample pension book</button>
+            <p><b>For the demo:</b> no printed book? Pick a sample pension book (all fake people). PIN for all: 1234.</p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                { no: "PEN-K-1001", name: "Zainab Bibi", note: "widow, Lyari" },
+                { no: "PEN-K-1011", name: "Sakina Baloch", note: "widow, Lyari" },
+                { no: "PEN-K-1012", name: "Ghulam Rasool", note: "retired teacher" },
+              ].map((b) => (
+                <button key={b.no} className="btn btn-accent btn-sm w-full" style={{ minHeight: 52, flexDirection: "column", gap: 0 }} disabled={busy} onClick={() => useSampleBook(b.no)} data-no-voice>
+                  <span>📘 {b.name}</span><span className="text-xs font-medium opacity-80">{b.note}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -182,12 +196,12 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
             {[0, 1, 2, 3].map((i) => <span key={i} className={`pindot ${i < pin.length ? "on" : ""}`} />)}
           </div>
           <div className="flex items-center gap-3">
-            <button className={`mic-btn ${listening ? "live" : ""}`} style={{ width: 64, height: 64 }} disabled={busy || listening} onClick={sayPin} aria-label="Say your PIN" data-no-voice>
-              <span className="text-3xl">{listening ? "👂" : "🎤"}</span>
+            <button className={`mic-btn ${listening ? "live" : ""}`} style={{ width: 64, height: 64 }} disabled={busy} onClick={sayPin} aria-label={listening ? "Stop listening" : "Say your PIN"} data-no-voice>
+              <span className="text-3xl">{listening ? "⏹️" : "🎤"}</span>
             </button>
             <div className="flex-1">
-              <p className="ur font-semibold">{listening ? "بولیں… میں سن رہی ہوں" : "مائیک دبا کر پن بولیں"}</p>
-              <p className="en text-sm muted">{listening ? "Listening… say the four numbers" : "Tap the mic and say your PIN"}</p>
+              <p className="ur font-semibold">{listening ? "پن بولیں، پھر دوبارہ دبائیں" : "مائیک دبا کر پن بولیں"}</p>
+              <p className="en text-sm muted">{listening ? "Say the four numbers, then tap again" : "Tap the mic and say your PIN"}</p>
             </div>
             <Info en="Your PIN is 4 numbers given by the pension office. You can tap them, or tap the microphone and say them in Urdu or English, like 'ek, do, teen, char'." ur="پن چار ہندسوں کا ہے جو پنشن آفس نے دیا۔ نمبر دبائیں یا مائیک دبا کر بولیں، جیسے ایک، دو، تین، چار۔" />
           </div>
@@ -203,7 +217,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
               <button className="pinkey" style={{ fontSize: "1.2rem" }} onClick={() => { setPin(""); setError(null); setStep("face"); }} aria-label="Use face instead" data-say="چہرے سے لاگ اِن">🙂</button>
             ) : <span />}
           </div>
-          <p className="muted text-sm text-center">Demo PIN for Zainab Bibi: 1234</p>
+          <p className="muted text-sm text-center">Demo PIN for the sample books: 1234</p>
         </div>
       )}
 

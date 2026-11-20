@@ -1,49 +1,57 @@
 "use client";
-import { useState } from "react";
-import { listen, matchCommand } from "@/lib/client/listen";
-import { speakUrdu, speakUrduAndWait } from "@/lib/client/voice";
+import { useRef, useState } from "react";
+import { startListening, matchCommand, LISTEN_ERROR, type Listening } from "@/lib/client/listen";
+import { speakUrdu, stopSpeaking } from "@/lib/client/voice";
 
 // Big microphone button: the person SAYS what they want instead of reading the screen.
-// Each command has words in Urdu script, Roman Urdu and English.
+// Tap once to start listening (it starts straight away), tap again to finish. Each command has words
+// in Urdu script, Roman Urdu and English.
 export type Command = { id: string; words: string[]; confirmUr: string; run: () => void };
 
 export default function VoiceCommand({ promptUr, promptEn, commands }: { promptUr: string; promptEn: string; commands: Command[] }) {
   const [state, setState] = useState<"idle" | "listening" | "thinking">("idle");
   const [heard, setHeard] = useState<string | null>(null);
-  const [missed, setMissed] = useState(false);
+  const [problem, setProblem] = useState<{ en: string; ur: string } | null>(null);
+  const live = useRef<Listening | null>(null);
 
-  async function go() {
+  async function tap() {
+    if (state === "listening") { live.current?.stop(); return; }
+    if (state !== "idle") return;
+    stopSpeaking();
     setHeard(null);
-    setMissed(false);
-    await speakUrduAndWait(promptUr); // let the prompt finish before the mic opens
+    setProblem(null);
     setState("listening");
-    const said = await listen(4500);
+    live.current = startListening(7000);
+    const r = await live.current.result;
+    live.current = null;
     setState("thinking");
-    setHeard(said);
-    const id = said ? matchCommand(said, commands) : null;
+    setHeard(r.text);
+    const id = r.text ? matchCommand(r.text, commands) : null;
     const cmd = commands.find((c) => c.id === id);
     setState("idle");
     if (!cmd) {
-      setMissed(true);
-      void speakUrdu("معاف کیجیے، سمجھ نہیں آیا۔ دوبارہ مائیک دبا کر بولیں، یا تصویر والا بٹن دبائیں۔");
+      const p = r.error ? LISTEN_ERROR[r.error] : { en: `Heard "${r.text}", but that is not one of the choices. Try again.`, ur: "سمجھ نہیں آیا۔ دوبارہ بولیں۔" };
+      setProblem(p);
+      void speakUrdu(`${p.ur} ${promptUr}`);
       return;
     }
     void speakUrdu(cmd.confirmUr);
-    setTimeout(cmd.run, 1500);
+    setTimeout(cmd.run, 1300);
   }
 
+  const listening = state === "listening";
   return (
     <div className="mic-card" data-no-voice>
-      <button type="button" className={`mic-btn ${state === "listening" ? "live" : ""}`} onClick={go} disabled={state !== "idle"} aria-label="Speak / بولیں">
-        <span className="text-4xl">{state === "listening" ? "👂" : state === "thinking" ? "⏳" : "🎤"}</span>
+      <button type="button" className={`mic-btn ${listening ? "live" : ""}`} onClick={tap} disabled={state === "thinking"} aria-label={listening ? "Stop listening" : "Speak / بولیں"}>
+        <span className="text-4xl">{listening ? "⏹️" : state === "thinking" ? "⏳" : "🎤"}</span>
       </button>
       <div className="flex-1 min-w-0">
-        <p className="ur text-xl font-semibold">{state === "listening" ? "میں سن رہی ہوں… بولیں" : "بول کر بتائیں"}</p>
-        <p className="en text-sm font-semibold">{state === "listening" ? "Listening… speak now" : "Tap and say what you want"}</p>
-        <p className="ur text-sm muted">{promptUr}</p>
+        <p className="ur text-xl font-semibold">{listening ? "بولیں… ختم ہو تو دوبارہ دبائیں" : "مائیک دبائیں اور بولیں"}</p>
+        <p className="en text-sm font-semibold">{listening ? "Listening… tap again when you finish" : "Tap the mic and say what you want"}</p>
+        <p className="ur text-sm muted" style={{ whiteSpace: "normal" }}>{promptUr}</p>
         <p className="en text-xs muted">{promptEn}</p>
         {heard && <p className="text-sm mt-1">🗣️ “{heard}”</p>}
-        {missed && <p className="text-sm" style={{ color: "var(--warn)" }}><span className="ur">سمجھ نہیں آیا، دوبارہ بولیں</span><span className="en"> Didn&apos;t catch that, try again.</span></p>}
+        {problem && <p className="text-sm" style={{ color: "var(--warn)" }}><span className="ur" style={{ whiteSpace: "normal" }}>{problem.ur}</span><span className="both-only"> </span><span className="en">{problem.en}</span></p>}
       </div>
     </div>
   );

@@ -3,26 +3,64 @@
 // phone's own voice as a fallback) and Urdu speech-to-text (Whisper on Groq through our server).
 
 let current: HTMLAudioElement | null = null;
+let serverVoice: boolean | null = null; // null = not tried yet; false = not set up, stop asking
 
+export type VoiceChoice = "female" | "male";
+export function getVoiceChoice(): VoiceChoice {
+  try { return localStorage.getItem("zh_tts") === "male" ? "male" : "female"; } catch { return "female"; }
+}
+export function setVoiceChoice(v: VoiceChoice) {
+  try { localStorage.setItem("zh_tts", v); } catch { /* ignore */ }
+}
+
+function loadVoices(): Promise<SpeechSynthesisVoice[]> {
+  const now = speechSynthesis.getVoices();
+  if (now.length) return Promise.resolve(now);
+  return new Promise((resolve) => {
+    const t = setTimeout(() => resolve(speechSynthesis.getVoices()), 1200);
+    speechSynthesis.addEventListener("voiceschanged", () => { clearTimeout(t); resolve(speechSynthesis.getVoices()); }, { once: true });
+  });
+}
+
+/** True if this device can speak Urdu (our voice service, or an Urdu voice installed on the device). */
+export async function canSpeakUrdu() {
+  if (serverVoice) return true;
+  if (!("speechSynthesis" in window)) return false;
+  return (await loadVoices()).some((v) => v.lang.toLowerCase().startsWith("ur"));
+}
+
+/** Speaks Urdu text. Uses our natural voice service when it is set up, else the device's own Urdu voice.
+ *  If neither exists (for example Chrome on a laptop), a notice is shown instead of silence. */
 export async function speakUrdu(text: string) {
   stopSpeaking();
-  try {
-    const res = await fetch(`/api/voice/tts?text=${encodeURIComponent(text)}`);
-    if (res.ok) {
-      const blob = await res.blob();
-      current = new Audio(URL.createObjectURL(blob));
-      await current.play();
+  if (serverVoice !== false) {
+    try {
+      const res = await fetch(`/api/voice/tts?voice=${getVoiceChoice()}&text=${encodeURIComponent(text)}`);
+      if (res.ok) {
+        serverVoice = true;
+        const blob = await res.blob();
+        current = new Audio(URL.createObjectURL(blob));
+        await current.play();
+        return true;
+      }
+      if (res.status === 503) serverVoice = false;
+    } catch { /* fall through to the device's voice */ }
+  }
+  if ("speechSynthesis" in window) {
+    const voices = await loadVoices();
+    const urdu = voices.filter((v) => v.lang.toLowerCase().startsWith("ur"));
+    if (urdu.length) {
+      const want = getVoiceChoice();
+      const pick = urdu.find((v) => (want === "male" ? /asad|male/i : /uzma|female/i).test(v.name)) ?? urdu[0];
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = pick.lang;
+      u.voice = pick;
+      u.rate = 0.9;
+      speechSynthesis.speak(u);
       return true;
     }
-  } catch { /* fall through to the phone's voice */ }
-  if ("speechSynthesis" in window) {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ur-PK";
-    const voice = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("ur"));
-    if (voice) u.voice = voice;
-    speechSynthesis.speak(u);
-    return true;
   }
+  window.dispatchEvent(new CustomEvent("zh-no-voice"));
   return false;
 }
 

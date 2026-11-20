@@ -7,7 +7,8 @@ import { prisma } from "./db";
 // The token lives in an httpOnly cookie so page scripts cannot read it.
 
 export const SESSION_COOKIE = "zh_session";
-const SESSION_HOURS = 12;
+/** Logged out after this many minutes without activity. The page renews the session while it is being used. */
+export const SESSION_MINUTES = 10;
 
 function secret() {
   const s = process.env.JWT_SECRET;
@@ -28,7 +29,7 @@ export async function createSessionToken(user: SessionUser) {
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_HOURS}h`)
+    .setExpirationTime(`${SESSION_MINUTES}m`)
     .sign(secret());
 }
 
@@ -56,7 +57,7 @@ export async function setSessionCookie(user: SessionUser) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_HOURS * 3600,
+    maxAge: SESSION_MINUTES * 60,
   });
 }
 

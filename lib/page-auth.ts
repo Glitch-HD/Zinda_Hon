@@ -5,7 +5,7 @@ import { getSessionUser, ROLE_HOME } from "./auth";
 /** For server-rendered pages: sends the visitor to login, or to their own home if their role may not see this page. */
 export async function pageUser(roles: Role[]) {
   const user = await getSessionUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?expired=1");
   if (!roles.includes(user.role)) redirect(ROLE_HOME[user.role]);
   return user;
 }

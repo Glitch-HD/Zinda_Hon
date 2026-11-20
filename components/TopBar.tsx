@@ -1,13 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getLang, setLang, voiceOn, setVoice, onPrefsChange, type Lang } from "@/lib/client/prefs";
-import { speakUrdu, stopSpeaking } from "@/lib/client/voice";
+import { speakUrdu, stopSpeaking, getVoiceChoice, setVoiceChoice, type VoiceChoice } from "@/lib/client/voice";
 import Info from "./ui/Info";
 
 // Thin bar on every page: the prototype warning, the language switch and the voice guide switch.
 export default function TopBar() {
   const [lang, setL] = useState<Lang>("both");
   const [voice, setV] = useState(false);
+  const [who, setWho] = useState<VoiceChoice>("female");
+  const [noVoice, setNoVoice] = useState(false);
+
+  useEffect(() => {
+    setWho(getVoiceChoice());
+    const show = () => setNoVoice(true);
+    window.addEventListener("zh-no-voice", show);
+    return () => window.removeEventListener("zh-no-voice", show);
+  }, []);
 
   useEffect(() => {
     const sync = () => { setL(getLang()); setV(voiceOn()); };
@@ -48,9 +57,32 @@ export default function TopBar() {
           >
             {voice ? "🔊" : "🔈"} <span className="en">Voice</span><span className="ur" style={{ lineHeight: 1.4 }}>آواز</span>
           </button>
+          <button
+            type="button"
+            className="voice-toggle"
+            aria-label={who === "female" ? "Voice: woman. Tap for a man's voice" : "Voice: man. Tap for a woman's voice"}
+            title="Change the speaking voice"
+            onClick={() => {
+              const next: VoiceChoice = who === "female" ? "male" : "female";
+              setVoiceChoice(next);
+              setWho(next);
+              void speakUrdu(next === "female" ? "یہ عورت کی آواز ہے۔" : "یہ مرد کی آواز ہے۔");
+            }}
+          >
+            {who === "female" ? "👩" : "👨"}
+          </button>
           <Info align="left" en="Voice help reads out every button you tap, in Urdu. Made for people who cannot read." ur="آواز کی مدد چالو کریں تو ہر بٹن دبانے پر وہ اردو میں بتائے گا کہ وہ کیا کرتا ہے۔" />
         </div>
       </div>
+      {noVoice && (
+        <div className="topbar-inner" role="status">
+          <p className="text-sm" style={{ color: "var(--warn)" }}>
+            🔇 <span className="en">This device has no Urdu voice, so nothing can be read aloud here. On a laptop, open the site in <b>Microsoft Edge</b> (it has Urdu voices built in), or ask the team to add the voice key.</span>
+            <span className="ur"> اس ڈیوائس میں اردو آواز نہیں ہے۔</span>
+          </p>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNoVoice(false)}>OK</button>
+        </div>
+      )}
     </div>
   );
 }

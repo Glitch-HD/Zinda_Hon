@@ -5,7 +5,11 @@ import { rateLimit } from "@/lib/ratelimit";
 
 // Urdu text-to-speech via Azure AI Speech (free F0 tier). Audio is cached by the browser for a week,
 // so repeated prompts cost nothing and work on a weak connection.
-const VOICE = process.env.AZURE_TTS_VOICE ?? "ur-PK-UzmaNeural";
+// Two Urdu (Pakistan) neural voices; the person picks one in the top bar.
+const VOICES: Record<string, string> = {
+  female: process.env.AZURE_TTS_VOICE ?? "ur-PK-UzmaNeural",
+  male: process.env.AZURE_TTS_VOICE_MALE ?? "ur-PK-AsadNeural",
+};
 const memoryCache = new Map<string, ArrayBuffer>();
 
 function escapeXml(s: string) {
@@ -22,10 +26,12 @@ export const GET = handle(async (req: Request) => {
   const region = process.env.AZURE_SPEECH_REGION;
   if (!key || !region) return NextResponse.json({ error: "Voice service not configured" }, { status: 503 });
 
-  let audio = memoryCache.get(text);
+  const voiceName = VOICES[new URL(req.url).searchParams.get("voice") ?? "female"] ?? VOICES.female;
+  const cacheKey = `${voiceName}|${text}`;
+  let audio = memoryCache.get(cacheKey);
   if (!audio) {
     await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 15, 60);
-    const ssml = `<speak version="1.0" xml:lang="ur-PK"><voice name="${VOICE}"><prosody rate="-10%">${escapeXml(text)}</prosody></voice></speak>`;
+    const ssml = `<speak version="1.0" xml:lang="ur-PK"><voice name="${voiceName}"><prosody rate="-10%">${escapeXml(text)}</prosody></voice></speak>`;
     const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: "POST",
       headers: { "Ocp-Apim-Subscription-Key": key, "Content-Type": "application/ssml+xml", "X-Microsoft-OutputFormat": "audio-16khz-32kbitrate-mono-mp3", "User-Agent": "zinda-hon-prototype" },
@@ -37,7 +43,7 @@ export const GET = handle(async (req: Request) => {
     }
     audio = await res.arrayBuffer();
     if (memoryCache.size > 300) memoryCache.clear();
-    memoryCache.set(text, audio);
+    memoryCache.set(cacheKey, audio);
   }
   return new NextResponse(audio, { headers: { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800" } });
 });

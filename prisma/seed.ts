@@ -22,10 +22,67 @@ async function ensurePensionerPins() {
   console.log(`Set demo PIN for ${users.length} pensioner account(s).`);
 }
 
+
+// More example people with a range of names (widows and retired workers, women and men), added on
+// every deploy if missing so older databases get them too. Two of them have app accounts and pension
+// books for the demo login. All invented; CNICs start with 00000.
+const EXTRA_PEOPLE = [
+  { pensionNo: "PEN-K-1011", name: "Sakina Baloch", nameUr: "سکینہ بلوچ", cnic: "00000-1000011-4", spouse: "Late Dad Muhammad", dob: "1956-08-08", type: "family", amount: 27500, bank: "MB-5011", area: "Lyari", phone: "03000000007",
+    nadra: { name: "Sakeena Baloch", spouse: "Dad Mohammad" } },
+  { pensionNo: "PEN-K-1012", name: "Ghulam Rasool", nameUr: "غلام رسول", cnic: "00000-1000012-5", spouse: undefined, dob: "1949-02-17", type: "self", amount: 45000, bank: "MB-5012", area: "Korangi", phone: "03000000008",
+    nadra: { name: "Gh. Rasool", spouse: undefined } },
+  { pensionNo: "PEN-K-1013", name: "Mumtaz Begum", nameUr: "ممتاز بیگم", cnic: "00000-1000013-6", spouse: "Late Iqbal Hussain", dob: "1950-10-03", type: "family", amount: 26500, bank: "MB-5013", area: "Lyari",
+    nadra: { name: "Mumtaz Begam", spouse: "Iqbal Husain" } },
+  { pensionNo: "PEN-K-1014", name: "Allah Rakhi", nameUr: "اللہ رکھی", cnic: "00000-1000014-7", spouse: "Late Muhammad Bakhsh", dob: "1947-06-21", type: "family", amount: 24000, bank: "MB-5014", area: "Malir",
+    nadra: { name: "Allah Rakhee", spouse: "M. Bux" } },
+  { pensionNo: "PEN-K-1015", name: "Abdul Ghafoor", nameUr: "عبدالغفور", cnic: "00000-1000015-8", spouse: undefined, dob: "1952-12-11", type: "self", amount: 39000, bank: "MB-5015", area: "Orangi",
+    nadra: { name: "Abdul Ghafur", spouse: undefined } },
+  { pensionNo: "PEN-K-1016", name: "Nasreen Akhtar", nameUr: "نسرین اختر", cnic: "00000-1000016-9", spouse: "Late Javed Iqbal", dob: "1958-03-29", type: "family", amount: 28500, bank: "MB-5016", area: "Lyari",
+    nadra: { name: "Nasrin Akhter", spouse: "Javaid Iqbal" } },
+  { pensionNo: "PEN-K-1017", name: "Kaneez Fatima", nameUr: "کنیز فاطمہ", cnic: "00000-1000017-1", spouse: "Late Syed Anwar Ali", dob: "1951-01-15", type: "family", amount: 31000, bank: "MB-5017", area: "Gulshan",
+    nadra: { name: "Kaniz Fatima", spouse: "Syed Anwer Ali" } },
+  { pensionNo: "PEN-K-1018", name: "Razia Sultana", nameUr: "رضیہ سلطانہ", cnic: "00000-1000018-2", spouse: "Late Khalid Mehmood", dob: "1954-09-09", type: "family", amount: 29500, bank: "MB-5018", area: "Lyari",
+    nadra: { name: "Razia Sultan", spouse: "Khalid Mahmood" } },
+];
+
+async function ensureExtraPeople() {
+  const karachi = await prisma.tenant.findFirst({ where: { name: "Mock Pension Office, Karachi" } });
+  const helper = await prisma.user.findUnique({ where: { phone: "03000000004" } });
+  if (!karachi || !helper) return;
+  let added = 0;
+  for (const p of EXTRA_PEOPLE) {
+    if (await prisma.pensioner.findUnique({ where: { pensionNo: p.pensionNo } })) continue;
+    let userId: string | undefined;
+    if (p.phone && !(await prisma.user.findUnique({ where: { phone: p.phone } }))) {
+      const u = await prisma.user.create({ data: { tenantId: karachi.id, role: "PENSIONER", name: `${p.name} (mock)`, phone: p.phone, passwordHash: await bcrypt.hash(DEMO_PASSWORD, 10), area: p.area } });
+      userId = u.id;
+    }
+    const pensioner = await prisma.pensioner.create({
+      data: {
+        tenantId: karachi.id, userId, pensionNo: p.pensionNo, cnicMock: p.cnic, name: p.name, nameUr: p.nameUr, nameNormalized: normalizeName(p.name),
+        fatherOrHusbandName: p.spouse, dateOfBirth: new Date(p.dob), pensionType: p.type, monthlyAmount: p.amount, bankAccountNo: p.bank, area: p.area,
+      },
+    });
+    await prisma.mockNadraRecord.create({ data: { cnic: p.cnic, name: p.nadra.name, fatherOrHusbandName: p.nadra.spouse, dateOfBirth: new Date(p.dob), maritalStatus: p.type === "family" ? "widowed" : "married", address: `${p.area}, Karachi (mock)` } });
+    if (!(await prisma.mockBankAccount.findUnique({ where: { accountNo: p.bank } }))) {
+      await prisma.mockBankAccount.create({ data: { accountNo: p.bank, holderName: p.name.toUpperCase(), cnic: p.cnic, lastActivity: new Date("2026-11-05"), withdrawalsLast90Days: 3 } });
+    }
+    await prisma.case.create({ data: { tenantId: karachi.id, pensionerId: pensioner.id, year: YEAR, status: "DUE" } });
+    if (p.area === "Lyari") {
+      await prisma.helperLink.create({ data: { helperId: helper.id, pensionerId: pensioner.id } });
+      await prisma.consent.create({ data: { pensionerId: pensioner.id, granteeType: "helper", granteeId: helper.id, granteeName: helper.name, fields: ["name", "case_status", "face", "cnic"] } });
+    }
+    await prisma.consent.create({ data: { pensionerId: pensioner.id, granteeType: "department", granteeId: karachi.id, granteeName: karachi.name, fields: ["name", "cnic", "bank_account", "face", "case_status"] } });
+    added++;
+  }
+  if (added) console.log(`Added ${added} more example pensioner(s).`);
+}
+
 async function main() {
   const existing = await prisma.tenant.count();
   if (existing > 0) {
     console.log("Seed skipped: database already has data.");
+    await ensureExtraPeople();
     await ensurePensionerPins();
     return;
   }
@@ -127,6 +184,7 @@ async function main() {
 
   await prisma.notification.create({ data: { userId: officer.id, title: "Welcome", body: "Proof-of-life season 2026 has started (mock)." } });
 
+  await ensureExtraPeople();
   await ensurePensionerPins();
   console.log(`Seeded 2 tenants, 7 users (password: ${DEMO_PASSWORD}), ${people.length} pensioner records.`);
 }

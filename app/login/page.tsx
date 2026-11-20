@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import PensionerLogin from "@/components/PensionerLogin";
 import Option from "@/components/ui/Option";
@@ -23,7 +23,9 @@ const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner">, { en: string; ur
 
 // Demo accounts are listed so judges can try every role. All are fake.
 const DEMO = [
-  { phone: "03000000006", label: "Pensioner (widow)", icon: "👵🏽" },
+  { phone: "03000000006", label: "Pensioner: Zainab", icon: "👵🏽" },
+  { phone: "03000000007", label: "Pensioner: Sakina", icon: "🧕🏽" },
+  { phone: "03000000008", label: "Pensioner: Ghulam Rasool", icon: "👴🏽" },
   { phone: "03000000004", label: "Community helper", icon: "🤝" },
   { phone: "03000000005", label: "Shopkeeper", icon: "🏪" },
   { phone: "03000000001", label: "Pension officer", icon: "🧑‍💼" },
@@ -43,6 +45,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [expired, setExpired] = useState(false);
+  useEffect(() => { setExpired(new URLSearchParams(window.location.search).has("expired")); }, []);
 
   async function login(p = phone, pw = password) {
     setBusy(true);
@@ -98,6 +102,12 @@ export default function LoginPage() {
       </section>
 
       <section className="space-y-6">
+        {expired && (
+          <div className="card card-soft text-center" role="status">
+            <span className="ur block">حفاظت کے لیے آپ کو لاگ آؤٹ کر دیا گیا۔ دوبارہ لاگ اِن کریں۔</span>
+            <span className="en block text-sm">For your safety you were logged out after 10 minutes without activity. Please log in again.</span>
+          </div>
+        )}
         {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
 
         {view === "choose" && (
@@ -177,7 +187,7 @@ export default function LoginPage() {
 
         <details className="card card-soft">
           <summary className="cursor-pointer font-semibold">🧪 For judges: one-tap demo accounts</summary>
-          <p className="muted text-sm mt-2">All accounts are fake. Password for all: <b>demo1234</b>. To try the no-typing pensioner login, tap “I get a pension”, then “Use the sample pension book”, then PIN <b>1234</b> (tap it or say it).</p>
+          <p className="muted text-sm mt-2">All accounts are fake. Password for all: <b>demo1234</b>. To try the no-typing pensioner login, tap “I get a pension”, then pick a sample pension book, then PIN <b>1234</b> (tap it or say it).</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
             {DEMO.map((d) => (
               <button key={d.phone} className="btn btn-ghost btn-sm justify-start" disabled={busy} onClick={() => login(d.phone, "demo1234")}>

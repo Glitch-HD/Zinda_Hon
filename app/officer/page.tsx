@@ -21,11 +21,28 @@ export default async function OfficerQueue() {
     orderBy: { updatedAt: "desc" },
     take: 50,
   });
+  // Pensioners who have the app but no face yet (the list column can be empty or NULL, so filter here).
+  const notEnrolled = (await prisma.pensioner.findMany({
+    where: { tenantId: user.tenantId, userId: { not: null } },
+    select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true },
+    orderBy: { pensionNo: "asc" },
+  })).filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
   const notes = await prisma.notification.findMany({ where: { userId: user.id, read: false }, orderBy: { createdAt: "desc" }, take: 5 });
 
   return (
     <div>
       <Header user={user} links={[{ href: "/officer/enroll", label: "📷 Enrol faces", info: { en: "Register a pensioner's face once at the office. Only 128 numbers are stored, never the photo.", ur: "دفتر میں ایک بار چہرہ رجسٹر کریں۔" } }, { href: "/officer/pension-books", label: "📖 Pension books", info: { en: "Print pension book QR codes. Each is signed so edits (like a changed amount) are caught.", ur: "پنشن بک کے دستخط شدہ کیو آر پرنٹ کریں۔" } }, { href: "/officer/messages", label: "🛡️ Scam reviews", info: { en: "Messages the AI was unsure about. Your label also makes the accuracy numbers honest.", ur: "وہ پیغام جن پر اے آئی کو یقین نہیں تھا۔" } }]} />
+      {notEnrolled.length > 0 && (
+        <div className="card mb-5" style={{ borderColor: "var(--accent)", borderWidth: 2 }}>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h2 className="text-lg font-bold">📷 Faces waiting to be enrolled ({notEnrolled.length})</h2>
+            <span className="muted text-sm">These pensioners have the app but cannot do the face check until you enrol them once.</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {notEnrolled.map((p) => <Link key={p.id} href={`/officer/enroll?p=${p.id}`} className="btn btn-accent btn-sm">Enrol {p.name} · {p.pensionNo}</Link>)}
+          </div>
+        </div>
+      )}
       {notes.length > 0 && (
         <div className="card mb-4"><b>🔔 {notes.length} new</b>: {notes.map((n) => n.body).join(" · ")}</div>
       )}

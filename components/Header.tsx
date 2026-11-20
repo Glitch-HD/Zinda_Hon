@@ -3,6 +3,7 @@ import type { SessionUser } from "@/lib/auth";
 import LogoutButton from "./LogoutButton";
 import Logo from "./Logo";
 import Info from "./ui/Info";
+import SessionGuard from "./SessionGuard";
 
 const ROLE_LABEL: Record<string, { en: string; ur: string; icon: string }> = {
   PENSIONER: { en: "Pensioner", ur: "پنشنر", icon: "👵🏽" },
@@ -47,6 +48,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
         ))}
         <LogoutButton />
       </nav>
+      <SessionGuard userId={user.id} userName={user.name} />
     </header>
   );
 }

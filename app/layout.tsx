@@ -15,8 +15,10 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, them
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ur" data-lang="both" suppressHydrationWarning>
+    <html lang="ur" translate="no" className="notranslate" data-lang="both" suppressHydrationWarning>
       <head>
+        {/* Stop the browser offering to translate: the page already shows Urdu and English, and auto-translate doubled the words. */}
+        <meta name="google" content="notranslate" />
         <script dangerouslySetInnerHTML={{ __html: PREFS_BOOT_SCRIPT }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

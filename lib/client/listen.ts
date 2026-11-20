@@ -24,50 +24,71 @@ export function canListen() {
   return typeof navigator !== "undefined" && (!!navigator.mediaDevices?.getUserMedia || !!browserRecognizer());
 }
 
-async function recordAndTranscribe(maxMs: number) {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const rec = new MediaRecorder(stream);
-  const chunks: Blob[] = [];
-  rec.ondataavailable = (e) => chunks.push(e.data);
-  const done = new Promise<void>((r) => (rec.onstop = () => r()));
-  rec.start();
-  setTimeout(() => rec.state !== "inactive" && rec.stop(), maxMs);
-  await done;
-  stream.getTracks().forEach((t) => t.stop());
-  const form = new FormData();
-  form.append("audio", new Blob(chunks, { type: rec.mimeType || "audio/webm" }), "speech.webm");
-  const res = await fetch("/api/voice/stt", { method: "POST", body: form });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return typeof data.text === "string" && data.text.trim() ? data.text.trim() : null;
-}
+export type ListenResult = { text: string | null; error?: "no_permission" | "no_support" | "no_speech" | "network" };
+export type Listening = { result: Promise<ListenResult>; stop: () => void };
 
-function browserListen(maxMs: number): Promise<string | null> {
-  const r = browserRecognizer();
-  if (!r) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    let text: string | null = null;
-    r.lang = "ur-PK";
-    r.interimResults = false;
-    r.maxAlternatives = 1;
-    r.onresult = (e) => { text = e.results[0]?.[0]?.transcript ?? null; };
-    r.onerror = () => resolve(null);
-    r.onend = () => resolve(text);
-    r.start();
-    setTimeout(() => { try { r.stop(); } catch { /* already stopped */ } }, maxMs);
-  });
+/** Starts listening at once. Call stop() to finish early (the person taps the mic again); otherwise it stops after maxMs. */
+export function startListening(maxMs = 7000): Listening {
+  let stopFn = () => {};
+  const result = (async (): Promise<ListenResult> => {
+    // 1. Our server (Whisper) when it is set up: best for Urdu, works on every phone and laptop.
+    if (await serverAvailable()) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const rec = new MediaRecorder(stream);
+        const chunks: Blob[] = [];
+        rec.ondataavailable = (e) => chunks.push(e.data);
+        const done = new Promise<void>((r) => (rec.onstop = () => r()));
+        rec.start();
+        stopFn = () => rec.state !== "inactive" && rec.stop();
+        setTimeout(stopFn, maxMs);
+        await done;
+        stream.getTracks().forEach((t) => t.stop());
+        const form = new FormData();
+        form.append("audio", new Blob(chunks, { type: rec.mimeType || "audio/webm" }), "speech.webm");
+        const res = await fetch("/api/voice/stt", { method: "POST", body: form });
+        if (!res.ok) return { text: null, error: "network" };
+        const data = await res.json();
+        const text = typeof data.text === "string" && data.text.trim() ? data.text.trim() : null;
+        return text ? { text } : { text: null, error: "no_speech" };
+      } catch (e) {
+        if (e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError")) return { text: null, error: "no_permission" };
+        /* otherwise fall through to the device's recogniser */
+      }
+    }
+    // 2. The device's own speech recognition (Chrome on Android understands Urdu).
+    const r = browserRecognizer();
+    if (!r) return { text: null, error: "no_support" };
+    return new Promise<ListenResult>((resolve) => {
+      let text: string | null = null;
+      let error: ListenResult["error"];
+      r.lang = "ur-PK";
+      r.interimResults = false;
+      r.maxAlternatives = 1;
+      r.onresult = (e) => { text = e.results[0]?.[0]?.transcript ?? null; };
+      r.onerror = ((ev: { error?: string }) => {
+        error = ev?.error === "not-allowed" || ev?.error === "service-not-allowed" ? "no_permission" : ev?.error === "network" ? "network" : "no_speech";
+      }) as unknown as () => void;
+      r.onend = () => resolve(text ? { text } : { text: null, error: error ?? "no_speech" });
+      stopFn = () => { try { r.stop(); } catch { /* already stopped */ } };
+      try { r.start(); } catch { resolve({ text: null, error: "no_support" }); return; }
+      setTimeout(stopFn, maxMs);
+    });
+  })();
+  return { result, stop: () => stopFn() };
 }
 
 /** Listens for up to maxMs and returns what was said (Urdu or English), or null. */
 export async function listen(maxMs = 5000): Promise<string | null> {
-  try {
-    if (await serverAvailable()) {
-      const t = await recordAndTranscribe(maxMs);
-      if (t) return t;
-    }
-  } catch { /* microphone or network problem: try the phone's own recogniser */ }
-  try { return await browserListen(maxMs); } catch { return null; }
+  return (await startListening(maxMs).result).text;
 }
+
+export const LISTEN_ERROR: Record<NonNullable<ListenResult["error"]>, { en: string; ur: string }> = {
+  no_permission: { en: "Microphone permission is off. Allow the microphone for this site in the browser settings.", ur: "مائیک کی اجازت دیں۔" },
+  no_support: { en: "This browser cannot listen. Use Chrome on Android, or Chrome or Edge on a laptop.", ur: "یہ براؤزر آواز نہیں سن سکتا۔ کروم استعمال کریں۔" },
+  no_speech: { en: "Did not hear anything clear. Hold the phone close and speak after tapping the mic.", ur: "آواز صاف نہیں آئی۔ فون قریب رکھ کر دوبارہ بولیں۔" },
+  network: { en: "Could not reach the speech service. Check the internet and try again.", ur: "انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔" },
+};
 
 // ---------- Understanding what was said ----------
 

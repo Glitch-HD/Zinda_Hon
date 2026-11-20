@@ -59,7 +59,9 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 
 | Role | Phone |
 | --- | --- |
-| Pensioner (widow) | 03000000006 |
+| Pensioner (widow) Zainab Bibi | 03000000006 |
+| Pensioner (widow) Sakina Baloch | 03000000007 |
+| Pensioner (retired teacher) Ghulam Rasool | 03000000008 |
 | Helper | 03000000004 |
 | Shopkeeper | 03000000005 |
 | Pension officer | 03000000001 |
@@ -68,7 +70,9 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 
 The front page also has one-tap demo buttons for each role (under "For judges").
 
-**Pensioner login needs no typing:** tap "I get a pension", show the QR in the pension book to the camera, then look at the camera (face + movement check). A 4-digit PIN on a big number pad is the backup. For the demo, use "Use the sample pension book" and PIN `1234`.
+**Pensioner login needs no typing:** tap "I get a pension", show the QR in the pension book to the camera, then look at the camera (face + movement check). A 4-digit PIN on a big number pad is the backup. For the demo, pick one of the three sample pension books and use PIN `1234` (tap it or say it).
+
+**Security:** you are logged out after 10 minutes without activity (a warning appears 1 minute before). One browser holds one login, so to show two people side by side use a private/incognito window for the second.
 
 ## Messy data on purpose (Challenge 03)
 
