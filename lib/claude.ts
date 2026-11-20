@@ -17,7 +17,7 @@ function getClient() {
 
 // Free fallback: when there is no Anthropic key, the same calls go to an open model on Groq
 // (OpenAI-compatible API, JSON mode). The answer is checked against the same schema.
-export const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
+export const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "openai/gpt-oss-120b";
 
 export function claudeAvailable() {
   return Boolean(process.env.ANTHROPIC_API_KEY);
