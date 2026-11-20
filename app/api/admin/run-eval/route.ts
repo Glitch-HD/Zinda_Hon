@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { prisma } from "@/lib/db";
-import { classifyMessage, CLAUDE_MODEL } from "@/lib/claude";
+import { classifyMessage } from "@/lib/claude";
 import { heuristicSigns, routeMessage } from "@/lib/scam";
 import { EVAL_MESSAGES } from "@/data/eval-messages";
 import { audit } from "@/lib/audit";
@@ -23,7 +23,7 @@ export const POST = handle(async () => {
     await prisma.checkedMessage.create({
       data: {
         tenantId: user.tenantId, text: m.text, sender: m.sender, area: m.area, label, confidence, route: routeMessage(label, confidence),
-        reviewedLabel: m.label, modelName: ai ? CLAUDE_MODEL : null,
+        reviewedLabel: m.label, modelName: ai ? ai.model : null,
         reasons: { source: ai ? "claude" : "signs_only", eval: true, ms: Date.now() - started, usage: ai?.usage ?? null, signs: h.signs },
       },
     });

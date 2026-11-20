@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { rateLimit } from "@/lib/ratelimit";
-import { answerFromRulebook, CLAUDE_MODEL } from "@/lib/claude";
+import { answerFromRulebook } from "@/lib/claude";
 import { searchRulebook, RULEBOOK } from "@/data/rulebook";
 import { audit } from "@/lib/audit";
 
@@ -16,7 +16,7 @@ export const POST = handle(async (req: Request) => {
   const { question } = Body.parse(await req.json());
   const sections = searchRulebook(question, 4);
   const ai = await answerFromRulebook(question, sections);
-  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? CLAUDE_MODEL : "none", action: "rulebook_answer", details: { sections: sections.map((s) => s.id), answerable: ai?.data.answerable ?? false } });
+  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? ai.model : "none", action: "rulebook_answer", details: { sections: sections.map((s) => s.id), answerable: ai?.data.answerable ?? false } });
   if (!ai || !ai.data.answerable) {
     return NextResponse.json({ answerUr: "اس سوال کا جواب قواعد میں نہیں ملا۔ پنشن افسر آپ کی مدد کرے گا۔", answerEn: "The rulebook does not answer this. A pension officer will help you.", sources: [] });
   }

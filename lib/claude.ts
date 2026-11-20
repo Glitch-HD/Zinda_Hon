@@ -15,13 +15,24 @@ function getClient() {
   return client;
 }
 
+// Free fallback: when there is no Anthropic key, the same calls go to an open model on Groq
+// (OpenAI-compatible API, JSON mode). The answer is checked against the same schema.
+export const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
+
 export function claudeAvailable() {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
-async function structured<T extends z.ZodType>(schema: T, system: string, user: string, maxTokens = 4000): Promise<{ data: z.infer<T>; ms: number; usage: { input: number; output: number } } | null> {
+/** True when any text AI (Claude, or the free Groq fallback) is configured. */
+export function textAiAvailable() {
+  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.GROQ_API_KEY);
+}
+
+type Structured<T> = { data: T; ms: number; usage: { input: number; output: number }; model: string };
+
+async function structured<T extends z.ZodType>(schema: T, system: string, user: string, maxTokens = 4000): Promise<Structured<z.infer<T>> | null> {
   const c = getClient();
-  if (!c) return null;
+  if (!c) return process.env.GROQ_API_KEY ? structuredGroq(schema, system, user, maxTokens) : null;
   const started = Date.now();
   try {
     const res = await c.messages.parse({
@@ -34,9 +45,47 @@ async function structured<T extends z.ZodType>(schema: T, system: string, user: 
     if (res.stop_reason === "refusal" || !res.parsed_output) return null;
     const checked = schema.safeParse(res.parsed_output);
     if (!checked.success) return null;
-    return { data: checked.data, ms: Date.now() - started, usage: { input: res.usage.input_tokens, output: res.usage.output_tokens } };
+    return { data: checked.data, ms: Date.now() - started, usage: { input: res.usage.input_tokens, output: res.usage.output_tokens }, model: CLAUDE_MODEL };
   } catch (err) {
     console.error("[claude] call failed", err);
+    return null;
+  }
+}
+
+async function structuredGroq<T extends z.ZodType>(schema: T, system: string, user: string, maxTokens: number): Promise<Structured<z.infer<T>> | null> {
+  const started = Date.now();
+  const jsonSchema = JSON.stringify(z.toJSONSchema(schema));
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+      signal: AbortSignal.timeout(30_000),
+      body: JSON.stringify({
+        model: GROQ_TEXT_MODEL,
+        temperature: 0.1,
+        max_tokens: maxTokens,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: `${system}\n\nReply with ONE JSON object only, matching this JSON Schema exactly (no extra keys, respect max lengths):\n${jsonSchema}` },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) {
+      console.error("[groq-text] HTTP", res.status, (await res.text()).slice(0, 300));
+      return null;
+    }
+    const body = await res.json();
+    const raw = body?.choices?.[0]?.message?.content;
+    if (typeof raw !== "string") return null;
+    const checked = schema.safeParse(JSON.parse(raw));
+    if (!checked.success) {
+      console.error("[groq-text] schema mismatch", checked.error.issues.slice(0, 3));
+      return null;
+    }
+    return { data: checked.data, ms: Date.now() - started, usage: { input: body.usage?.prompt_tokens ?? 0, output: body.usage?.completion_tokens ?? 0 }, model: `groq/${GROQ_TEXT_MODEL}` };
+  } catch (err) {
+    console.error("[groq-text] call failed", err);
     return null;
   }
 }

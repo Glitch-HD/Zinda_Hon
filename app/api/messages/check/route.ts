@@ -5,7 +5,7 @@ import { handle } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { rateLimit } from "@/lib/ratelimit";
-import { classifyMessage, CLAUDE_MODEL } from "@/lib/claude";
+import { classifyMessage } from "@/lib/claude";
 import { heuristicSigns, routeMessage } from "@/lib/scam";
 
 const Body = z.object({ text: z.string().min(3).max(2000), sender: z.string().max(50).optional(), area: z.string().max(80).optional() });
@@ -42,11 +42,11 @@ export const POST = handle(async (req: Request) => {
   const saved = await prisma.checkedMessage.create({
     data: {
       tenantId: user.tenantId, submittedById: user.id, text: body.text, sender: body.sender, area: body.area ?? (await prisma.user.findUnique({ where: { id: user.id }, select: { area: true } }))?.area ?? null,
-      label, confidence, route, modelName: ai ? CLAUDE_MODEL : null,
+      label, confidence, route, modelName: ai ? ai.model : null,
       reasons: { source, signs: h.signs, signScore: h.score, ai: ai?.data ?? null, ms: Date.now() - started, usage: ai?.usage ?? null },
     },
   });
-  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? CLAUDE_MODEL : "scam-signs", action: `message_${label}`, targetType: "checked_message", targetId: saved.id, details: { confidence, route, source, submittedBy: user.id } });
+  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? ai.model : "scam-signs", action: `message_${label}`, targetType: "checked_message", targetId: saved.id, details: { confidence, route, source, submittedBy: user.id } });
 
   return NextResponse.json({
     id: saved.id, label, confidence, route,

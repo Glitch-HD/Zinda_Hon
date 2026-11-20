@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 
 // Evaluation dashboard: accuracy, false alarms, speed, cost and failures, measured on labelled data.
 // Numbers are computed live from the database, never typed in by hand.
-const PRICE_IN = 4 / 1_000_000, PRICE_OUT = 20 / 1_000_000; // USD per token, Claude Opus 5.5
+const PRICE_IN = 4 / 1_000_000, PRICE_OUT = 20 / 1_000_000; // USD per token, Claude Opus 5.5 (Groq free tier counts as 0)
 
 export default async function Evaluation() {
   const user = await pageUser(["ADMIN", "AUDITOR", "OFFICER"]);
@@ -23,7 +23,7 @@ export default async function Evaluation() {
   const times = reasons.map((r) => r.ms ?? 0).filter((x) => x > 0).sort((a, b) => a - b);
   const p50 = times[Math.floor(times.length / 2)] ?? 0;
   const p90 = times[Math.floor(times.length * 0.9)] ?? 0;
-  const cost = reasons.reduce((a, r) => a + (r.usage ? r.usage.input * PRICE_IN + r.usage.output * PRICE_OUT : 0), 0);
+  const cost = msgs.reduce((a, m, i) => { const u = reasons[i].usage; return a + (u && !m.modelName?.startsWith("groq/") ? u.input * PRICE_IN + u.output * PRICE_OUT : 0); }, 0);
   const aiFailures = reasons.filter((r) => r.source === "signs_only").length;
   const pct = (a: number, b: number) => (b === 0 ? "–" : `${((a / b) * 100).toFixed(1)}%`);
 

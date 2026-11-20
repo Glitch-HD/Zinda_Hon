@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handle } from "@/lib/api";
 import { requireApiKey } from "@/lib/apikeys";
-import { classifyMessage, CLAUDE_MODEL } from "@/lib/claude";
+import { classifyMessage } from "@/lib/claude";
 import { heuristicSigns, routeMessage } from "@/lib/scam";
 import { audit } from "@/lib/audit";
 
@@ -17,5 +17,5 @@ export const POST = handle(async (req: Request) => {
   let confidence = ai?.data.confidence ?? (h.score >= 0.7 ? h.score : 0.5);
   if (label === "genuine" && h.score >= 0.5) { label = "unsure"; confidence = Math.min(confidence, 0.6); }
   await audit({ tenantId: key.tenantId, actorType: "API_CLIENT", actorId: key.prefix, action: `api_message_${label}`, details: { confidence } });
-  return NextResponse.json({ label, confidence, route: routeMessage(label, confidence), signs: h.signs.map((s) => s.id), model: ai ? CLAUDE_MODEL : null });
+  return NextResponse.json({ label, confidence, route: routeMessage(label, confidence), signs: h.signs.map((s) => s.id), model: ai ? ai.model : null });
 });

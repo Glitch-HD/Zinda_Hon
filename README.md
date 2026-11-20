@@ -95,7 +95,7 @@ npm run test:smoke        # end-to-end checks against a running server
 ## Deploy (Vercel + Supabase)
 
 1. Create a Supabase project. Copy the **pooled** connection string (port 6543) as `DATABASE_URL` (add `?pgbouncer=true&connection_limit=1`) and the **direct** one (port 5432) as `DIRECT_URL`.
-2. Import the GitHub repo in Vercel and set these environment variables: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `QR_SIGNING_SECRET` (each secret: 32+ random characters), `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`.
+2. Import the GitHub repo in Vercel and set these environment variables: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `QR_SIGNING_SECRET` (each secret: 32+ random characters), `GROQ_API_KEY` (free; powers speech-to-text and, when there is no Anthropic key, the text AI too), optionally `ANTHROPIC_API_KEY`, `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`.
 3. Deploy. The build runs migrations and seeds the demo data automatically (the seed skips itself if data already exists).
 
 ## Known limits (said honestly)
