@@ -23,6 +23,23 @@ const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner">, { en: string; ur
 
 
 
+// One-tap logins for testing. Hide them before judging by setting NEXT_PUBLIC_HIDE_TEST_LOGINS=1 in Vercel and redeploying.
+const SHOW_TEST_LOGINS = process.env.NEXT_PUBLIC_HIDE_TEST_LOGINS !== "1";
+const TEST_LOGINS = [
+  { icon: "👵🏽", label: "Zainab Bibi", role: "Pensioner", phone: "03026619470", pw: "Zainab786" },
+  { icon: "👵🏽", label: "Sakina Baloch", role: "Pensioner", phone: "03154407218", pw: "Sakina4321" },
+  { icon: "👴🏽", label: "Ghulam Rasool", role: "Pensioner", phone: "03317065529", pw: "Rasool1949" },
+  { icon: "🧑‍💼", label: "Sana Qureshi", role: "Officer, Karachi", phone: "03214417832", pw: "Sana@Pension24" },
+  { icon: "🧑‍💼", label: "Bilal Ahmed", role: "Officer, Karachi", phone: "03332290615", pw: "Bilal#Korangi7" },
+  { icon: "🧑‍💼", label: "Naveed Memon", role: "Officer, Hyderabad", phone: "03003108847", pw: "Naveed!Hyd52" },
+  { icon: "⚙️", label: "Kamran Siddiqui", role: "Admin", phone: "03452876104", pw: "Kamran$Admin9" },
+  { icon: "🔎", label: "Nadia Hussain", role: "Auditor", phone: "03127739025", pw: "Nadia&Audit3" },
+  { icon: "🤝", label: "Rubina Shaikh", role: "Helper, Lyari", phone: "03012654398", pw: "Rubina@Lyari8" },
+  { icon: "🤝", label: "Farhan Ali", role: "Helper, Korangi", phone: "03349182746", pw: "Farhan%Help6" },
+  { icon: "🏪", label: "Imran Baig", role: "Shopkeeper, Lyari", phone: "03225501987", pw: "Imran*Shop4" },
+  { icon: "🏪", label: "Saleem Jokhio", role: "Shopkeeper, Malir", phone: "03468820431", pw: "Saleem+Mart2" },
+];
+
 const HOW = [
   { icon: "📖", ur: "پنشن بک دکھائیں", en: "Show your pension book" },
   { icon: "🙂", ur: "کیمرے میں دیکھیں", en: "Look at the camera" },
@@ -177,6 +194,21 @@ export default function LoginPage() {
             {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
             <button className="btn w-full" disabled={busy}>{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
           </form>
+        )}
+
+        {SHOW_TEST_LOGINS && view === "choose" && (
+          <details className="card card-soft" data-no-voice>
+            <summary className="cursor-pointer font-semibold">🧪 Test logins (one tap)</summary>
+            <p className="muted text-sm mt-2">For testing only. Pensioners here skip the pension book and face steps.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+              {TEST_LOGINS.map((d) => (
+                <button key={d.phone} type="button" className="btn btn-ghost btn-sm justify-start" disabled={busy} onClick={() => login(d.phone, d.pw)}>
+                  <span className="text-lg">{d.icon}</span>
+                  <span className="text-left text-sm leading-tight"><b>{d.label}</b><br /><span className="muted text-xs">{d.role}</span></span>
+                </button>
+              ))}
+            </div>
+          </details>
         )}
 
         {error && view === "choose" && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
