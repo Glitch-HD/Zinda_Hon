@@ -4,7 +4,7 @@ import { speakUrdu } from "@/lib/client/voice";
 import { listen } from "@/lib/client/listen";
 import Info from "./ui/Info";
 
-type R = { label: string; confidence: number; route: string; explanationUr: string; explanationEn: string; signs: { id: string; en: string; ur: string }[] };
+type R = { label: string; confidence: number; route: string; explanationUr: string; explanationEn: string; signs: { id: string; en: string; ur: string }[]; checkedBy?: string | null };
 
 export default function MessageChecker() {
   const [text, setText] = useState("");
@@ -47,6 +47,7 @@ export default function MessageChecker() {
           <p className="font-semibold"><span className="en">{look.en}</span> · {(r.confidence * 100).toFixed(0)}% sure</p>
           <p className="ur text-lg">{r.explanationUr}</p>
           <p className="en muted text-sm">{r.explanationEn}</p>
+          <p className="muted text-xs" data-testid="checked-by">{r.checkedBy ? `Checked by AI (${r.checkedBy}) and warning signs` : "Checked by warning signs only (AI not available right now)"}</p>
           {r.signs.length > 0 && <ul className="text-sm text-left">{r.signs.map((s) => <li key={s.id}>⚠️ <span className="en">{s.en}</span><span className="both-only"> · </span><span className="ur">{s.ur}</span></li>)}</ul>}
           <button className="btn btn-ghost w-full" onClick={() => speakUrdu(r.explanationUr, r.explanationEn)}>🔊 <span className="ur">سنیں</span></button>
         </div>

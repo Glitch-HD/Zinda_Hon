@@ -54,5 +54,6 @@ export const POST = handle(async (req: Request) => {
     explanationUr: ai?.data.explanation_ur ?? (label === "scam" ? "یہ پیغام دھوکہ لگتا ہے۔ کسی کو پن یا پیسے نہ دیں۔" : "ہمیں یقین نہیں ہے۔ پنشن افسر اسے دیکھے گا۔ تب تک کسی کو پن یا پیسے نہ دیں۔"),
     explanationEn: ai?.data.explanation_en ?? (label === "scam" ? "This message looks like a scam. Do not share a PIN or send money." : "We are not sure. A pension officer will check it. Until then, do not share a PIN or send money."),
     signs: h.signs,
+    checkedBy: ai ? ai.model : null,
   });
 });
