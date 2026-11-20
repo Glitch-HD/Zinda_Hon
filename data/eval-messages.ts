@@ -8,7 +8,7 @@ export const EVAL_MESSAGES: { text: string; sender?: string; label: "scam" | "ge
   { text: "Congratulations! You are the lucky winner of a 50,000 relief prize. Call 03009876543 now.", sender: "03009876543", label: "scam", area: "Lyari" },
   { text: "Apne shanakhti card ki tasveer WhatsApp karein taake aap ki pension jari rahe.", sender: "03121234567", label: "scam", area: "Korangi" },
   { text: "BISP Ehsaas relief 12000 aap ke liye. Is link par click karein: bit.ly/relief-12k", sender: "03451112223", label: "scam", area: "Malir" },
-  { text: "Pension office: Your yearly proof-of-life is due by 31 December. Open the Zinda Hoon app or visit the pension office. We never ask for your PIN.", sender: "8XXX", label: "genuine", area: "Lyari" },
+  { text: "Pension office: Your yearly proof-of-life is due by 31 December. Open the Zinda Hon app or visit the pension office. We never ask for your PIN.", sender: "8XXX", label: "genuine", area: "Lyari" },
   { text: "پنشن آفس: آپ کا اس سال کا ثبوتِ حیات مکمل ہو گیا ہے۔ شکریہ۔", sender: "8XXX", label: "genuine", area: "Lyari" },
   { text: "Pension office: your November pension of Rs 30,000 has been credited to your bank account.", sender: "8XXX", label: "genuine", area: "Korangi" },
   { text: "Reminder: Free eye camp for pensioners at the pension office on Saturday 10am.", sender: "8XXX", label: "genuine", area: "Malir" },

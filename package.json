@@ -1,8 +1,8 @@
 {
-  "name": "zinda-hoon",
+  "name": "zinda-hon",
   "version": "0.1.0",
   "private": true,
-  "description": "Zinda Hoon - prototype pension proof-of-life platform (Coder's Cup '26 AI Hackathon). Prototype, not an official service.",
+  "description": "Zinda Hon - prototype pension proof-of-life platform (Coder's Cup '26 AI Hackathon). Prototype, not an official service.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && prisma migrate deploy && tsx prisma/seed.ts && next build",

@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md space-y-4">
       <div className="text-center pt-4">
         <div className="text-5xl">🫀</div>
-        <h1 className="text-3xl font-bold">Zinda Hoon</h1>
+        <h1 className="text-3xl font-bold">Zinda Hon</h1>
         <p className="ur text-xl">زندہ ہوں: سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
         <p className="muted text-sm">Yearly pension proof-of-life from home (prototype)</p>
       </div>

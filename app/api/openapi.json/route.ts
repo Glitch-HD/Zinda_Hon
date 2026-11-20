@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 const spec = {
   openapi: "3.0.3",
   info: {
-    title: "Zinda Hoon public API (PROTOTYPE)",
+    title: "Zinda Hon public API (PROTOTYPE)",
     version: "1.0.0",
     description: "Prototype, not an official service. All identity, pension, bank and death-registry data is simulated. Create a key in the Admin page; send it in the x-api-key header. Each key has scopes and a per-minute rate limit.",
   },

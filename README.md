@@ -1,4 +1,4 @@
-# Zinda Hoon (زندہ ہوں) — PROTOTYPE
+# Zinda Hon (زندہ ہوں) — PROTOTYPE
 
 > **Prototype, not an official service.** Every person, CNIC, pension, bank account and death record in this system is invented. No real personal data is used.
 
@@ -8,7 +8,7 @@ Built for Coder's Cup '26, Hagrid's Hackathon: *The Last Mile: AI on Public Rail
 
 ## The three people we serve
 
-| Person in the brief | In Zinda Hoon | What they do |
+| Person in the brief | In Zinda Hon | What they do |
 | --- | --- | --- |
 | The widow (can't read, weak signal) | Pensioner on a family pension | Proves she is alive by Urdu voice prompts, a selfie with a liveness check, and a scan of her pension book QR. Progress is saved on the phone. |
 | The shopkeeper (fake relief messages) | Mobile-wallet cash-out agent | Checks suspicious "pension" / "relief payment" messages; results feed the Scam Map. |

@@ -1,4 +1,4 @@
-// Zinda Hoon database schema. PROTOTYPE: every person, CNIC, pension and payment here is fake.
+// Zinda Hon database schema. PROTOTYPE: every person, CNIC, pension and payment here is fake.
 
 generator client {
   provider = "prisma-client-js"

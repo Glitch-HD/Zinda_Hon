@@ -15,7 +15,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
   return (
     <header className="flex flex-wrap items-center justify-between gap-2 mb-4">
       <div>
-        <Link href="/" className="text-xl font-bold">🫀 Zinda Hoon</Link>
+        <Link href="/" className="text-xl font-bold">🫀 Zinda Hon</Link>
         <div className="muted text-sm">{user.name} · {ROLE_LABEL[user.role]}</div>
       </div>
       <nav className="flex flex-wrap gap-2 items-center">

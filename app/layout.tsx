@@ -3,7 +3,7 @@ import "./globals.css";
 import RegisterSW from "@/components/RegisterSW";
 
 export const metadata: Metadata = {
-  title: "Zinda Hoon (prototype)",
+  title: "Zinda Hon (prototype)",
   description: "Prototype pension proof-of-life platform. Not an official service. All data is simulated.",
   manifest: "/manifest.webmanifest",
 };
