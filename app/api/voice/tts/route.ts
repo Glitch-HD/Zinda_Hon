@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { rateLimit } from "@/lib/ratelimit";
 
@@ -13,7 +13,9 @@ function escapeXml(s: string) {
 }
 
 export const GET = handle(async (req: Request) => {
-  const user = await requireUser();
+  // Works before login too (the front page talks to people who cannot read), with a tighter per-IP limit.
+  const user = await getSessionUser();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   const text = (new URL(req.url).searchParams.get("text") ?? "").slice(0, 400);
   if (!text) return NextResponse.json({ error: "No text" }, { status: 400 });
   const key = process.env.AZURE_SPEECH_KEY;
@@ -22,7 +24,7 @@ export const GET = handle(async (req: Request) => {
 
   let audio = memoryCache.get(text);
   if (!audio) {
-    await rateLimit(`tts:${user.id}`, 40, 60);
+    await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 15, 60);
     const ssml = `<speak version="1.0" xml:lang="ur-PK"><voice name="${VOICE}"><prosody rate="-10%">${escapeXml(text)}</prosody></voice></speak>`;
     const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: "POST",

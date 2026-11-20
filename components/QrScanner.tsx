@@ -70,9 +70,9 @@ export default function QrScanner({ onResult }: { onResult: (text: string | null
         <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
       </div>
       <canvas ref={canvasRef} hidden />
-      {!scanning && <button className="btn btn-big" onClick={startCamera}><span className="text-3xl">📖</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">پنشن بک اسکین کریں</span><span className="text-sm font-semibold opacity-90">Scan pension book</span></span></button>}
+      {!scanning && <button className="btn btn-big" onClick={startCamera}><span className="text-3xl">📖</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">پنشن بک اسکین کریں</span><span className="en text-sm font-semibold opacity-90">Scan pension book</span></span></button>}
       <label className="btn btn-ghost w-full">
-        🖼️ Use a photo instead
+        🖼️ <span className="en">Use a photo instead</span><span className="ur">تصویر سے</span>
         <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => e.target.files?.[0] && fromFile(e.target.files[0])} />
       </label>
       {msg && <p role="alert" style={{ color: "var(--warn)" }}>{msg}</p>}

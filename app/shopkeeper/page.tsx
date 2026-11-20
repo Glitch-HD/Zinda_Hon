@@ -2,18 +2,32 @@ import Header from "@/components/Header";
 import MessageChecker from "@/components/MessageChecker";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
+import Info from "@/components/ui/Info";
 
 export default async function Shopkeeper() {
   const user = await pageUser(["SHOPKEEPER"]);
   const mine = await prisma.checkedMessage.findMany({ where: { submittedById: user.id }, orderBy: { createdAt: "desc" }, take: 10 });
   return (
     <div>
-      <Header user={user} links={[{ href: "/scam-map", label: "🗺️ Scam map" }]} />
-      <p className="card mb-3">🏪 Customers show you suspicious &quot;pension&quot; or &quot;relief payment&quot; messages? Check them here before anyone sends money.</p>
-      <MessageChecker />
-      <div className="card mt-4 max-w-xl mx-auto">
-        <h3 className="font-semibold">Your recent checks</h3>
-        <ul className="text-sm">{mine.map((m) => <li key={m.id}>{m.createdAt.toISOString().slice(0, 16).replace("T", " ")} · <b>{m.label}</b> ({(m.confidence * 100).toFixed(0)}%) · {m.text.slice(0, 60)}…</li>)}</ul>
+      <Header user={user} links={[{ href: "/scam-map", label: "🗺️ Scam map", ur: "دھوکے کا نقشہ", info: { en: "See which areas are getting the most fake pension and relief messages right now.", ur: "دیکھیں کن علاقوں میں سب سے زیادہ جعلی پیغام آ رہے ہیں۔" } }]} />
+      <div className="card card-soft mb-6 flex items-start gap-3">
+        <span className="text-3xl">🏪</span>
+        <p className="flex-1"><span className="en">Customers show you suspicious &quot;pension&quot; or &quot;relief payment&quot; messages? Check them here before anyone sends money.</span><span className="ur">گاہک پنشن یا امداد کا مشکوک پیغام دکھائیں؟ پیسے بھیجنے سے پہلے یہاں جانچیں۔</span></p>
+        <Info en="Every check also feeds the Scam Map, so officers can warn an area when a new scam starts." ur="ہر جانچ دھوکے کے نقشے میں جاتی ہے تاکہ افسر علاقے کو خبردار کر سکیں۔" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] items-start">
+        <MessageChecker />
+        <div className="card">
+          <h3 className="font-semibold mb-2"><span className="en">Your recent checks</span><span className="ur">آپ کی حالیہ جانچ</span></h3>
+          {mine.length === 0 ? <p className="muted text-sm">Nothing checked yet.</p> : (
+            <ul className="text-sm space-y-2">{mine.map((m) => (
+              <li key={m.id} className="flex gap-2 items-start">
+                <span className={`badge ${m.label === "scam" ? "badge-danger" : m.label === "genuine" ? "badge-ok" : "badge-warn"}`}>{m.label}</span>
+                <span className="flex-1"><span className="muted">{m.createdAt.toISOString().slice(0, 16).replace("T", " ")} · {(m.confidence * 100).toFixed(0)}%</span><br />{m.text.slice(0, 80)}…</span>
+              </li>
+            ))}</ul>
+          )}
+        </div>
       </div>
     </div>
   );

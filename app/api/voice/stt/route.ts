@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { rateLimit } from "@/lib/ratelimit";
 import { audit } from "@/lib/audit";
 
 // Urdu speech-to-text via Whisper on Groq. Audio is sent for transcription and not stored by us.
+// Also works before login (a pensioner can SAY her PIN), with a tighter per-IP limit.
+
+/** Lets the phone know whether to use this service or its own speech recognition. */
+export const GET = handle(async () => NextResponse.json({ available: Boolean(process.env.GROQ_API_KEY) }));
+
 export const POST = handle(async (req: Request) => {
-  const user = await requireUser();
-  await rateLimit(`stt:${user.id}`, 20, 60);
+  const user = await getSessionUser();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  if (user) await rateLimit(`stt:${user.id}`, 20, 60);
+  else await rateLimit(`stt:anon:${ip}`, 8, 60);
   const key = process.env.GROQ_API_KEY;
   if (!key) return NextResponse.json({ error: "Speech service not configured" }, { status: 503 });
   const form = await req.formData();
@@ -26,6 +33,6 @@ export const POST = handle(async (req: Request) => {
     return NextResponse.json({ error: "Speech service failed" }, { status: 502 });
   }
   const data = (await res.json()) as { text?: string };
-  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: "whisper-large-v3", action: "speech_transcribed", details: { chars: data.text?.length ?? 0, byUser: user.id } });
+  await audit({ tenantId: user?.tenantId ?? null, actorType: "AI", actorId: "whisper-large-v3", action: "speech_transcribed", details: { chars: data.text?.length ?? 0, byUser: user?.id ?? "not_logged_in" } });
   return NextResponse.json({ text: data.text ?? "" });
 });

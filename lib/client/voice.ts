@@ -26,6 +26,18 @@ export async function speakUrdu(text: string) {
   return false;
 }
 
+/** Speaks and resolves when the speech has finished (or after maxMs), so the microphone does not hear it. */
+export async function speakUrduAndWait(text: string, maxMs = 8000) {
+  const started = await speakUrdu(text);
+  if (!started) return;
+  await new Promise<void>((resolve) => {
+    const t = setTimeout(resolve, maxMs);
+    const done = () => { clearTimeout(t); resolve(); };
+    if (current) { current.addEventListener("ended", done, { once: true }); current.addEventListener("pause", done, { once: true }); return; }
+    const poll = setInterval(() => { if (!speechSynthesis.speaking) { clearInterval(poll); done(); } }, 200);
+  });
+}
+
 export function stopSpeaking() {
   current?.pause();
   current = null;

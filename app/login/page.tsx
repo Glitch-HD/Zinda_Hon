@@ -2,15 +2,18 @@
 import { useState } from "react";
 import Logo from "@/components/Logo";
 import PensionerLogin from "@/components/PensionerLogin";
+import Option from "@/components/ui/Option";
+import VoiceCommand from "@/components/ui/VoiceCommand";
 import { speakUrdu } from "@/lib/client/voice";
+import { voiceDefaultOn } from "@/lib/client/prefs";
 
-// Front page. Urdu first, one big picture button per kind of person.
-// Pensioners never type: they log in with their pension book QR + face (or a 4-digit PIN).
+// Front page. Urdu first, one big picture button per kind of person, each with an ⓘ that explains it.
+// Pensioners never type: they log in with their pension book QR + face (or a PIN they can say or tap).
 // Helpers, shopkeepers and staff can read, so they use phone + password.
 
 type View = "choose" | "pensioner" | "helper" | "shopkeeper" | "staff";
 
-const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتے ہیں تو سب سے اوپر والا بڑا بٹن دبائیں۔";
+const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا سبز بٹن دبائیں، یا مائیک دبا کر بولیں۔";
 
 const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner">, { en: string; ur: string; icon: string }> = {
   helper: { en: "Helper login", ur: "مددگار لاگ اِن", icon: "🤝" },
@@ -28,6 +31,12 @@ const DEMO = [
   { phone: "03000000003", label: "Auditor", icon: "🔍" },
 ];
 
+const HOW = [
+  { icon: "📖", ur: "پنشن بک دکھائیں", en: "Show your pension book" },
+  { icon: "🙂", ur: "کیمرے میں دیکھیں", en: "Look at the camera" },
+  { icon: "✅", ur: "پنشن جاری رہے گی", en: "Your pension continues" },
+];
+
 export default function LoginPage() {
   const [view, setView] = useState<View>("choose");
   const [phone, setPhone] = useState("");
@@ -42,6 +51,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: p, password: pw }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Login failed");
+      if (data.home === "/pensioner") voiceDefaultOn();
       window.location.href = data.home;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Login failed. Check your connection.");
@@ -53,97 +63,132 @@ export default function LoginPage() {
   function open(v: View) {
     setError(null);
     setView(v);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function openPensioner() {
+    voiceDefaultOn();
+    open("pensioner");
+    void speakUrdu("اپنی پنشن بک کھولیں اور اس کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔");
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-5">
-      <div className="text-center pt-2 space-y-2">
-        <div className="flex justify-center"><Logo size={68} /></div>
-        <h1 className="ur text-5xl font-bold" style={{ lineHeight: 1.9 }}>زندہ ہوں</h1>
-        <p className="text-sm font-extrabold tracking-[.2em] uppercase" style={{ color: "var(--brand)" }}>Zinda Hon</p>
-        <p className="ur text-lg">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
-        <p className="muted text-sm">Yearly pension proof-of-life from home. No forms, no queues.</p>
-      </div>
-
-      {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
-
-      {view === "choose" && (
-        <div className="space-y-3">
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(GREETING)}>🔊 <span className="ur">سنیں</span> · Listen</button>
-
-          <button className="tile tile-hero" onClick={() => { open("pensioner"); void speakUrdu("اپنی پنشن بک کھولیں اور اس کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔"); }}>
-            <span className="tile-icon">👵🏽</span>
-            <span className="flex-1">
-              <span className="ur block text-2xl font-bold" style={{ lineHeight: 1.8 }}>میں پنشنر ہوں</span>
-              <span className="block font-bold">I get a pension</span>
-              <span className="block text-sm muted">No typing. Show your pension book, then your face.</span>
-            </span>
-          </button>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button className="tile flex-col text-center" onClick={() => open("helper")}>
-              <span className="tile-icon">🤝</span>
-              <span>
-                <span className="ur block text-lg font-semibold" style={{ lineHeight: 1.8 }}>میں مددگار ہوں</span>
-                <span className="block text-sm font-semibold">I help families</span>
-              </span>
-            </button>
-            <button className="tile flex-col text-center" onClick={() => open("shopkeeper")}>
-              <span className="tile-icon">🏪</span>
-              <span>
-                <span className="ur block text-lg font-semibold" style={{ lineHeight: 1.8 }}>میں دکاندار ہوں</span>
-                <span className="block text-sm font-semibold">I run a shop</span>
-              </span>
-            </button>
-          </div>
-
-          <button className="tile" style={{ padding: 12 }} onClick={() => open("staff")}>
-            <span className="tile-icon" style={{ width: 44, height: 44, fontSize: "1.4rem", borderRadius: 12 }}>🏛️</span>
-            <span className="flex-1">
-              <span className="block font-semibold">Pension office staff</span>
-              <span className="block text-xs muted">Officer, admin, auditor</span>
-            </span>
-            <span className="muted">→</span>
-          </button>
+    <div className="grid gap-8 lg:gap-14 md:grid-cols-[1fr_1.05fr] md:items-start">
+      {/* Left on big screens, top on phones */}
+      <section className="text-center md:text-left space-y-4 md:sticky md:top-8">
+        <div className="flex justify-center md:justify-start"><Logo size={76} /></div>
+        <div>
+          <h1 className="ur always text-5xl md:text-6xl font-bold" style={{ lineHeight: 1.9 }}>زندہ ہوں</h1>
+          <p className="text-sm font-extrabold tracking-[.2em] uppercase" style={{ color: "var(--brand)" }}>Zinda Hon</p>
         </div>
-      )}
+        <p className="ur text-xl md:text-2xl">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
+        <p className="en muted md:text-lg">Yearly pension proof-of-life from home. No forms, no queues, no fingerprints.</p>
+        <button className="btn btn-ghost" onClick={() => speakUrdu(GREETING)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
 
-      {view !== "choose" && view !== "pensioner" && (
-        <form className="card space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
-          <div className="flex items-center justify-between">
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← Back</button>
-            <span className="text-3xl">{FORM_TITLE[view].icon}</span>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">{FORM_TITLE[view].en}</h2>
-            <p className="ur muted">{FORM_TITLE[view].ur}</p>
-          </div>
-          <label className="block space-y-1">
-            <span className="text-sm font-semibold">Phone number <span className="ur muted">فون نمبر</span></span>
-            <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
-          </label>
-          <label className="block space-y-1">
-            <span className="text-sm font-semibold">Password <span className="ur muted">پاس ورڈ</span></span>
-            <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-          </label>
-          {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-          <button className="btn w-full" disabled={busy}>{busy ? "…" : "Log in"}</button>
-        </form>
-      )}
-
-      <details className="card card-soft">
-        <summary className="cursor-pointer font-semibold">🧪 For judges: one-tap demo accounts</summary>
-        <p className="muted text-sm mt-2">All accounts are fake. Password for all: <b>demo1234</b>. To try the no-typing pensioner login, tap “I get a pension”, then “Use the sample pension book”, then PIN <b>1234</b>.</p>
-        <div className="grid grid-cols-2 gap-2 mt-3">
-          {DEMO.map((d) => (
-            <button key={d.phone} className="btn btn-ghost btn-sm justify-start" disabled={busy} onClick={() => login(d.phone, "demo1234")}>
-              <span className="text-lg">{d.icon}</span>
-              <span className="text-left text-sm">{d.label}</span>
-            </button>
+        <div className="hidden md:grid grid-cols-3 gap-3 pt-4">
+          {HOW.map((h, i) => (
+            <div key={h.en} className="card card-soft text-center space-y-1">
+              <div className="eyebrow">Step {i + 1}</div>
+              <div className="text-4xl">{h.icon}</div>
+              <div className="ur font-semibold">{h.ur}</div>
+              <div className="en text-sm">{h.en}</div>
+            </div>
           ))}
         </div>
-        {error && view === "choose" && <p role="alert" className="mt-2" style={{ color: "var(--danger)" }}>{error}</p>}
-      </details>
+      </section>
+
+      <section className="space-y-6">
+        {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
+
+        {view === "choose" && (
+          <>
+            <Option
+              variant="hero"
+              icon="👵🏽"
+              ur="میں پنشنر ہوں"
+              en="I get a pension"
+              hintUr="کچھ لکھنا نہیں۔ پنشن بک اور چہرہ دکھائیں۔"
+              hintEn="No typing. Show your pension book, then your face."
+              info={{ en: "For widows and retired people who receive a pension. You log in by showing the QR in your pension book and looking at the camera. Nothing to read or type.", ur: "پنشن لینے والوں کے لیے۔ پنشن بک کا کیو آر دکھائیں اور کیمرے میں دیکھیں، بس۔ کچھ پڑھنا یا لکھنا نہیں۔" }}
+              say="میں پنشنر ہوں۔"
+              onClick={openPensioner}
+            />
+
+            <VoiceCommand
+              promptUr="بولیں: پنشن، مددگار، یا دکان۔"
+              promptEn='Say "pension", "helper" or "shop".'
+              commands={[
+                { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", run: openPensioner },
+                { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", run: () => open("helper") },
+                { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", run: () => open("shopkeeper") },
+              ]}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <Option
+                icon="🤝"
+                ur="میں مددگار ہوں"
+                en="I help families"
+                info={{ en: "For social workers and relatives who help several pensioners from one phone. Each family must give permission first.", ur: "سماجی کارکن یا رشتہ دار جو ایک فون سے کئی خاندانوں کی مدد کرتے ہیں۔ ہر خاندان کی اجازت ضروری ہے۔" }}
+                onClick={() => open("helper")}
+              />
+              <Option
+                icon="🏪"
+                ur="میں دکاندار ہوں"
+                en="I run a shop"
+                info={{ en: "For shopkeepers and mobile-wallet agents. Check if a 'pension' or 'relief payment' message is a scam before anyone pays.", ur: "دکاندار اور موبائل والیٹ ایجنٹ۔ پیسے دینے سے پہلے جانچیں کہ پنشن یا امداد کا پیغام دھوکہ تو نہیں۔" }}
+                onClick={() => open("shopkeeper")}
+              />
+            </div>
+
+            <Option
+              variant="compact"
+              icon="🏛️"
+              ur="پنشن آفس عملہ"
+              en="Pension office staff"
+              info={{ en: "For pension officers, admins and auditors. Officers review difficult cases; admins change rules; auditors read the full log.", ur: "پنشن افسر، ایڈمن اور آڈیٹر کے لیے۔" }}
+              onClick={() => open("staff")}
+            />
+          </>
+        )}
+
+        {view !== "choose" && view !== "pensioner" && (
+          <form className="card space-y-5" style={{ padding: 22 }} onSubmit={(e) => { e.preventDefault(); login(); }}>
+            <div className="flex items-center justify-between">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← <span className="en">Back</span><span className="ur">واپس</span></button>
+              <span className="text-4xl">{FORM_TITLE[view].icon}</span>
+            </div>
+            <div>
+              <h2 className="en text-2xl font-bold">{FORM_TITLE[view].en}</h2>
+              <p className="ur text-xl">{FORM_TITLE[view].ur}</p>
+            </div>
+            <label className="block space-y-1">
+              <span className="text-sm font-semibold"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
+              <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
+            </label>
+            <label className="block space-y-1">
+              <span className="text-sm font-semibold"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
+              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+            </label>
+            {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
+            <button className="btn w-full" disabled={busy}>{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
+          </form>
+        )}
+
+        <details className="card card-soft">
+          <summary className="cursor-pointer font-semibold">🧪 For judges: one-tap demo accounts</summary>
+          <p className="muted text-sm mt-2">All accounts are fake. Password for all: <b>demo1234</b>. To try the no-typing pensioner login, tap “I get a pension”, then “Use the sample pension book”, then PIN <b>1234</b> (tap it or say it).</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+            {DEMO.map((d) => (
+              <button key={d.phone} className="btn btn-ghost btn-sm justify-start" disabled={busy} onClick={() => login(d.phone, "demo1234")}>
+                <span className="text-lg">{d.icon}</span>
+                <span className="text-left text-sm">{d.label}</span>
+              </button>
+            ))}
+          </div>
+          {error && view === "choose" && <p role="alert" className="mt-2" style={{ color: "var(--danger)" }}>{error}</p>}
+        </details>
+      </section>
     </div>
   );
 }

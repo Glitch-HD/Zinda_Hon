@@ -4,6 +4,7 @@ import FaceCapture, { type FaceResult } from "./FaceCapture";
 import QrScanner from "./QrScanner";
 import { enqueue, flush, newActionId, pendingCount } from "@/lib/client/queue";
 import { speakUrdu } from "@/lib/client/voice";
+import Info from "./ui/Info";
 
 // The one end-to-end task: a yearly proof-of-life, designed for someone who cannot read.
 // Every screen has one big action, an icon, and an Urdu voice prompt. Progress is saved after every step.
@@ -94,65 +95,84 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
   const stepsDone = { intro: 0, face: 1, document: 2, submit: 3, result: 3 }[step];
 
   if (initialStatus === "VERIFIED") {
-    return <div className="card text-center"><div className="text-6xl">✅</div><p className="ur text-2xl">آپ کا اس سال کا ثبوتِ حیات مکمل ہے۔</p><p>Your proof-of-life for this year is complete.</p></div>;
+    return <div className="card text-center max-w-2xl mx-auto space-y-2" style={{ padding: 28 }}><div className="text-7xl">✅</div><p className="ur text-2xl">آپ کا اس سال کا ثبوتِ حیات مکمل ہے۔</p><p className="en">Your proof-of-life for this year is complete.</p></div>;
   }
 
+  const STEPS = [
+    { icon: "🙂", ur: "تصویر", en: "Photo" },
+    { icon: "📖", ur: "پنشن بک", en: "Book" },
+    { icon: "📨", ur: "بھیجیں", en: "Send" },
+  ];
+
   return (
-    <div className="space-y-4 max-w-xl mx-auto">
+    <div className="space-y-5 max-w-2xl mx-auto">
       <div className="flex justify-between items-center text-sm">
-        <span>{online ? "🟢 Online" : "🔴 Offline: steps are saved on this phone"}</span>
-        {queued > 0 && <span className="badge badge-warn">{queued} step(s) waiting to send</span>}
+        <span>{online ? <>🟢 <span className="en">Online</span><span className="both-only"> · </span><span className="ur">آن لائن</span></> : <>🔴 <span className="en">Offline: steps are saved on this phone</span><span className="ur">انٹرنیٹ نہیں، قدم محفوظ ہیں</span></>}</span>
+        {queued > 0 && <span className="badge badge-warn">{queued} <span className="en">step(s) waiting to send</span><span className="ur">قدم بھیجنے باقی</span></span>}
       </div>
-      <div className="flex gap-2" aria-label={`Step ${stepsDone} of 3`}>
-        {["🙂", "📖", "📨"].map((icon, i) => (
-          <div key={icon} className="flex-1 text-center rounded-xl py-2 text-2xl" style={{ background: i < stepsDone ? "var(--brand)" : "var(--card)", border: "1px solid var(--line)" }}>{i < stepsDone ? "✔️" : icon}</div>
+      <div className="grid grid-cols-3 gap-3" aria-label={`Step ${stepsDone} of 3`}>
+        {STEPS.map((st, i) => (
+          <div key={st.en} className="text-center rounded-2xl py-3" style={{ background: i < stepsDone ? "var(--brand)" : "var(--card)", color: i < stepsDone ? "var(--brand-ink)" : "var(--ink)", border: "1px solid var(--line)" }}>
+            <div className="text-3xl">{i < stepsDone ? "✔️" : st.icon}</div>
+            <div className="text-xs font-semibold"><span className="ur" style={{ lineHeight: 1.8 }}>{st.ur}</span><span className="both-only"> </span><span className="en">{st.en}</span></div>
+          </div>
         ))}
       </div>
 
       {step === "intro" && (
-        <div className="card space-y-4 text-center">
-          <div className="text-6xl">👵🏽</div>
+        <div className="card space-y-5 text-center" style={{ padding: 24 }}>
+          <div className="flex justify-end -mb-6"><Info en="Once a year you must show you are alive so your pension continues. Three steps: a photo with a small movement, a scan of your pension book, then send. Your progress is saved after every step, even without internet." ur="سال میں ایک بار ثبوتِ حیات دینا ہوتا ہے۔ تین قدم: تصویر، پنشن بک، بھیجیں۔ ہر قدم کے بعد آپ کا کام محفوظ ہو جاتا ہے، انٹرنیٹ نہ ہو تب بھی۔" /></div>
+          <div className="text-7xl">👵🏽</div>
           <p className="ur text-2xl">{pensionerName}، اپنی پنشن جاری رکھنے کے لیے ثبوتِ حیات دیں</p>
-          <p className="muted">Prove you are alive so your pension continues. 3 short steps.</p>
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(SAY.intro)}>🔊 <span className="ur">سنیں</span> · Listen</button>
-          {!enrolled && <p style={{ color: "var(--warn)" }}>Your face is not enrolled yet. Please visit the pension office once (mock), or ask an officer to enrol you.</p>}
-          <button className="btn btn-big" disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="text-sm font-semibold opacity-90">Start</span></span></button>
+          <p className="en muted">Prove you are alive so your pension continues. 3 short steps.</p>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.intro)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          {!enrolled && <p style={{ color: "var(--warn)" }}><span className="en">Your face is not enrolled yet. Please visit the pension office once (mock), or ask an officer to enrol you.</span><span className="ur">آپ کا چہرہ ابھی رجسٹر نہیں۔ ایک بار پنشن آفس جائیں۔</span></p>}
+          <button className="btn btn-big" data-no-voice disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start</span></span></button>
         </div>
       )}
 
       {step === "face" && (
-        <div className="card space-y-3">
-          <p className="ur text-xl text-center">قدم ۱: اپنی تصویر</p>
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(SAY.face)}>🔊 <span className="ur">سنیں</span></button>
+        <div className="card space-y-4" style={{ padding: 22 }}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xl"><span className="ur">قدم ۱: اپنی تصویر</span><span className="both-only"> · </span><span className="en font-semibold">Step 1: your photo</span></p>
+            <Info en="Look at the camera. You will be asked to blink or turn your head so we know it is really you and not a printed photo. Only 128 numbers about your face are sent, never the photo." ur="کیمرے میں دیکھیں۔ آنکھ جھپکانے یا سر موڑنے کو کہا جائے گا تاکہ پتا چلے یہ آپ ہی ہیں۔ تصویر فون سے باہر نہیں جاتی۔" />
+          </div>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.face)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
           <FaceCapture onDone={onFace} />
-          {busy && <p>Saving… <span className="ur">محفوظ ہو رہا ہے</span></p>}
+          {busy && <p><span className="en">Saving…</span> <span className="ur">محفوظ ہو رہا ہے</span></p>}
         </div>
       )}
 
       {step === "document" && (
-        <div className="card space-y-3">
-          <p className="ur text-xl text-center">قدم ۲: پنشن بک</p>
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(SAY.document)}>🔊 <span className="ur">سنیں</span></button>
+        <div className="card space-y-4" style={{ padding: 22 }}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xl"><span className="ur">قدم ۲: پنشن بک</span><span className="both-only"> · </span><span className="en font-semibold">Step 2: pension book</span></p>
+            <Info en="Open your pension book and hold its QR code in front of the back camera. The QR is signed by the pension office, so a changed or fake book is caught." ur="پنشن بک کھول کر اس کا کیو آر فون کے پیچھے والے کیمرے کے سامنے رکھیں۔ جعلی یا بدلی ہوئی بک پکڑی جاتی ہے۔" />
+          </div>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.document)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
           <QrScanner onResult={onQr} />
         </div>
       )}
 
       {step === "submit" && (
-        <div className="card space-y-4 text-center">
-          <p className="ur text-xl">قدم ۳: بھیج دیں</p>
-          <button className="btn btn-big" disabled={busy} onClick={submit}><span className="text-3xl">📨</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">بھیجیں</span><span className="text-sm font-semibold opacity-90">Send</span></span></button>
-          {busy && <p>Checking… <span className="ur">جانچ ہو رہی ہے</span></p>}
+        <div className="card space-y-5 text-center" style={{ padding: 24 }}>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xl"><span className="ur">قدم ۳: بھیج دیں</span><span className="both-only"> · </span><span className="en font-semibold">Step 3: send</span></p>
+            <Info en="Sends your steps for checking. If everything is clear, you are approved straight away. If not, we ask for one more photo or a pension officer looks at it. Your pension is never stopped by the computer." ur="آپ کے قدم جانچ کے لیے بھیجے جائیں گے۔ سب ٹھیک ہو تو فوراً منظوری۔ ورنہ دوبارہ تصویر یا افسر دیکھے گا۔ کمپیوٹر کبھی پنشن بند نہیں کرتا۔" />
+          </div>
+          <button className="btn btn-big" data-no-voice disabled={busy} onClick={submit}><span className="text-3xl">📨</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">بھیجیں</span><span className="en text-sm font-semibold opacity-90">Send</span></span></button>
+          {busy && <p><span className="en">Checking…</span> <span className="ur">جانچ ہو رہی ہے</span></p>}
           {note && <p role="status" style={{ color: "var(--warn)" }}>{note}</p>}
         </div>
       )}
 
       {step === "result" && result && (
-        <div className="card space-y-4 text-center">
+        <div className="card space-y-5 text-center" style={{ padding: 24 }}>
           <div className="text-7xl">{result.outcome === "APPROVE" ? "✅" : result.outcome === "ASK_MORE_PROOF" ? "📷" : "🧑‍💼"}</div>
           <p className="ur text-2xl">{result.reasonUr}</p>
-          <p className="muted">{result.reasonEn}</p>
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(result.reasonUr)}>🔊 <span className="ur">دوبارہ سنیں</span> · Listen again</button>
-          {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" onClick={() => restartFor(result.askFor)}><span className="text-3xl">🔁</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">دوبارہ کریں</span><span className="text-sm font-semibold opacity-90">Try again</span></span></button>}
+          <p className="en muted">{result.reasonEn}</p>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(result.reasonUr)}>🔊 <span className="ur">دوبارہ سنیں</span><span className="en">Listen again</span></button>
+          {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" data-no-voice onClick={() => restartFor(result.askFor)}><span className="text-3xl">🔁</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">دوبارہ کریں</span><span className="en text-sm font-semibold opacity-90">Try again</span></span></button>}
         </div>
       )}
     </div>

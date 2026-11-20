@@ -15,7 +15,7 @@ export default async function Admin() {
   const tenant = await prisma.tenant.findUnique({ where: { id: user.tenantId } });
   return (
     <div className="space-y-4">
-      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation" }, { href: "/scam-map", label: "🗺️ Scam map" }, { href: "/docs", label: "API docs" }]} />
+      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "Accuracy of the face and scam checks on test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }, { href: "/scam-map", label: "🗺️ Scam map", info: { en: "Where scam messages are being reported, by area.", ur: "دھوکے کے پیغام کہاں سے آ رہے ہیں۔" } }, { href: "/docs", label: "🔌 API docs", info: { en: "Public REST API documentation (OpenAPI) for banks and departments.", ur: "بینکوں اور محکموں کے لیے اے پی آئی۔" } }]} />
       <p className="muted">Workspace: {tenant?.name}</p>
       <div className="card">
         <h2 className="text-xl font-bold">Proof-of-life rules (active: version {active.version})</h2>

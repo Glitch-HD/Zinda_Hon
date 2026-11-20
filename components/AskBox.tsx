@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { listenUrdu, speakUrdu } from "@/lib/client/voice";
+import { speakUrdu } from "@/lib/client/voice";
+import { listen } from "@/lib/client/listen";
 
 type A = { answerUr: string; answerEn: string; sources: { id: string; title: string; text: string }[] };
 export default function AskBox() {
@@ -16,10 +17,10 @@ export default function AskBox() {
   return (
     <div className="max-w-xl mx-auto space-y-3">
       <div className="card space-y-2">
-        <h2 className="text-xl font-bold">❓ <span className="ur">سوال پوچھیں</span> · Ask about the rules</h2>
+        <h2 className="text-xl font-bold">❓ <span className="ur">سوال پوچھیں</span><span className="both-only"> · </span><span className="en">Ask about the rules</span></h2>
         <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="What happens if I am late? / اگر دیر ہو جائے تو کیا ہوگا؟" />
         <div className="grid grid-cols-2 gap-2">
-          <button className="btn btn-ghost" disabled={busy} onClick={async () => { const t = await listenUrdu().catch(() => null); if (t) { setQ(t); void ask(t); } }}>🎤 <span className="ur">بولیں</span></button>
+          <button className="btn btn-ghost" disabled={busy} onClick={async () => { const t = await listen(7000).catch(() => null); if (t) { setQ(t); void ask(t); } }}>🎤 <span className="ur">بولیں</span></button>
           <button className="btn" disabled={busy || q.length < 3} onClick={() => ask()}>{busy ? "…" : "Ask"}</button>
         </div>
       </div>

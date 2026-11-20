@@ -38,3 +38,19 @@ describe("normalizeCnic", () => {
     expect(normalizeCnic("12345")).toBeNull();
   });
 });
+
+import { spokenDigits, matchCommand } from "../lib/client/listen";
+describe("voice input", () => {
+  it("reads a spoken PIN in Urdu words, digits, Urdu numerals and Roman Urdu", () => {
+    expect(spokenDigits("ایک دو تین چار")).toBe("1234");
+    expect(spokenDigits("1 2 3 4")).toBe("1234");
+    expect(spokenDigits("۱۲۳۴۔")).toBe("1234");
+    expect(spokenDigits("ek do teen char")).toBe("1234");
+  });
+  it("matches a spoken command", () => {
+    const cmds = [{ id: "start", words: ["شروع", "start"] }, { id: "message", words: ["پیغام", "message"] }];
+    expect(matchCommand("مجھے پیغام چیک کرنا ہے", cmds)).toBe("message");
+    expect(matchCommand("شروع کریں", cmds)).toBe("start");
+    expect(matchCommand("کچھ اور", cmds)).toBeNull();
+  });
+});

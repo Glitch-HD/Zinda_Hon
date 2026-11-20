@@ -2,7 +2,9 @@
 import { useState } from "react";
 import QrScanner from "./QrScanner";
 import FaceCapture, { type FaceResult } from "./FaceCapture";
-import { speakUrdu } from "@/lib/client/voice";
+import { speakUrdu, speakUrduAndWait } from "@/lib/client/voice";
+import { listen, spokenDigits } from "@/lib/client/listen";
+import Info from "./ui/Info";
 
 // No-typing login for a pensioner who cannot read:
 //   1. Show the pension book QR to the camera.  2. Look at the camera (with a movement check).
@@ -27,6 +29,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
   const [busy, setBusy] = useState(false);
   const [pin, setPin] = useState("");
   const [faceKey, setFaceKey] = useState(0);
+  const [listening, setListening] = useState(false);
 
   function fail(data: { error?: string; errorUr?: string }, fallback: string) {
     const e = { en: data.error ?? fallback, ur: data.errorUr };
@@ -81,15 +84,10 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
     }
   }
 
-  async function press(d: string) {
-    if (busy) return;
-    const next = (pin + d).slice(0, 4);
-    setPin(next);
-    setError(null);
-    if (next.length < 4) return;
+  async function submitPin(full: string) {
     setBusy(true);
     try {
-      const { res, data } = await post("/api/auth/pensioner/pin", { pin: next });
+      const { res, data } = await post("/api/auth/pensioner/pin", { pin: full });
       if (res.ok) { void speakUrdu(SAY.welcome); window.location.href = data.home; return; }
       setPin("");
       fail(data, "Wrong PIN.");
@@ -101,67 +99,108 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
     }
   }
 
+  function press(d: string) {
+    if (busy) return;
+    const next = (pin + d).slice(0, 4);
+    setPin(next);
+    setError(null);
+    if (next.length === 4) void submitPin(next);
+  }
+
+  async function sayPin() {
+    setError(null);
+    setPin("");
+    await speakUrduAndWait("اپنا چار ہندسوں کا پن بولیں، جیسے ایک، دو، تین، چار۔");
+    setListening(true);
+    const said = await listen(6000);
+    setListening(false);
+    const digits = said ? spokenDigits(said) : "";
+    if (digits.length !== 4) {
+      setError({ en: said ? `Heard "${said}". Please say exactly four numbers, or tap them.` : "Could not hear you. Please try again or tap the numbers.", ur: "چار ہندسے صاف بولیں، یا نمبر دبائیں۔" });
+      void speakUrdu("سمجھ نہیں آیا۔ چار ہندسے صاف بولیں، یا نمبر دبائیں۔");
+      return;
+    }
+    setPin(digits);
+    void submitPin(digits);
+  }
+
   const stepNo = step === "book" ? 1 : 2;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back · <span className="ur">واپس</span></button>
+        <button className="btn btn-ghost btn-sm" onClick={onBack} data-say="واپس">← <span className="en">Back</span><span className="ur">واپس</span></button>
         <span className="eyebrow">Step {stepNo} of 2</span>
       </div>
       <div className="stepper" aria-hidden="true"><div className="done" /><div className={stepNo >= 2 ? "done" : ""} /></div>
 
       {step === "book" && (
-        <div className="card space-y-4">
+        <div className="card space-y-5" style={{ padding: 22 }}>
           <div className="text-center space-y-1">
-            <div className="text-6xl">📖</div>
+            <div className="text-7xl">📖</div>
             <p className="ur text-2xl font-semibold">اپنی پنشن بک کا کیو آر دکھائیں</p>
-            <p className="muted">Show the QR code inside your pension book to the camera.</p>
+            <p className="en muted">Show the QR code inside your pension book to the camera.</p>
           </div>
-          <button className="btn btn-ghost w-full" onClick={() => speakUrdu(SAY.book)}>🔊 <span className="ur">سنیں</span> · Listen</button>
+          <div className="flex gap-2 items-center">
+            <button className="btn btn-ghost flex-1" onClick={() => speakUrdu(SAY.book)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+            <Info en="The QR code is printed inside your pension book by the pension office. It proves the book is real. Hold the book open in front of the back camera." ur="پنشن بک کے اندر چھپا ہوا کیو آر کوڈ ثابت کرتا ہے کہ بک اصلی ہے۔ بک کھول کر فون کے پیچھے والے کیمرے کے سامنے رکھیں۔" />
+          </div>
           <QrScanner onResult={onBook} />
-          {busy && <p className="text-center">Checking the book… <span className="ur">جانچ ہو رہی ہے</span></p>}
+          {busy && <p className="text-center"><span className="en">Checking the book…</span> <span className="ur">جانچ ہو رہی ہے</span></p>}
           <div className="card card-soft text-sm space-y-2">
             <p><b>For the demo:</b> no printed book? Use the sample book of Zainab Bibi (fake person).</p>
-            <button className="btn btn-accent btn-sm w-full" disabled={busy} onClick={useSampleBook}>📘 Use the sample pension book</button>
+            <button className="btn btn-accent btn-sm w-full" disabled={busy} onClick={useSampleBook} data-no-voice>📘 Use the sample pension book</button>
           </div>
         </div>
       )}
 
       {step === "face" && who && (
-        <div className="card space-y-3">
+        <div className="card space-y-4" style={{ padding: 22 }}>
           <div className="text-center">
             <p className="ur text-2xl font-semibold" style={{ lineHeight: 2.4 }}>السلام علیکم، {who.nameUr ?? who.name}</p>
-            <p className="muted">Hello {who.name}. Now look at the camera and follow the instructions.</p>
+            <p className="en muted">Hello {who.name}. Now look at the camera and follow the instructions.</p>
+          </div>
+          <div className="flex justify-end">
+            <Info en="We compare your face with the photo taken once at the pension office. You will be asked to blink or turn your head, so a printed photo cannot be used. The photo never leaves your phone." ur="ہم آپ کا چہرہ پنشن آفس میں لی گئی تصویر سے ملاتے ہیں۔ آنکھ جھپکانے یا سر موڑنے کو کہا جائے گا۔ تصویر آپ کے فون سے باہر نہیں جاتی۔" />
           </div>
           <FaceCapture key={faceKey} onDone={onFace} />
-          {busy && <p className="text-center">Checking your face… <span className="ur">چہرہ جانچا جا رہا ہے</span></p>}
+          {busy && <p className="text-center"><span className="en">Checking your face…</span> <span className="ur">چہرہ جانچا جا رہا ہے</span></p>}
           <div className={`grid gap-2 ${error ? "grid-cols-2" : "grid-cols-1"}`}>
-            {error && <button className="btn btn-ghost" onClick={() => { setError(null); setFaceKey((k) => k + 1); }}>🔁 Try again</button>}
-            {who.hasPin && <button className={error ? "btn" : "btn btn-ghost btn-sm"} onClick={() => { setError(null); setStep("pin"); void speakUrdu(SAY.pin); }}>🔢 Use PIN instead</button>}
+            {error && <button className="btn btn-ghost" data-say="دوبارہ کوشش کریں" onClick={() => { setError(null); setFaceKey((k) => k + 1); }}>🔁 <span className="en">Try again</span><span className="ur">دوبارہ</span></button>}
+            {who.hasPin && <button className={error ? "btn" : "btn btn-ghost btn-sm"} data-no-voice onClick={() => { setError(null); setStep("pin"); void speakUrdu(SAY.pin); }}>🔢 <span className="en">Use PIN instead</span><span className="ur">پن استعمال کریں</span></button>}
           </div>
         </div>
       )}
 
       {step === "pin" && who && (
-        <div className="card space-y-4">
+        <div className="card space-y-5" style={{ padding: 22 }}>
           <div className="text-center">
-            <p className="ur text-2xl font-semibold">اپنا پن دبائیں</p>
-            <p className="muted">{who.name}: press your 4-digit PIN.</p>
+            <p className="ur text-2xl font-semibold">اپنا پن دبائیں یا بولیں</p>
+            <p className="en muted">{who.name}: tap or say your 4-digit PIN.</p>
           </div>
           <div className="flex justify-center gap-4" aria-label={`${pin.length} of 4 digits entered`}>
             {[0, 1, 2, 3].map((i) => <span key={i} className={`pindot ${i < pin.length ? "on" : ""}`} />)}
           </div>
+          <div className="flex items-center gap-3">
+            <button className={`mic-btn ${listening ? "live" : ""}`} style={{ width: 64, height: 64 }} disabled={busy || listening} onClick={sayPin} aria-label="Say your PIN" data-no-voice>
+              <span className="text-3xl">{listening ? "👂" : "🎤"}</span>
+            </button>
+            <div className="flex-1">
+              <p className="ur font-semibold">{listening ? "بولیں… میں سن رہی ہوں" : "مائیک دبا کر پن بولیں"}</p>
+              <p className="en text-sm muted">{listening ? "Listening… say the four numbers" : "Tap the mic and say your PIN"}</p>
+            </div>
+            <Info en="Your PIN is 4 numbers given by the pension office. You can tap them, or tap the microphone and say them in Urdu or English, like 'ek, do, teen, char'." ur="پن چار ہندسوں کا ہے جو پنشن آفس نے دیا۔ نمبر دبائیں یا مائیک دبا کر بولیں، جیسے ایک، دو، تین، چار۔" />
+          </div>
           <div className="pinpad" dir="ltr">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-              <button key={d} className="pinkey" disabled={busy} onClick={() => press(d)} aria-label={d}>
-                {d}<span className="block text-sm muted ur" style={{ lineHeight: 1.2 }}>{URDU_DIGITS[Number(d)]}</span>
+              <button key={d} className="pinkey" disabled={busy} onClick={() => press(d)} aria-label={d} data-no-voice>
+                {d}<span className="block text-sm muted ur always" style={{ lineHeight: 1.2 }}>{URDU_DIGITS[Number(d)]}</span>
               </button>
             ))}
-            <button className="pinkey" style={{ fontSize: "1.2rem" }} disabled={busy || !pin} onClick={() => setPin(pin.slice(0, -1))} aria-label="Delete">⌫</button>
-            <button className="pinkey" disabled={busy} onClick={() => press("0")} aria-label="0">0<span className="block text-sm muted ur" style={{ lineHeight: 1.2 }}>۰</span></button>
+            <button className="pinkey" style={{ fontSize: "1.2rem" }} disabled={busy || !pin} onClick={() => setPin(pin.slice(0, -1))} aria-label="Delete" data-say="مٹائیں">⌫</button>
+            <button className="pinkey" disabled={busy} onClick={() => press("0")} aria-label="0" data-no-voice>0<span className="block text-sm muted ur always" style={{ lineHeight: 1.2 }}>۰</span></button>
             {who.hasFace ? (
-              <button className="pinkey" style={{ fontSize: "1.2rem" }} onClick={() => { setPin(""); setError(null); setStep("face"); }} aria-label="Use face instead">🙂</button>
+              <button className="pinkey" style={{ fontSize: "1.2rem" }} onClick={() => { setPin(""); setError(null); setStep("face"); }} aria-label="Use face instead" data-say="چہرے سے لاگ اِن">🙂</button>
             ) : <span />}
           </div>
           <p className="muted text-sm text-center">Demo PIN for Zainab Bibi: 1234</p>
@@ -171,7 +210,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
       {error && (
         <div role="alert" className="card text-center space-y-1" style={{ borderColor: "var(--danger)" }}>
           {error.ur && <p className="ur text-lg" style={{ color: "var(--danger)" }}>{error.ur}</p>}
-          <p style={{ color: "var(--danger)" }}>{error.en}</p>
+          <p className="en" style={{ color: "var(--danger)" }}>{error.en}</p>
         </div>
       )}
     </div>

@@ -5,5 +5,5 @@ import { ROLE_HOME } from "@/lib/auth";
 
 export default async function CheckMessage() {
   const user = await pageUser(["PENSIONER", "HELPER", "SHOPKEEPER", "OFFICER"]);
-  return (<div><Header user={user} links={[{ href: ROLE_HOME[user.role], label: "← Home" }]} /><MessageChecker /></div>);
+  return (<div><Header user={user} links={[{ href: ROLE_HOME[user.role], label: "← Home", ur: "← واپس" }]} /><MessageChecker /></div>);
 }

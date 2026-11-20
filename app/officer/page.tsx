@@ -25,7 +25,7 @@ export default async function OfficerQueue() {
 
   return (
     <div>
-      <Header user={user} links={[{ href: "/officer/enroll", label: "Enrol faces" }, { href: "/officer/pension-books", label: "Pension books" }, { href: "/officer/messages", label: "Scam reviews" }]} />
+      <Header user={user} links={[{ href: "/officer/enroll", label: "📷 Enrol faces", info: { en: "Register a pensioner's face once at the office. Only 128 numbers are stored, never the photo.", ur: "دفتر میں ایک بار چہرہ رجسٹر کریں۔" } }, { href: "/officer/pension-books", label: "📖 Pension books", info: { en: "Print pension book QR codes. Each is signed so edits (like a changed amount) are caught.", ur: "پنشن بک کے دستخط شدہ کیو آر پرنٹ کریں۔" } }, { href: "/officer/messages", label: "🛡️ Scam reviews", info: { en: "Messages the AI was unsure about. Your label also makes the accuracy numbers honest.", ur: "وہ پیغام جن پر اے آئی کو یقین نہیں تھا۔" } }]} />
       {notes.length > 0 && (
         <div className="card mb-4"><b>🔔 {notes.length} new</b>: {notes.map((n) => n.body).join(" · ")}</div>
       )}

@@ -22,7 +22,7 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   if (!c) notFound();
   return (
     <div>
-      <Header user={user} links={[{ href: user.role === "HELPER" ? "/helper" : "/pensioner", label: "← Back" }]} />
+      <Header user={user} links={[{ href: user.role === "HELPER" ? "/helper" : "/pensioner", label: "← Back", ur: "← واپس" }]} />
       {user.role === "HELPER" && <div className="card mb-3">🤝 Helper Mode: acting for <b>{c.pensioner.name}</b> <span className="ur">{c.pensioner.nameUr}</span>. Hand the phone to them for the photo.</div>}
       <CaseFlow caseId={c.id} pensionerName={c.pensioner.nameUr ?? c.pensioner.name} enrolled={c.pensioner.enrolledFaceDescriptor.length === 128} initialStatus={c.status} />
     </div>

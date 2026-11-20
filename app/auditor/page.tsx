@@ -9,7 +9,7 @@ export default async function Auditor({ searchParams }: { searchParams: Promise<
   const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
   return (
     <div>
-      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation" }]} />
+      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "How accurate the AI checks are, measured on labelled test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }]} />
       <div className="flex gap-2 mb-3">{tabs.map((t) => <a key={t.id} href={`?tab=${t.id}`} className={`btn ${tab === t.id ? "" : "btn-ghost"}`}>{t.label}</a>)}</div>
       {tab === "decisions" && <Decisions tenantId={user.tenantId} />}
       {tab === "log" && <Log tenantId={user.tenantId} />}
