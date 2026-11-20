@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import RegisterSW from "@/components/RegisterSW";
 
 export const metadata: Metadata = {
   title: "Zinda Hoon (prototype)",
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <span className="ur"> آزمائشی نمونہ، سرکاری سروس نہیں</span>
         </div>
         <main className="mx-auto max-w-5xl px-4 py-4">{children}</main>
+        <RegisterSW />
       </body>
     </html>
   );
