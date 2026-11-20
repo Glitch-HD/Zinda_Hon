@@ -1,0 +1,335 @@
+// Zinda Hoon database schema. PROTOTYPE: every person, CNIC, pension and payment here is fake.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  PENSIONER
+  HELPER
+  SHOPKEEPER
+  OFFICER
+  ADMIN
+  AUDITOR
+}
+
+enum CaseStatus {
+  DUE
+  IN_PROGRESS
+  NEEDS_PROOF
+  WITH_OFFICER
+  VERIFIED
+  STOPPED
+}
+
+enum Outcome {
+  APPROVE
+  ASK_MORE_PROOF
+  SEND_TO_OFFICER
+  OFFICER_APPROVED
+  OFFICER_STOPPED
+}
+
+enum ActorType {
+  USER
+  AI
+  AGENT
+  SYSTEM
+  API_CLIENT
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  nameUr    String
+  plan      String   @default("free")
+  createdAt DateTime @default(now())
+
+  users       User[]
+  pensioners  Pensioner[]
+  cases       Case[]
+  ruleVersions RuleVersion[]
+  apiKeys     ApiKey[]
+}
+
+model User {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id])
+  role              Role
+  name              String
+  phone             String   @unique
+  passwordHash      String
+  preferredLanguage String   @default("ur")
+  area              String?
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  pensioner      Pensioner?
+  helperLinks    HelperLink[]
+  assignedCases  Case[]       @relation("AssignedOfficer")
+  checkedMessages CheckedMessage[]
+
+  @@index([tenantId, role])
+}
+
+model Pensioner {
+  id                     String    @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant    @relation(fields: [tenantId], references: [id])
+  userId                 String?   @unique
+  user                   User?     @relation(fields: [userId], references: [id])
+  pensionNo              String    @unique
+  cnicMock               String?
+  name                   String
+  nameUr                 String?
+  nameNormalized         String
+  fatherOrHusbandName    String?
+  dateOfBirth            DateTime?
+  pensionType            String // "family" (widow) or "self"
+  monthlyAmount          Int
+  bankAccountNo          String?
+  area                   String?
+  enrolledFaceDescriptor Float[] // 128 numbers from face-api, never the photo itself
+  status                 String    @default("active") // active, suspended, stopped
+  createdAt              DateTime  @default(now())
+
+  cases       Case[]
+  helperLinks HelperLink[]
+  consents    Consent[]
+  corrections DataCorrectionRequest[]
+
+  @@index([tenantId])
+  @@index([cnicMock])
+}
+
+model HelperLink {
+  id          String    @id @default(cuid())
+  helperId    String
+  helper      User      @relation(fields: [helperId], references: [id])
+  pensionerId String
+  pensioner   Pensioner @relation(fields: [pensionerId], references: [id])
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@unique([helperId, pensionerId])
+}
+
+model Case {
+  id               String     @id @default(cuid())
+  tenantId         String
+  tenant           Tenant     @relation(fields: [tenantId], references: [id])
+  pensionerId      String
+  pensioner        Pensioner  @relation(fields: [pensionerId], references: [id])
+  year             Int
+  status           CaseStatus @default(DUE)
+  assignedOfficerId String?
+  assignedOfficer  User?      @relation("AssignedOfficer", fields: [assignedOfficerId], references: [id])
+  priority         Int        @default(0) // higher = more urgent
+  confidence       Float?
+  riskFlags        String[]
+  officerNotes     String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  closedAt         DateTime?
+
+  steps     CaseStep[]
+  evidence  Evidence[]
+  decisions Decision[]
+
+  @@unique([pensionerId, year])
+  @@index([tenantId, status])
+}
+
+model CaseStep {
+  id             String   @id @default(cuid())
+  caseId         String
+  case           Case     @relation(fields: [caseId], references: [id])
+  step           String // voice_intro, selfie, liveness, document, review
+  result         String
+  clientActionId String   @unique // generated on the phone; stops duplicate syncs
+  createdAt      DateTime @default(now())
+}
+
+model Evidence {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id])
+  type      String // face_match, liveness, document_qr, document_ocr
+  score     Float?
+  passed    Boolean?
+  details   Json
+  createdAt DateTime @default(now())
+
+  @@index([caseId, type])
+}
+
+model Decision {
+  id            String      @id @default(cuid())
+  caseId        String
+  case          Case        @relation(fields: [caseId], references: [id])
+  outcome       Outcome
+  confidence    Float
+  ruleVersionId String
+  ruleVersion   RuleVersion @relation(fields: [ruleVersionId], references: [id])
+  modelName     String? // which AI model wrote the explanation, if any
+  inputs        Json
+  checkScores   Json
+  reasonUr      String
+  reasonEn      String
+  auditTrace    Json
+  decidedBy     String // "ai" or the officer's user id
+  createdAt     DateTime    @default(now())
+
+  @@index([caseId])
+}
+
+model RuleVersion {
+  id         String     @id @default(cuid())
+  tenantId   String
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  ruleKey    String // e.g. "proof_of_life"
+  version    Int
+  config     Json // thresholds and costs, edited by admin without code changes
+  note       String?
+  createdBy  String
+  activeFrom DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+
+  decisions Decision[]
+
+  @@unique([tenantId, ruleKey, version])
+}
+
+model Consent {
+  id          String    @id @default(cuid())
+  pensionerId String
+  pensioner   Pensioner @relation(fields: [pensionerId], references: [id])
+  granteeType String // helper, bank, department
+  granteeId   String
+  granteeName String
+  fields      String[] // e.g. name, cnic, face, bank_account
+  grantedAt   DateTime  @default(now())
+  withdrawnAt DateTime?
+
+  @@index([pensionerId])
+  @@index([granteeId])
+}
+
+model DataCorrectionRequest {
+  id          String    @id @default(cuid())
+  pensionerId String
+  pensioner   Pensioner @relation(fields: [pensionerId], references: [id])
+  field       String
+  oldValue    String?
+  newValue    String
+  status      String    @default("pending") // pending, accepted, rejected
+  requestedBy String
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+}
+
+model CheckedMessage {
+  id            String   @id @default(cuid())
+  tenantId      String
+  submittedById String?
+  submittedBy   User?    @relation(fields: [submittedById], references: [id])
+  text          String
+  sender        String?
+  area          String?
+  label         String // scam, genuine, unsure
+  confidence    Float
+  reasons       Json
+  route         String // warn_user, ask_more, human_review
+  reviewedLabel String? // set by an officer; used for honest accuracy numbers
+  modelName     String?
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  tenantId   String?
+  actorType  ActorType
+  actorId    String?
+  actorRole  String?
+  action     String
+  targetType String?
+  targetId   String?
+  details    Json?
+  createdAt  DateTime  @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  name       String
+  prefix     String    @unique
+  keyHash    String
+  scopes     String[]
+  rateLimit  Int       @default(60) // requests per minute
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  bucket    String
+  createdAt DateTime @default(now())
+
+  @@index([bucket, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  channel   String   @default("in_app") // in_app, sms_mock
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+// ---------- Mock government and bank services (deliberately messy data) ----------
+
+model MockNadraRecord {
+  id           String    @id @default(cuid())
+  cnic         String?
+  name         String
+  nameUr       String?
+  fatherOrHusbandName String?
+  dateOfBirth  DateTime?
+  address      String?
+  maritalStatus String?
+}
+
+model MockBankAccount {
+  id           String    @id @default(cuid())
+  accountNo    String    @unique
+  holderName   String
+  cnic         String?
+  lastActivity DateTime?
+  withdrawalsLast90Days Int @default(0)
+}
+
+model MockDeathRecord {
+  id          String   @id @default(cuid())
+  cnic        String?
+  name        String
+  dateOfDeath DateTime
+  registeredAt String
+}
