@@ -52,42 +52,88 @@ async function structured<T extends z.ZodType>(schema: T, system: string, user: 
   }
 }
 
+// Models to try on Groq, in order. Groq retires models from time to time, so if one is gone
+// (or busy) the next is tried. GROQ_TEXT_MODEL, if set, is tried first.
+const GROQ_MODELS = [...new Set([GROQ_TEXT_MODEL, "llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"])];
+
+/** The last Groq problem, for the admin "AI check" page. Never contains the key. */
+export let lastAiError: string | null = null;
+
+type JsonSchema = { type?: string; properties?: Record<string, JsonSchema>; items?: JsonSchema; maxLength?: number; maxItems?: number; minimum?: number; maximum?: number; enum?: unknown[] };
+
+/** Small models sometimes write a sentence too long or a number out of range. Trim and clamp to the
+ *  schema before validating, instead of throwing a good answer away. Wrong labels are NOT fixed here. */
+function fitToSchema(v: unknown, js: JsonSchema): unknown {
+  if (js.type === "object" && v && typeof v === "object" && js.properties) {
+    const out: Record<string, unknown> = {};
+    for (const [k, sub] of Object.entries(js.properties)) if (k in (v as object)) out[k] = fitToSchema((v as Record<string, unknown>)[k], sub);
+    return out;
+  }
+  if (js.type === "array" && Array.isArray(v)) return (js.maxItems ? v.slice(0, js.maxItems) : v).map((x) => (js.items ? fitToSchema(x, js.items) : x));
+  if (js.type === "string" && typeof v === "string" && js.maxLength && v.length > js.maxLength) return v.slice(0, js.maxLength - 1) + "…";
+  if (js.type === "string" && js.enum && typeof v === "string" && !js.enum.includes(v) && js.enum.includes("other")) return "other";
+  if (js.type === "number" && typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) v = Number(v);
+  if (js.type === "number" && typeof v === "number") {
+    if (v > 1 && js.maximum === 1 && v <= 100) v = v / 100; // "85" meaning 85%
+    if (js.minimum !== undefined) v = Math.max(js.minimum, v as number);
+    if (js.maximum !== undefined) v = Math.min(js.maximum, v as number);
+  }
+  if (js.type === "boolean" && (v === "true" || v === "false")) return v === "true";
+  return v;
+}
+
+function parseJson(raw: string): unknown {
+  const t = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "");
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  return JSON.parse(a >= 0 && b > a ? t.slice(a, b + 1) : t);
+}
+
 async function structuredGroq<T extends z.ZodType>(schema: T, system: string, user: string, maxTokens: number): Promise<Structured<z.infer<T>> | null> {
   const started = Date.now();
-  const jsonSchema = JSON.stringify(z.toJSONSchema(schema));
-  try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY}` },
-      signal: AbortSignal.timeout(30_000),
-      body: JSON.stringify({
-        model: GROQ_TEXT_MODEL,
-        temperature: 0.1,
-        max_tokens: maxTokens,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: `${system}\n\nReply with ONE JSON object only, matching this JSON Schema exactly (no extra keys, respect max lengths):\n${jsonSchema}` },
-          { role: "user", content: user },
-        ],
-      }),
-    });
-    if (!res.ok) {
-      console.error("[groq-text] HTTP", res.status, (await res.text()).slice(0, 300));
-      return null;
+  const js = z.toJSONSchema(schema) as JsonSchema;
+  const problems: string[] = [];
+  for (const model of GROQ_MODELS) {
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+        signal: AbortSignal.timeout(25_000),
+        body: JSON.stringify({
+          model,
+          temperature: 0.1,
+          max_tokens: maxTokens,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: `${system}\n\nReply with ONE JSON object only, matching this JSON Schema exactly (no extra keys, keep within the max lengths):\n${JSON.stringify(js)}` },
+            { role: "user", content: user },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const text = (await res.text()).slice(0, 300);
+        problems.push(`${model}: HTTP ${res.status} ${text}`);
+        console.error("[groq-text]", model, "HTTP", res.status, text);
+        if (res.status === 401 || res.status === 403) break; // bad key: other models will fail the same way
+        continue;
+      }
+      const body = await res.json();
+      const raw = body?.choices?.[0]?.message?.content;
+      if (typeof raw !== "string") { problems.push(`${model}: empty reply`); continue; }
+      const checked = schema.safeParse(fitToSchema(parseJson(raw), js));
+      if (!checked.success) {
+        problems.push(`${model}: answer did not fit the format (${checked.error.issues.slice(0, 2).map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")})`);
+        console.error("[groq-text]", model, "schema mismatch", checked.error.issues.slice(0, 3));
+        continue;
+      }
+      lastAiError = null;
+      return { data: checked.data, ms: Date.now() - started, usage: { input: body.usage?.prompt_tokens ?? 0, output: body.usage?.completion_tokens ?? 0 }, model: `groq/${model}` };
+    } catch (err) {
+      problems.push(`${model}: ${err instanceof Error ? err.message : String(err)}`);
+      console.error("[groq-text]", model, "call failed", err);
     }
-    const body = await res.json();
-    const raw = body?.choices?.[0]?.message?.content;
-    if (typeof raw !== "string") return null;
-    const checked = schema.safeParse(JSON.parse(raw));
-    if (!checked.success) {
-      console.error("[groq-text] schema mismatch", checked.error.issues.slice(0, 3));
-      return null;
-    }
-    return { data: checked.data, ms: Date.now() - started, usage: { input: body.usage?.prompt_tokens ?? 0, output: body.usage?.completion_tokens ?? 0 }, model: `groq/${GROQ_TEXT_MODEL}` };
-  } catch (err) {
-    console.error("[groq-text] call failed", err);
-    return null;
   }
+  lastAiError = problems.join(" | ").slice(0, 1500);
+  return null;
 }
 
 // ---------- Scam message checker (classification + routing) ----------
