@@ -11,7 +11,8 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
   const c = await prisma.case.findUnique({ where: { id }, include: { pensioner: true, decisions: { orderBy: { createdAt: "desc" }, include: { ruleVersion: { select: { version: true } } } }, evidence: { orderBy: { createdAt: "asc" } } } });
   if (!c || c.tenantId !== user.tenantId) notFound();
   const identity = await lookupIdentity(c.pensionerId);
-  const latest = c.decisions[0];
+  // The AI panel shows the latest AI run, not an officer's later decision (which has no checks).
+  const latest = c.decisions.find((d) => d.decidedBy === "ai");
   const trace = (latest?.auditTrace ?? {}) as { checks?: { check: string; status: string; score: number | null; detail: string }[]; confidence?: number; requiredConfidence?: number };
 
   return (

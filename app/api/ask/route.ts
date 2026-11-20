@@ -17,7 +17,12 @@ export const POST = handle(async (req: Request) => {
   const sections = searchRulebook(question, 4);
   const ai = await answerFromRulebook(question, sections);
   await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? ai.model : "none", action: "rulebook_answer", details: { sections: sections.map((s) => s.id), answerable: ai?.data.answerable ?? false } });
-  if (!ai || !ai.data.answerable) {
+  if (!ai) {
+    // The AI is down or not configured: show the closest official rules instead of an AI answer.
+    const matched = searchRulebook(question, 2);
+    return NextResponse.json({ answerUr: "ابھی AI مددگار دستیاب نہیں۔ نیچے قواعد کے متعلقہ حصے ہیں۔ مزید مدد کے لیے پنشن افسر سے بات کریں۔", answerEn: "The AI helper is not available right now. These are the closest sections of the rulebook. A pension officer can help with anything else.", sources: matched.map((s) => ({ id: s.id, title: s.title, text: s.text })) });
+  }
+  if (!ai.data.answerable) {
     return NextResponse.json({ answerUr: "اس سوال کا جواب قواعد میں نہیں ملا۔ پنشن افسر آپ کی مدد کرے گا۔", answerEn: "The rulebook does not answer this. A pension officer will help you.", sources: [] });
   }
   const cited = RULEBOOK.filter((s) => ai.data.cited_sections.includes(s.id));

@@ -46,7 +46,9 @@ export default function ConsentManager() {
               </label>
             ))}
           </div>
-          {c.withdrawnAt
+          {c.granteeType === "department" && !c.withdrawnAt
+            ? <p className="text-sm muted">🏛️ <span className="en">The pension office needs your bank account to pay you, so this one cannot be withdrawn here. Talk to an officer to stop the pension.</span><span className="ur">پنشن آفس کو پنشن بھیجنے کے لیے بینک اکاؤنٹ چاہیے، اس لیے یہ اجازت یہاں واپس نہیں ہو سکتی۔</span></p>
+            : c.withdrawnAt
             ? <button className="btn btn-ghost" onClick={() => act(c.id, { action: "restore" })}>↩️ Give permission again</button>
             : <button className="btn" style={{ background: "var(--danger)" }} onClick={() => act(c.id, { action: "withdraw" })}>⛔ <span className="ur">اجازت واپس لیں</span> · Withdraw</button>}
         </div>

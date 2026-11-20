@@ -18,8 +18,8 @@ export default async function OfficerQueue() {
   const others = await prisma.case.findMany({
     where: { tenantId: user.tenantId, status: { not: "WITH_OFFICER" } },
     include: { pensioner: { select: { name: true, pensionNo: true } } },
-    orderBy: { updatedAt: "desc" },
-    take: 50,
+    orderBy: [{ year: "desc" }, { updatedAt: "desc" }],
+    take: 60,
   });
   // Every active pensioner without a face yet: those with their own app account AND those a helper
   // acts for. (The list column can be empty or NULL, so filter here.)

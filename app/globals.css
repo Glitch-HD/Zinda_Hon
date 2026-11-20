@@ -137,8 +137,10 @@ a { text-underline-offset: 3px; }
    utilities (which also set line-height) cannot squash it. */
 .ur { line-height: 2.1; }
 .btn .ur, .badge .ur { line-height: 1.7; white-space: nowrap; }
-/* Short Urdu labels next to English (names, titles) should never break mid-word. */
-span.ur { white-space: nowrap; }
+/* English and Urdu side by side ("Both" mode) need a little space between them. */
+html[data-lang="both"] span.en + span.ur, html[data-lang="both"] span.ur + span.en { margin-inline-start: .4em; }
+/* Wide tables scroll inside their card on phones instead of pushing the whole page sideways. */
+@media (max-width: 640px) { table.data { display: block; overflow-x: auto; } }
 .btn-big .ur { line-height: 1.9; }
 
 /* ---------- Language switch: hide the other language without reloading ---------- */

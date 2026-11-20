@@ -38,7 +38,7 @@ export default function TopBar() {
           <span className="both-only"> · </span>
           <span className="ur">آزمائشی نمونہ، سرکاری سروس نہیں</span>
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           <div className="seg" role="group" aria-label="Language / زبان">
             {langs.map((l) => (
               <button key={l.id} type="button" aria-pressed={lang === l.id} aria-label={l.aria} className={lang === l.id ? "on" : ""} onClick={() => setLang(l.id)}>{l.label}</button>

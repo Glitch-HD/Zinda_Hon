@@ -10,8 +10,21 @@ export const RULEBOOK: { id: string; title: string; text: string }[] = [
   { id: "R8", title: "Pension book", text: "Each pensioner has a pension book with a QR code. The QR code is digitally signed. If the details in the book are changed, the app will notice. Keep your pension book safe and do not give it to anyone who asks for it by phone." },
 ];
 
+// Urdu and Roman Urdu words mapped to English rulebook words, so search works without the AI too.
+const SYNONYMS: Record<string, string[]> = {
+  "ثبوت": ["proof"], saboot: ["proof"], suboot: ["proof"], "زندہ": ["proof", "life"], zinda: ["proof", "life"],
+  "دیر": ["late"], der: ["late"], late: ["late"], "بند": ["stop", "held"], band: ["stop", "held"], "رک": ["held"],
+  "بیوہ": ["widow"], bewa: ["widow"], bewah: ["widow"], "شوہر": ["widow", "husband"],
+  "پن": ["pin"], "او": ["otp"], otp: ["otp"], pin: ["pin"], "پاسورڈ": ["password"],
+  "ڈیٹا": ["data"], data: ["data"], "اجازت": ["permission", "withdraw"], ijazat: ["permission", "withdraw"],
+  "پنشن": ["pension"], "بک": ["book"], book: ["book"], "کیو": ["qr"], qr: ["qr"],
+  "افسر": ["officer"], afsar: ["officer"], "فیصلہ": ["decides"], faisla: ["decides"],
+  "سیلفی": ["selfie"], "تصویر": ["selfie"], tasveer: ["selfie"], "چہرہ": ["selfie", "liveness"],
+};
+
 export function searchRulebook(question: string, k = 3) {
-  const words = question.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length > 2);
+  const raw = question.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean);
+  const words = [...new Set(raw.flatMap((w) => [...(SYNONYMS[w] ?? []), ...(w.length > 2 && !/^(pension|the|and|kya|hai|hoga|main|mein|aur)$/.test(w) ? [w] : [])]))];
   const scored = RULEBOOK.map((s) => {
     const hay = `${s.title} ${s.text}`.toLowerCase();
     const score = words.reduce((a, w) => a + (hay.includes(w) ? 1 : 0), 0);

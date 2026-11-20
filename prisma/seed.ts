@@ -5,7 +5,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { normalizeName } from "../lib/names";
-import { DEFAULT_RULE_CONFIG } from "../lib/decision";
+import { DEFAULT_RULE_CONFIG, decide, type DecisionInputs, type RuleConfig } from "../lib/decision";
 
 const prisma = new PrismaClient();
 const YEAR = 2026;
@@ -133,6 +133,54 @@ async function ensureAccounts() {
   if (changed) console.log(`Set up ${changed} named demo account(s).`);
 }
 
+
+// Past years (2024, 2025) of closed proof-of-life cases with the AI decision for each, so the
+// Digital Twin, officer stats and the audit trail have real history to work on. Inputs vary
+// deterministically: most people pass easily, some are borderline, a few needed an officer.
+async function ensureHistory() {
+  const tenants = await prisma.tenant.findMany();
+  for (const t of tenants) {
+    const rule = await prisma.ruleVersion.findFirst({ where: { tenantId: t.id, ruleKey: "proof_of_life", version: 1 } });
+    const officer = await prisma.user.findFirst({ where: { tenantId: t.id, role: "OFFICER" } });
+    if (!rule) continue;
+    const pensioners = await prisma.pensioner.findMany({ where: { tenantId: t.id }, orderBy: { pensionNo: "asc" } });
+    let i = 0;
+    for (const p of pensioners) {
+      for (const year of [2024, 2025]) {
+        i++;
+        const exists = await prisma.case.findUnique({ where: { pensionerId_year: { pensionerId: p.id, year } } });
+        if (exists) continue;
+        const r = (k: number) => ((i * 37 + k * 101) % 97) / 97; // 0..1, fixed per person and year
+        const kind = i % 7 === 0 ? "officer" : i % 4 === 0 ? "borderline" : "clear";
+        const age = p.dateOfBirth ? year - p.dateOfBirth.getFullYear() : null;
+        const inputs: DecisionInputs = {
+          face: { distance: kind === "clear" ? 0.22 + r(1) * 0.15 : kind === "borderline" ? 0.38 + r(1) * 0.1 : 0.5 + r(1) * 0.08, attempts: kind === "clear" ? 1 : 2 },
+          liveness: { passed: true, attempts: 1 },
+          document: { qrValid: kind === "officer" && r(2) > 0.5 ? false : true, fieldsMatch: true, attempts: 1 },
+          identity: { nameSimilarity: kind === "clear" ? 0.95 + r(3) * 0.05 : 0.82 + r(3) * 0.14, cnicMatch: p.cnicMock ? true : null, dobMatch: true, duplicateRecords: 0 },
+          deathRecordFound: false,
+          ageYears: age,
+          anomalies: [],
+        };
+        const res = decide(inputs, rule.config as unknown as RuleConfig);
+        const when = new Date(Date.UTC(year, 10, 3 + (i % 25), 6 + (i % 8)));
+        const needsOfficer = res.outcome !== "APPROVE";
+        const c = await prisma.case.create({
+          data: { tenantId: t.id, pensionerId: p.id, year, status: "VERIFIED", priority: res.priority, confidence: res.confidence, riskFlags: res.redFlags, createdAt: when, updatedAt: new Date(when.getTime() + (needsOfficer ? 2 * 86400000 : 60000)), closedAt: new Date(when.getTime() + (needsOfficer ? 2 * 86400000 : 60000)), assignedOfficerId: needsOfficer ? officer?.id : null },
+        });
+        await prisma.decision.create({
+          data: { caseId: c.id, outcome: res.outcome, confidence: res.confidence, ruleVersionId: rule.id, inputs, checkScores: res.checks, reasonEn: res.reasonEn, reasonUr: res.reasonUr, auditTrace: { ...res, inputs }, decidedBy: "ai", createdAt: when },
+        });
+        if (needsOfficer && officer) {
+          await prisma.decision.create({
+            data: { caseId: c.id, outcome: "OFFICER_APPROVED", confidence: 1, ruleVersionId: rule.id, inputs, checkScores: [], reasonEn: "A pension officer checked your case and approved it. Your pension continues.", reasonUr: "پنشن افسر نے آپ کا کیس دیکھ کر منظور کر دیا۔ آپ کی پنشن جاری رہے گی۔", auditTrace: { officer: officer.id, history: true }, decidedBy: officer.id, createdAt: new Date(when.getTime() + 2 * 86400000) },
+          });
+        }
+      }
+    }
+  }
+}
+
 async function main() {
   const existing = await prisma.tenant.count();
   if (existing > 0) {
@@ -140,6 +188,7 @@ async function main() {
     await ensureExtraPeople();
     await ensureAccounts();
     await ensurePensionerPins();
+    await ensureHistory();
     return;
   }
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -243,6 +292,7 @@ async function main() {
   await ensureExtraPeople();
   await ensureAccounts();
   await ensurePensionerPins();
+  await ensureHistory();
   console.log(`Seeded 2 tenants and ${people.length} pensioner records. Demo accounts: see README.`);
 }
 
