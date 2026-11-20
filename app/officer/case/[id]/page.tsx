@@ -5,12 +5,15 @@ import AgentPanel from "@/components/AgentPanel";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 import { lookupIdentity } from "@/lib/case-service";
+import { audit } from "@/lib/audit";
 
 export default async function OfficerCase({ params }: { params: Promise<{ id: string }> }) {
   const user = await pageUser(["OFFICER"]);
   const { id } = await params;
   const c = await prisma.case.findUnique({ where: { id }, include: { pensioner: true, decisions: { orderBy: { createdAt: "desc" }, include: { ruleVersion: { select: { version: true } } } }, evidence: { orderBy: { createdAt: "asc" } } } });
   if (!c || c.tenantId !== user.tenantId) notFound();
+  // Need-to-know: every time staff open a widow's file is on the record (she can see it on her My data page).
+  await audit({ tenantId: user.tenantId, actorType: "USER", actorId: user.id, actorRole: user.role, action: "case_viewed", targetType: "pensioner", targetId: c.pensionerId, details: { caseId: c.id } });
   const identity = await lookupIdentity(c.pensionerId);
   // The AI panel shows the latest AI run, not an officer's later decision (which has no checks).
   const latest = c.decisions.find((d) => d.decidedBy === "ai");
