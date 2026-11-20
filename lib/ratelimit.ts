@@ -9,6 +9,6 @@ export async function rateLimit(bucket: string, max: number, windowSeconds: numb
   await prisma.rateLimitHit.create({ data: { bucket } });
   // Opportunistic cleanup of old rows (1 in 50 requests).
   if (Math.random() < 0.02) {
-    await prisma.rateLimitHit.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 3600_000) } } }).catch(() => undefined);
+    await prisma.rateLimitHit.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 25 * 3600_000) } } }).catch(() => undefined);
   }
 }

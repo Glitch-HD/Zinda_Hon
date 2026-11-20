@@ -16,6 +16,7 @@ export const POST = handle(async (req: Request) => {
   const { descriptor, livenessPassed } = Body.parse(await req.json());
   const { user, pensioner } = await readPensionerLogin();
   await rateLimit(`plogin:face:${pensioner.id}`, 5, 600);
+  await rateLimit(`plogin:face:day:${pensioner.id}`, 20, 86400);
   if (pensioner.enrolledFaceDescriptor.length !== 128) {
     return NextResponse.json({ error: "Your face is not registered yet. Please use your PIN.", errorUr: "آپ کا چہرہ ابھی رجسٹر نہیں۔ اپنا پن استعمال کریں۔", usePin: true }, { status: 409 });
   }

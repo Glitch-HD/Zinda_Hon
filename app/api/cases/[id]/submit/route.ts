@@ -5,7 +5,7 @@ import { loadCaseFor } from "@/lib/case-access";
 import { runDecision } from "@/lib/case-service";
 
 export const POST = handle(async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
-  const user = await requireUser(["PENSIONER", "HELPER", "OFFICER"]);
+  const user = await requireUser(["PENSIONER", "HELPER"]);
   const { id } = await ctx.params;
   await loadCaseFor(user, id);
   const { result, status } = await runDecision(id, user);

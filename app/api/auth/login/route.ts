@@ -12,7 +12,9 @@ const Body = z.object({ phone: z.string().min(5).max(20), password: z.string().m
 export const POST = handle(async (req: Request) => {
   const { phone, password } = Body.parse(await req.json());
   const cleanPhone = phone.replace(/\D/g, "");
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
   await rateLimit(`login:${cleanPhone}`, 10, 60);
+  await rateLimit(`login:ip:${ip}`, 30, 60);
   const user = await prisma.user.findUnique({ where: { phone: cleanPhone } });
   const ok = user && user.active && (await bcrypt.compare(password, user.passwordHash));
   if (!user || !ok) {

@@ -78,6 +78,26 @@ investigation and the officer watches each step live:
   5 clean) and shows whether it found each problem by itself, whether its suggestion was safe before and after
   the safety rules, and false alarms (`lib/agent-eval.ts`).
 
+## Security and insider fraud
+
+`npm run test:attack -- <url> <database-url>` runs 39 attacks against a fresh local copy (forged login tokens,
+other roles, other offices, helpers outside their families, staff faking proof, face swaps, replays, PIN
+guessing, forged pension books, API keys, audit tampering). All are blocked. Controls against insiders:
+
+- **Helper:** only sees families the office linked and who gave consent; cannot change bank account or CNIC;
+  10% of helper-done proofs go to an officer at random; a helper doing more than 15 proofs a year has every
+  further one checked; a pensioner seen only through a helper three years running goes to an officer.
+- **Officer:** cannot submit proof of life for anyone; cannot enrol a face already used by another pensioner;
+  replacing a face needs a reason and sends this year's case to an officer; cannot approve someone whose face
+  they enrolled in the last year; approving with open risks (death record, duplicate, no proof) needs a
+  written check of 30+ characters and appears on the auditor's "Risky actions" list.
+- **Replays:** the exact same face numbers twice, or numbers almost identical to the enrolment photo, go to an officer.
+- **Audit log:** append-only in the database itself (a trigger refuses UPDATE, DELETE and TRUNCATE).
+  To wipe demo data, drop the database or disable the trigger as the database owner.
+- **Limits we state openly:** face and liveness checks run on the phone, so a skilled attacker could send
+  made-up results; the record checks, replay checks, random spot checks and separation of duties are there
+  because of that. Production would use a certified liveness service.
+
 ## Evaluation
 
 `/evaluation` (admin presses Run) measures, on our own labelled data, with 95% error margins:

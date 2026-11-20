@@ -7,12 +7,13 @@ export default async function Auditor({ searchParams }: { searchParams: Promise<
   const user = await pageUser(["AUDITOR"]);
   const sp = await searchParams;
   const tab = sp.tab ?? "decisions";
-  const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "agent", label: "AI case assistant" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
+  const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "risky", label: "⚠️ Risky actions" }, { id: "agent", label: "AI case assistant" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
   return (
     <div>
       <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "How accurate the AI checks are, measured on labelled test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }]} />
       <div className="flex flex-wrap gap-2 mb-3">{tabs.map((t) => <a key={t.id} href={`?tab=${t.id}`} className={`btn ${tab === t.id ? "" : "btn-ghost"}`}>{t.label}</a>)}</div>
       {tab === "decisions" && <Decisions tenantId={user.tenantId} />}
+      {tab === "risky" && <Risky tenantId={user.tenantId} />}
       {tab === "agent" && <AgentRuns tenantId={user.tenantId} />}
       {tab === "log" && <Log tenantId={user.tenantId} actor={sp.actor} />}
       {tab === "consent" && <Consents tenantId={user.tenantId} />}
@@ -52,6 +53,48 @@ async function Log({ tenantId, actor }: { tenantId: string; actor?: string }) {
       <table className="data"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
         <tbody>{rows.map((r) => (
           <tr key={r.id}><td className="text-sm">{r.createdAt.toISOString().slice(0, 19).replace("T", " ")}</td><td>{r.actorType}{r.actorRole ? ` (${r.actorRole.toLowerCase()})` : ""}{r.actorType === "AGENT" || r.actorType === "AI" ? <div className="text-xs muted">{r.actorId}</div> : null}</td><td>{r.action}</td><td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td><td className="text-xs" style={{ maxWidth: 360 }}>{r.details ? JSON.stringify(r.details).slice(0, 220) : ""}</td></tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+// Insider-risk view: the actions a dishonest insider would need, in one place, so the auditor can
+// check each one. None of them is forbidden outright (real life needs exceptions); all are visible.
+const RISKY: Record<string, string> = {
+  officer_approve: "Officer approved despite open risks",
+  face_reenrolled: "Enrolled face replaced",
+  face_enrol_refused_same_face: "Tried to enrol a face that belongs to another pensioner",
+  correction_requested: "Asked to change bank account or CNIC",
+  correction_refused_sensitive_field: "Helper tried to change bank account or CNIC",
+  access_denied_no_consent: "Helper tried to open data without consent",
+  pensioner_login_forged_book: "Forged pension book used to log in",
+  login_pin_failed: "Wrong PIN",
+  officer_stop: "Pension stopped by an officer",
+};
+
+async function Risky({ tenantId }: { tenantId: string }) {
+  const rows = (await prisma.auditLog.findMany({ where: { OR: [{ tenantId }, { tenantId: null }], action: { in: Object.keys(RISKY) } }, orderBy: { createdAt: "desc" }, take: 300 }))
+    .filter((r) => {
+      const d = (r.details ?? {}) as { riskyApproval?: boolean; highRisk?: boolean };
+      if (r.action === "officer_approve") return d.riskyApproval === true;
+      if (r.action === "correction_requested") return d.highRisk === true;
+      return true;
+    })
+    .slice(0, 100);
+  if (!rows.length) return <div className="card"><p className="muted">No risky actions recorded.</p></div>;
+  return (
+    <div className="card overflow-x-auto">
+      <p className="text-sm muted mb-2">Everything a dishonest insider would need to do, in one list. The audit log cannot be edited or deleted, even from the database.</p>
+      <table className="data"><thead><tr><th>When</th><th>What</th><th>Who</th><th>Target</th><th>Details</th></tr></thead>
+        <tbody>{rows.map((r) => (
+          <tr key={r.id}>
+            <td className="text-sm">{r.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td>
+            <td><span className="badge badge-warn" style={{ whiteSpace: "normal" }}>{RISKY[r.action]}</span></td>
+            <td className="text-sm">{r.actorRole?.toLowerCase() ?? r.actorType.toLowerCase()}<div className="text-xs muted">{r.actorId?.slice(-6)}</div></td>
+            <td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td>
+            <td className="text-xs" style={{ maxWidth: 360 }}>{r.details ? JSON.stringify(r.details).slice(0, 220) : ""}</td>
+          </tr>
         ))}</tbody>
       </table>
     </div>

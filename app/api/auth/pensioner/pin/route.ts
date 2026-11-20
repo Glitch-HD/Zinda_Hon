@@ -13,7 +13,9 @@ const Body = z.object({ pin: z.string().regex(/^\d{4}$/) });
 export const POST = handle(async (req: Request) => {
   const { pin } = Body.parse(await req.json());
   const { user, pensioner } = await readPensionerLogin();
+  // 5 tries per 10 minutes and 10 per day: guessing a 4-digit PIN would take years, and every failure is logged.
   await rateLimit(`plogin:pin:${pensioner.id}`, 5, 600);
+  await rateLimit(`plogin:pin:day:${pensioner.id}`, 10, 86400);
   const ok = Boolean(user.pinHash) && (await bcrypt.compare(pin, user.pinHash!));
   await audit({ tenantId: pensioner.tenantId, actorType: "USER", actorId: user.id, actorRole: "PENSIONER", action: ok ? "login_pin" : "login_pin_failed", targetType: "pensioner", targetId: pensioner.id });
   if (!ok) return NextResponse.json({ error: "Wrong PIN. Try again.", errorUr: "پن غلط ہے۔ دوبارہ کوشش کریں۔" }, { status: 401 });

@@ -8,6 +8,10 @@ import { audit } from "@/lib/audit";
 import { faceDistance } from "@/lib/case-service";
 import { verifyPensionBookQr } from "@/lib/qr";
 import { nameSimilarity, normalizeCnic } from "@/lib/names";
+import { createHash } from "node:crypto";
+
+/** A fingerprint of the face numbers (not reversible to a face). A real selfie never repeats exactly. */
+const faceFingerprint = (d: number[]) => createHash("sha256").update(d.map((x) => x.toFixed(3)).join(",")).digest("hex").slice(0, 24);
 
 // Receives one piece of proof from the phone. Each submission carries a clientActionId made on the phone,
 // so if a weak connection makes the phone send it twice, the second copy is ignored (no duplicates).
@@ -22,7 +26,9 @@ const Body = z.discriminatedUnion("type", [
 ]);
 
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
-  const user = await requireUser(["PENSIONER", "HELPER", "OFFICER"]);
+  // Staff cannot submit proof of life for a pensioner: otherwise an officer could "prove" a dead person
+  // alive and have it approved. Only the pensioner, or a helper she has linked and consented to, can.
+  const user = await requireUser(["PENSIONER", "HELPER"]);
   const { id } = await ctx.params;
   const body = Body.parse(await req.json());
   const c = await loadCaseFor(user, id, body.type === "face_match" || body.type === "liveness" ? "face" : "case_status");
@@ -39,9 +45,13 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
     const enrolled = c.pensioner.enrolledFaceDescriptor;
     if (enrolled.length !== 128) throw new HttpError(409, "No enrolled face for this pensioner yet. An officer must enrol it first.");
     score = faceDistance(enrolled, body.descriptor);
-    details = { distance: score, quality: body.quality ?? null, note: "Only the 128-number face descriptor was received; no photo stored." };
+    const fp = faceFingerprint(body.descriptor);
+    const reused = await prisma.evidence.findFirst({ where: { type: "face_match", case: { pensionerId: c.pensionerId }, details: { path: ["fp"], equals: fp } }, select: { caseId: true } });
+    details = {
+      fp, reusedFrom: reused?.caseId ?? null, distance: score, quality: body.quality ?? null, note: "Only the 128-number face descriptor was received; no photo stored." };
   } else if (body.type === "liveness") {
-    const allDone = body.challenges.length >= 2 && body.challenges.every((ch) => ch.done);
+    // A person needs time to blink or turn; a script that just says "done" usually does not wait.
+    const allDone = body.challenges.length >= 2 && body.challenges.every((ch) => ch.done && ch.ms >= 150);
     passed = body.passed && allDone;
     details = { challenges: body.challenges, clientReported: body.passed };
   } else {

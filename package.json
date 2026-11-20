@@ -11,7 +11,8 @@
     "test": "vitest run",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "test:smoke": "node tests/smoke.mjs"
+    "test:smoke": "node tests/smoke.mjs",
+    "test:attack": "node tests/attack.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -110,9 +110,55 @@ export async function gatherInputs(caseId: string): Promise<{ inputs: DecisionIn
     },
     deathRecordFound: Boolean(identity.death),
     ageYears: identity.ageYears,
-    anomalies: identity.anomalies.filter((a) => a !== "possible_duplicate_pension"), // duplicates are already counted in identity
+    anomalies: [...identity.anomalies.filter((a) => a !== "possible_duplicate_pension"), ...(await fraudSignals(c, face.latest?.score ?? null, face.latest?.details ?? null))], // duplicates are already counted in identity
   };
   return { inputs, identity };
+}
+
+/** Share of helper-assisted proofs that an officer checks at random, even when everything looks fine. */
+export const HELPER_SPOT_CHECK_RATE = 0.1;
+/** A helper who completes more proofs than this in a year has every further one checked by an officer. */
+export const HELPER_YEARLY_LIMIT = 15;
+
+/** Stable 0..1 number per case, so a spot check cannot be dodged by submitting again. */
+function caseDraw(caseId: string) {
+  let h = 2166136261;
+  for (const ch of caseId) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return (h >>> 0) / 4294967295;
+}
+
+/**
+ * Insider and replay checks that need history, not just this year's evidence. Each returns a flag that
+ * sends the case to an officer; none of them stops a pension on its own.
+ * - face_numbers_reused: exactly the same face numbers were sent before (a replay of an old submission).
+ * - face_too_identical_possible_replay: a live selfie is never almost identical to the enrolment photo;
+ *   a replayed photo or copied numbers are.
+ * - face_reenrolled_this_year: someone replaced the enrolled face this year.
+ * - helper_spot_check: a random 10% of proofs done through a helper.
+ * - helper_high_volume: the helper has done unusually many proofs this year.
+ * - helper_only_3_years: the pensioner has not done proof herself for three years in a row.
+ */
+async function fraudSignals(c: { id: string; pensionerId: string; tenantId: string; year: number }, faceDistanceNow: number | null, faceDetails: unknown) {
+  const flags: string[] = [];
+  if ((faceDetails as { reusedFrom?: string | null } | null)?.reusedFrom) flags.push("face_numbers_reused");
+  if (faceDistanceNow !== null && faceDistanceNow < 0.08) flags.push("face_too_identical_possible_replay");
+  const yearStart = new Date(Date.UTC(c.year, 0, 1));
+  const reenrol = await prisma.auditLog.findFirst({ where: { action: "face_reenrolled", targetId: c.pensionerId, createdAt: { gte: yearStart } } });
+  if (reenrol) flags.push("face_reenrolled_this_year");
+
+  // Who submitted this year's selfie: the pensioner or a helper?
+  const faceStep = await prisma.auditLog.findFirst({ where: { action: "evidence_face_match", targetId: c.id }, orderBy: { createdAt: "desc" } });
+  if (faceStep?.actorRole === "HELPER" && faceStep.actorId) {
+    if (caseDraw(c.id) < HELPER_SPOT_CHECK_RATE) flags.push("helper_spot_check");
+    const helped = await prisma.auditLog.findMany({ where: { action: "evidence_face_match", actorId: faceStep.actorId, createdAt: { gte: yearStart } }, select: { targetId: true }, distinct: ["targetId"] });
+    if (helped.length > HELPER_YEARLY_LIMIT) flags.push("helper_high_volume");
+    const earlier = await prisma.case.findMany({ where: { pensionerId: c.pensionerId, year: { in: [c.year - 1, c.year - 2] } }, select: { id: true } });
+    if (earlier.length === 2) {
+      const byHelper = await Promise.all(earlier.map((e) => prisma.auditLog.findFirst({ where: { action: "evidence_face_match", targetId: e.id, actorRole: "HELPER" } })));
+      if (byHelper.every(Boolean)) flags.push("helper_only_3_years");
+    }
+  }
+  return flags;
 }
 
 /** Runs the decision engine on a case and records the result with a full audit trace. */
