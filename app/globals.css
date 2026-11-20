@@ -197,3 +197,109 @@ html[data-voice="1"] .tile[data-say]::after { content: "🔊"; position: absolut
 html[data-voice="1"] .tile { position: relative; }
 
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(10, 20, 16, .55); display: grid; place-items: center; padding: 16px; backdrop-filter: blur(3px); }
+
+/* =====================================================================
+   Look & feel v3: warm, local and hand-made rather than "another AI app".
+   Motifs: the mehrab (arch) from mosques and old Karachi doorways, girih-style
+   eight-point stars, and festival bunting (jhandiyan). Fraunces for English display.
+   ===================================================================== */
+:root {
+  --indigo: #3f4fb8; --indigo-soft: #e4e7fb;
+  --marigold: #d98a12; --marigold-soft: #fcefd6;
+  --rose: #c03a6b; --rose-soft: #fbe3ec;
+  --slate: #4b5563; --slate-soft: #e9e7e1;
+  --teal: #0f8a8a; --teal-soft: #d8f1ef;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%230d6b5a' stroke-opacity='.075' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+  --pattern-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/g%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --indigo: #9aa6ff; --indigo-soft: #23284a;
+    --marigold: #f2b45a; --marigold-soft: #3a2c16;
+    --rose: #f08cb0; --rose-soft: #3b1d2a;
+    --slate: #c3c9d1; --slate-soft: #2a2f33;
+    --teal: #4fd1c5; --teal-soft: #163634;
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%232fbf9f' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/g%3E%3C/svg%3E");
+  }
+}
+
+body {
+  background:
+    radial-gradient(900px 420px at 100% -5%, color-mix(in srgb, var(--brand-soft) 90%, transparent), transparent 65%),
+    radial-gradient(700px 360px at -10% 10%, color-mix(in srgb, var(--accent-soft) 90%, transparent), transparent 60%),
+    var(--pattern),
+    var(--bg);
+  background-attachment: fixed;
+}
+h1, h2, .display { font-family: "Fraunces", Georgia, serif; font-weight: 700; letter-spacing: -0.015em; }
+h3 { font-weight: 700; }
+
+/* Festival bunting under the top bar */
+.bunting {
+  height: 16px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='16' viewBox='0 0 150 16'%3E%3Cpath d='M0 0h150' stroke='%23a07a3c' stroke-width='1.2'/%3E%3Cpath d='M3 1h24L15 15z' fill='%230d6b5a'/%3E%3Cpath d='M33 1h24L45 15z' fill='%23e39a2d'/%3E%3Cpath d='M63 1h24L75 15z' fill='%23c03a6b'/%3E%3Cpath d='M93 1h24L105 15z' fill='%233f4fb8'/%3E%3Cpath d='M123 1h24L135 15z' fill='%2312876f'/%3E%3C/svg%3E") repeat-x;
+  opacity: .9;
+}
+
+@layer components {
+  .card { border-radius: 24px; box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, var(--shadow); }
+  .card-soft { background: color-mix(in srgb, var(--card-2) 85%, transparent); }
+  .btn { border-radius: 999px; }
+  .btn-big { border-radius: 26px; }
+  .input { border-radius: 16px; }
+
+  /* Mehrab: the arch shape */
+  .arch { border-radius: 999px 999px 26px 26px; }
+  .arch-sm { border-radius: 999px 999px 14px 14px; }
+
+  /* Coloured tiles: each kind of person has a colour */
+  .tile { border-radius: 26px; overflow: hidden; }
+  .tile-icon { border-radius: 999px 999px 16px 16px; }
+  .tile-col::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--tone, var(--brand)); }
+  .tile-col { position: relative; background: linear-gradient(180deg, var(--tone-soft, var(--brand-soft)) 0%, var(--card) 55%); }
+  .tile-col .tile-icon { background: var(--card); box-shadow: 0 0 0 2px var(--tone-soft), 0 8px 18px color-mix(in srgb, var(--tone, var(--brand)) 22%, transparent); width: 72px; height: 80px; font-size: 2.4rem; }
+  .tile-col .tile-en { font-family: "Fraunces", Georgia, serif; font-size: 1.05rem; color: var(--tone, var(--ink)); }
+  .tile-compact .tile-icon { background: var(--tone-soft, var(--brand-soft)); }
+  .tile:hover { border-color: var(--tone, var(--brand-2)); }
+  .tone-green { --tone: var(--brand); --tone-soft: var(--brand-soft); }
+  .tone-indigo { --tone: var(--indigo); --tone-soft: var(--indigo-soft); }
+  .tone-marigold { --tone: var(--marigold); --tone-soft: var(--marigold-soft); }
+  .tone-rose { --tone: var(--rose); --tone-soft: var(--rose-soft); }
+  .tone-slate { --tone: var(--slate); --tone-soft: var(--slate-soft); }
+  .tone-teal { --tone: var(--teal); --tone-soft: var(--teal-soft); }
+
+  .tile-hero {
+    position: relative;
+    background: var(--pattern-light), radial-gradient(420px 220px at 95% 0%, rgba(240,173,67,.45), transparent 60%), linear-gradient(135deg, #0b5c4d, #12876f);
+    box-shadow: 0 18px 40px rgba(13,107,90,.35);
+  }
+  .tile-hero .tile-icon { width: 84px; height: 96px; font-size: 3rem; background: rgba(255,255,255,.16); box-shadow: 0 0 0 2px rgba(255,255,255,.28) inset; }
+  .tile-hero .tile-en { font-family: "Fraunces", Georgia, serif; font-size: 1.2rem; }
+
+  /* Hero panel on the front page */
+  .hero-panel {
+    position: relative; overflow: hidden; color: #fff; padding: 34px 26px 28px;
+    border-radius: 999px 999px 32px 32px / 260px 260px 32px 32px;
+    background: var(--pattern-light), radial-gradient(500px 260px at 50% 0%, rgba(240,173,67,.55), transparent 62%), linear-gradient(180deg, #0f7a66 0%, #0b5446 100%);
+    box-shadow: 0 30px 60px rgba(11, 84, 70, .35);
+  }
+  .hero-panel .sun { position: absolute; left: 50%; top: -60px; width: 220px; height: 220px; transform: translateX(-50%); border-radius: 999px; background: radial-gradient(circle, rgba(255,214,140,.55), rgba(255,214,140,0) 65%); pointer-events: none; }
+  .hero-panel .muted { color: rgba(255,255,255,.82); }
+  .hero-step { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); border-radius: 999px 999px 18px 18px; padding: 16px 8px 12px; text-align: center; }
+  .hero-step .eyebrow { color: rgba(255,255,255,.7); }
+
+  .ornament { display: flex; align-items: center; gap: 10px; color: var(--accent); font-size: .9rem; }
+  .ornament::before, .ornament::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 60%, transparent), transparent); }
+
+  /* Status card on the pensioner home */
+  .status-arch { position: relative; overflow: hidden; border-radius: 999px 999px 28px 28px / 220px 220px 28px 28px; padding-top: 36px; background: var(--pattern), linear-gradient(180deg, var(--accent-soft), var(--card) 70%); }
+}
+/* Urdu always in Nastaliq, even inside headings that use the English display font. */
+.ur { font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", serif; }
+.brand-word { font-family: "Fraunces", Georgia, serif; font-weight: 800; }
+.tile-hero, a.tile-hero { color: #fff; }
+.tile-hero .tile-en, .tile-hero .tile-hint { color: rgba(255,255,255,.92); }
+@media (max-width: 767px) {
+  .hero-panel { padding: 24px 18px 22px; border-radius: 999px 999px 26px 26px / 180px 180px 26px 26px; }
+  .hero-panel .hero-steps { display: none; }
+}

@@ -24,17 +24,22 @@ export function setLang(l: Lang) {
   window.dispatchEvent(new Event(EVT));
 }
 
-export function voiceOn(): boolean {
-  return read(VOICE_KEY) === "1";
-}
-export function setVoice(on: boolean) {
-  write(VOICE_KEY, on ? "1" : "0");
-  document.documentElement.dataset.voice = on ? "1" : "0";
+// The voice guide is remembered separately for each kind of user on this device.
+// It is ON by default only for pensioners (who may not read); everyone else can switch it on.
+let role = "guest";
+export function setPrefsRole(r: string) {
+  role = r;
+  document.documentElement.dataset.voice = voiceOn() ? "1" : "0";
   window.dispatchEvent(new Event(EVT));
 }
-/** Turn the voice guide on the first time a pensioner arrives, unless they switched it off before. */
-export function voiceDefaultOn() {
-  if (read(VOICE_KEY) === null) setVoice(true);
+export function voiceOn(): boolean {
+  const v = read(`${VOICE_KEY}_${role}`);
+  return v === null ? role === "PENSIONER" : v === "1";
+}
+export function setVoice(on: boolean) {
+  write(`${VOICE_KEY}_${role}`, on ? "1" : "0");
+  document.documentElement.dataset.voice = on ? "1" : "0";
+  window.dispatchEvent(new Event(EVT));
 }
 
 export function onPrefsChange(fn: () => void) {

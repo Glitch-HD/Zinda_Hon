@@ -1,11 +1,8 @@
 "use client";
-import { useEffect } from "react";
 import VoiceCommand from "./ui/VoiceCommand";
-import { voiceDefaultOn } from "@/lib/client/prefs";
 
 // The pensioner's home page can be used by voice alone: she says what she wants.
 export default function PensionerVoice({ caseHref }: { caseHref: string | null }) {
-  useEffect(() => { voiceDefaultOn(); }, []);
   const go = (href: string) => () => { window.location.href = href; };
   const commands = [
     ...(caseHref ? [{ id: "start", words: ["شروع", "ثبوت", "زندہ", "تصویر", "start", "shuru", "saboot"], confirmUr: "ثبوتِ حیات شروع ہو رہا ہے۔", run: go(caseHref) }] : []),

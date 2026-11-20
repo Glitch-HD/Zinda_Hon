@@ -18,7 +18,7 @@ export default async function PensionerHome() {
         <div className="card">No pension record linked to this account.</div>
       ) : (
         <div className="space-y-6">
-          <div className="card text-center space-y-2 md:py-8" data-say={statusUr}>
+          <div className="card status-arch text-center space-y-2 md:pb-8" data-say={statusUr}>
             <div className="text-7xl">{c.status === "VERIFIED" ? "✅" : c.status === "WITH_OFFICER" ? "🧑‍💼" : "⏳"}</div>
             <p className="ur text-2xl md:text-3xl">{statusUr}</p>
             <p className="en muted">{c.year}: {statusEn}</p>
@@ -43,6 +43,7 @@ export default async function PensionerHome() {
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
             <Option
               icon="🛡️"
+              tone="rose"
               ur="کیا یہ پیغام اصلی ہے؟"
               en="Is this message real?"
               info={{ en: "Got an SMS or WhatsApp about your pension or a relief payment? Check it here before you call anyone or share a code.", ur: "پنشن یا امداد کا کوئی پیغام آیا ہے؟ کسی کو فون کرنے یا کوڈ بتانے سے پہلے یہاں جانچیں۔" }}
@@ -50,6 +51,7 @@ export default async function PensionerHome() {
             />
             <Option
               icon="❓"
+              tone="indigo"
               ur="سوال پوچھیں"
               en="Ask a question"
               info={{ en: "Ask about pension rules by speaking or typing. Answers come only from the official rulebook; if it is not there, an officer will help.", ur: "پنشن کے قوانین کے بارے میں بول کر سوال پوچھیں۔ جواب صرف سرکاری قواعد سے ملے گا۔" }}
@@ -57,6 +59,7 @@ export default async function PensionerHome() {
             />
             <Option
               icon="🔐"
+              tone="teal"
               ur="میری معلومات"
               en="My data"
               info={{ en: "See who can see your information, take back permission at any time, or ask to correct a mistake.", ur: "دیکھیں کون آپ کی معلومات دیکھ سکتا ہے، اجازت واپس لیں، یا غلطی درست کروائیں۔" }}

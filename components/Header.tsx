@@ -4,6 +4,7 @@ import LogoutButton from "./LogoutButton";
 import Logo from "./Logo";
 import Info from "./ui/Info";
 import SessionGuard from "./SessionGuard";
+import RoleSync from "./RoleSync";
 
 const ROLE_LABEL: Record<string, { en: string; ur: string; icon: string }> = {
   PENSIONER: { en: "Pensioner", ur: "پنشنر", icon: "👵🏽" },
@@ -24,7 +25,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
         <Logo size={44} />
         <div className="leading-tight">
           <div className="flex items-baseline gap-2">
-            <span className="text-lg font-extrabold">Zinda Hon</span>
+            <span className="text-xl brand-word">Zinda Hon</span>
             <span className="ur always text-base" style={{ lineHeight: 1.6 }}>زندہ ہوں</span>
           </div>
           <div className="muted text-xs flex flex-wrap items-center gap-1">
@@ -49,6 +50,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
         <LogoutButton />
       </nav>
       <SessionGuard userId={user.id} userName={user.name} />
+      <RoleSync role={user.role} />
     </header>
   );
 }

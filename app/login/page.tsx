@@ -5,7 +5,7 @@ import PensionerLogin from "@/components/PensionerLogin";
 import Option from "@/components/ui/Option";
 import VoiceCommand from "@/components/ui/VoiceCommand";
 import { speakUrdu } from "@/lib/client/voice";
-import { voiceDefaultOn } from "@/lib/client/prefs";
+import { setPrefsRole } from "@/lib/client/prefs";
 
 // Front page. Urdu first, one big picture button per kind of person, each with an ⓘ that explains it.
 // Pensioners never type: they log in with their pension book QR + face (or a PIN they can say or tap).
@@ -55,7 +55,6 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: p, password: pw }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Login failed");
-      if (data.home === "/pensioner") voiceDefaultOn();
       window.location.href = data.home;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Login failed. Check your connection.");
@@ -65,37 +64,39 @@ export default function LoginPage() {
   }
 
   function open(v: View) {
+    if (v !== "pensioner") setPrefsRole("guest");
     setError(null);
     setView(v);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function openPensioner() {
-    voiceDefaultOn();
+    setPrefsRole("PENSIONER");
     open("pensioner");
     void speakUrdu("اپنی پنشن بک کھولیں اور اس کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔");
   }
 
   return (
     <div className="grid gap-8 lg:gap-14 md:grid-cols-[1fr_1.05fr] md:items-start">
-      {/* Left on big screens, top on phones */}
-      <section className="text-center md:text-left space-y-4 md:sticky md:top-8">
-        <div className="flex justify-center md:justify-start"><Logo size={76} /></div>
-        <div>
-          <h1 className="ur always text-5xl md:text-6xl font-bold" style={{ lineHeight: 1.9 }}>زندہ ہوں</h1>
-          <p className="text-sm font-extrabold tracking-[.2em] uppercase" style={{ color: "var(--brand)" }}>Zinda Hon</p>
+      {/* Left on big screens, top on phones: an arch (mehrab) shaped welcome panel */}
+      <section className="hero-panel text-center space-y-4 md:sticky md:top-8">
+        <div className="sun" aria-hidden="true" />
+        <div className="relative flex justify-center"><div className="rounded-[22px] p-1.5" style={{ background: "rgba(255,255,255,.18)" }}><Logo size={70} /></div></div>
+        <div className="relative">
+          <h1 className="ur always text-5xl md:text-6xl font-bold" style={{ lineHeight: 1.9, fontFamily: "var(--font-ur, 'Noto Nastaliq Urdu')" }}>زندہ ہوں</h1>
+          <p className="text-xs font-extrabold tracking-[.35em] uppercase" style={{ color: "#f6c66f" }}>Zinda Hon</p>
         </div>
-        <p className="ur text-xl md:text-2xl">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
-        <p className="en muted md:text-lg">Yearly pension proof-of-life from home. No forms, no queues, no fingerprints.</p>
-        <button className="btn btn-ghost" onClick={() => speakUrdu(GREETING)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
-
-        <div className="hidden md:grid grid-cols-3 gap-3 pt-4">
+        <p className="ur text-xl md:text-2xl relative">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
+        <p className="en muted md:text-lg relative" style={{ fontFamily: "Fraunces, Georgia, serif" }}>Yearly pension proof-of-life from home. No forms, no queues, no fingerprints.</p>
+        <button className="btn relative" style={{ background: "rgba(255,255,255,.95)", color: "#0b5446" }} onClick={() => speakUrdu(GREETING)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+        <div className="hero-steps ornament relative" style={{ color: "#f6c66f" }}>✦</div>
+        <div className="hero-steps relative grid grid-cols-3 gap-2 sm:gap-3">
           {HOW.map((h, i) => (
-            <div key={h.en} className="card card-soft text-center space-y-1">
-              <div className="eyebrow">Step {i + 1}</div>
-              <div className="text-4xl">{h.icon}</div>
-              <div className="ur font-semibold">{h.ur}</div>
-              <div className="en text-sm">{h.en}</div>
+            <div key={h.en} className="hero-step space-y-1">
+              <div className="eyebrow">{i + 1}</div>
+              <div className="text-3xl">{h.icon}</div>
+              <div className="ur text-sm font-semibold" style={{ whiteSpace: "normal", lineHeight: 1.9 }}>{h.ur}</div>
+              <div className="en text-xs">{h.en}</div>
             </div>
           ))}
         </div>
@@ -137,6 +138,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 gap-4">
               <Option
                 icon="🤝"
+                tone="indigo"
                 ur="میں مددگار ہوں"
                 en="I help families"
                 info={{ en: "For social workers and relatives who help several pensioners from one phone. Each family must give permission first.", ur: "سماجی کارکن یا رشتہ دار جو ایک فون سے کئی خاندانوں کی مدد کرتے ہیں۔ ہر خاندان کی اجازت ضروری ہے۔" }}
@@ -144,6 +146,7 @@ export default function LoginPage() {
               />
               <Option
                 icon="🏪"
+                tone="marigold"
                 ur="میں دکاندار ہوں"
                 en="I run a shop"
                 info={{ en: "For shopkeepers and mobile-wallet agents. Check if a 'pension' or 'relief payment' message is a scam before anyone pays.", ur: "دکاندار اور موبائل والیٹ ایجنٹ۔ پیسے دینے سے پہلے جانچیں کہ پنشن یا امداد کا پیغام دھوکہ تو نہیں۔" }}
@@ -154,6 +157,7 @@ export default function LoginPage() {
             <Option
               variant="compact"
               icon="🏛️"
+              tone="slate"
               ur="پنشن آفس عملہ"
               en="Pension office staff"
               info={{ en: "For pension officers, admins and auditors. Officers review difficult cases; admins change rules; auditors read the full log.", ur: "پنشن افسر، ایڈمن اور آڈیٹر کے لیے۔" }}

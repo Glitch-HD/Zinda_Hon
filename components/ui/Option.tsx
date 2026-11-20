@@ -15,11 +15,13 @@ type Props = {
   href?: string;
   onClick?: () => void;
   variant?: "hero" | "normal" | "compact";
+  /** Colour family of the tile, so each kind of person has their own colour. */
+  tone?: "green" | "indigo" | "marigold" | "rose" | "slate" | "teal";
   disabled?: boolean;
 };
 
-export default function Option({ icon, ur, en, hintEn, hintUr, info, say, href, onClick, variant = "normal", disabled }: Props) {
-  const cls = `tile ${variant === "hero" ? "tile-hero" : ""} ${variant === "compact" ? "tile-compact" : ""} ${variant === "normal" ? "tile-col" : ""}`;
+export default function Option({ icon, ur, en, hintEn, hintUr, info, say, href, onClick, variant = "normal", disabled, tone = "green" }: Props) {
+  const cls = `tile tone-${tone} ${variant === "hero" ? "tile-hero" : ""} ${variant === "compact" ? "tile-compact" : ""} ${variant === "normal" ? "tile-col" : ""}`;
   const body = (
     <>
       <span className="tile-icon">{icon}</span>

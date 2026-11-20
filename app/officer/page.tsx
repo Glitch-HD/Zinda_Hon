@@ -21,9 +21,10 @@ export default async function OfficerQueue() {
     orderBy: { updatedAt: "desc" },
     take: 50,
   });
-  // Pensioners who have the app but no face yet (the list column can be empty or NULL, so filter here).
+  // Every active pensioner without a face yet: those with their own app account AND those a helper
+  // acts for. (The list column can be empty or NULL, so filter here.)
   const notEnrolled = (await prisma.pensioner.findMany({
-    where: { tenantId: user.tenantId, userId: { not: null } },
+    where: { tenantId: user.tenantId, status: "active" },
     select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true },
     orderBy: { pensionNo: "asc" },
   })).filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
@@ -36,7 +37,7 @@ export default async function OfficerQueue() {
         <div className="card mb-5" style={{ borderColor: "var(--accent)", borderWidth: 2 }}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <h2 className="text-lg font-bold">📷 Faces waiting to be enrolled ({notEnrolled.length})</h2>
-            <span className="muted text-sm">These pensioners have the app but cannot do the face check until you enrol them once.</span>
+            <span className="muted text-sm">They (or their helper) cannot do the face check until you enrol them once.</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {notEnrolled.map((p) => <Link key={p.id} href={`/officer/enroll?p=${p.id}`} className="btn btn-accent btn-sm">Enrol {p.name} · {p.pensionNo}</Link>)}
