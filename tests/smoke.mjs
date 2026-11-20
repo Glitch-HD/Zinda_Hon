@@ -66,6 +66,18 @@ await widow.call(`/api/consents/${helperConsent.id}`, { method: "POST", body: JS
 const scam = await (await widow.call("/api/messages/check", { method: "POST", body: JSON.stringify({ text: "Aap ki pension ki imdadi raqam jari. Fee 500 Easypaisa par bhejain aur apna PIN code batain: 03001234567" }) })).json();
 ok(scam.label === "scam" || scam.route === "human_review", `obvious scam is not called genuine (got ${scam.label}/${scam.route})`);
 
+// The officer's AI case assistant: streams steps, never shows "approve" while a serious fact is open,
+// and cannot be run by a pensioner.
+ok((await widow.call(`/api/cases/${caseId}/agent`, { method: "POST" })).status === 403, "pensioner cannot run the case assistant (403)");
+const agentRes = await officer.call(`/api/cases/${caseId}/agent`, { method: "POST" });
+const events = (await agentRes.text()).trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+const final = events.find((e) => e.type === "report");
+ok(agentRes.ok && events[0]?.type === "start" && events.some((e) => e.type === "step") && Boolean(final), "case assistant streams its steps and a report");
+const tools = new Set(events.filter((e) => e.type === "step").map((e) => e.step.tool));
+ok(["case_overview", "check_nadra", "check_death_registry", "check_bank_activity"].every((t) => tools.has(t)), "case assistant ran the required checks");
+ok(final && (final.report.findings.every((f) => tools.has(f.source))), "every finding cites a check that really ran");
+ok(final && !(final.report.recommendation === "approve" && final.report.findings.some((f) => f.severity === "serious")), "no 'approve' next to a serious finding");
+
 // Public API needs a key.
 ok((await fetch(`${BASE}/api/v1/mock/nadra/0000010000012`)).status === 401, "public API rejects requests without a key");
 

@@ -33,6 +33,7 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | Face match (face-api, 128-number descriptors) and liveness (MediaPipe blink / head turn) | **Real**, runs in the browser. Not bank-grade anti-spoofing. |
 | Pension book QR signature check (HMAC) | **Real** |
 | Scam classifier, rulebook answers, explanations (Groq gpt-oss-120b, or Claude when its key is set, plus warning signs) | **Real** AI calls |
+| Officer's AI case assistant (an agent that calls tools) | **Real** AI tool calling (Groq gpt-oss-120b, or Claude); a fixed checklist runs when no key is set or the AI fails |
 | Urdu speech-to-text (Whisper on Groq) and text-to-speech (Azure neural voice) | **Real** services when keys are set; falls back to the phone's own voice |
 | NADRA, bank / Raast, death registry | **Simulated** mock services with deliberately messy data |
 | Pension program, amounts, rulebook | **Simulated** (our own invented rules) |
@@ -46,7 +47,8 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | JWT login + role-based access (6 roles) | `lib/auth.ts`, every route calls `requireUser([...])` |
 | Dashboard, case management (create / assign / escalate / close) | `/pensioner`, `/helper`, `/officer`, `lib/case-service.ts` |
 | Public REST API with API keys + OpenAPI docs | `/api/v1/*`, `/docs`, keys created in `/admin` |
-| Audit log of every user, AI and agent action | `lib/audit.ts`, viewable at `/auditor` |
+| Audit log of every user, AI and agent action | `lib/audit.ts`, viewable at `/auditor` (filter by actor; "AI case assistant" tab lists every agent run) |
+| Autonomous agent with tool calling | Officer case page → "Investigate with AI assistant": `lib/agent.ts`, `lib/agent-guardrails.ts`, `POST /api/cases/:id/agent` |
 | Consent: see, share, withdraw, correct | `/consent`, `lib/consent.ts` (checked live on every request) |
 | Mock identity, payment and data services | `/api/v1/mock/*`, seeded in `prisma/seed.ts` |
 | Platform extras: rule editor, officer queue (priority + confidence), offline mode, multi-tenant, rate limiting | `/admin`, `/officer`, `public/sw.js` + `lib/client/queue.ts`, `tenantId` on every record, `lib/ratelimit.ts` |
@@ -54,6 +56,24 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | Bonus: Helper Mode, Offline-First Sync, Digital Twin, Scam Map | `/helper`, `lib/client/queue.ts`, `/admin` → "Test on past cases first", `/scam-map` |
 | Database with migrations | `prisma/schema.prisma`, `prisma/migrations/` |
 | Monitoring, logs, tests | `/api/health`, Vercel logs, `npm test` (unit), `npm run test:smoke` (end-to-end) |
+
+## The officer's AI case assistant (agent)
+
+On any case page an officer can press **🕵️ Investigate with AI assistant**. The assistant plans its own
+investigation and the officer watches each step live:
+
+- **Tools it can call (read-only):** `case_overview`, `check_nadra`, `check_death_registry`, `check_bank_activity`,
+  `find_possible_duplicates`, `past_years`, `search_rulebook`, then `submit_report`.
+- **It cannot act.** No tool approves, stops or changes anything. The officer decides.
+- **Privacy:** CNICs and account numbers reach the model masked to the last 4 digits; face data never leaves (only "matched / not matched").
+- **Guardrails in plain code** (`lib/agent-guardrails.ts`, unit-tested), applied after the model answers:
+  1. A report is refused until NADRA, the death registry and the bank have been checked.
+  2. Findings that cite a check the assistant never ran are removed.
+  3. Serious facts from the records (death record, money used after death, duplicates, failed proof, ...) are always added if the model left them out.
+  4. "Approve" is never shown while a serious fact is open; the model's approving words are replaced and the officer sees what was overruled.
+  5. Confidence is capped at 60% while a serious fact is open.
+- **Limits:** at most 10 tool calls and 50 seconds; if the AI is slow, fails or no key is set, a fixed checklist finishes the job and says so.
+- **Audit:** the request, every tool call and the report are audit-log rows (`AGENT` actor), and each run is saved (`AgentRun`).
 
 ## Demo accounts
 

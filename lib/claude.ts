@@ -9,7 +9,7 @@ import { z } from "zod";
 export const CLAUDE_MODEL = "claude-opus-5-5";
 
 let client: Anthropic | null = null;
-function getClient() {
+export function getClient() {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   if (!client) client = new Anthropic({ timeout: 45_000, maxRetries: 2 });
   return client;
@@ -54,16 +54,16 @@ async function structured<T extends z.ZodType>(schema: T, system: string, user: 
 
 // Models to try on Groq, in order. Groq retires models from time to time, so if one is gone
 // (or busy) the next is tried. GROQ_TEXT_MODEL, if set, is tried first.
-const GROQ_MODELS = [...new Set([GROQ_TEXT_MODEL, "llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"])];
+export const GROQ_MODELS = [...new Set([GROQ_TEXT_MODEL, "llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"])];
 
 /** The last Groq problem, for the admin "AI check" page. Never contains the key. */
 export let lastAiError: string | null = null;
 
-type JsonSchema = { type?: string; properties?: Record<string, JsonSchema>; items?: JsonSchema; maxLength?: number; maxItems?: number; minimum?: number; maximum?: number; enum?: unknown[] };
+export type JsonSchema = { type?: string; properties?: Record<string, JsonSchema>; items?: JsonSchema; maxLength?: number; maxItems?: number; minimum?: number; maximum?: number; enum?: unknown[] };
 
 /** Small models sometimes write a sentence too long or a number out of range. Trim and clamp to the
  *  schema before validating, instead of throwing a good answer away. Wrong labels are NOT fixed here. */
-function fitToSchema(v: unknown, js: JsonSchema): unknown {
+export function fitToSchema(v: unknown, js: JsonSchema): unknown {
   if (js.type === "object" && v && typeof v === "object" && js.properties) {
     const out: Record<string, unknown> = {};
     for (const [k, sub] of Object.entries(js.properties)) if (k in (v as object)) out[k] = fitToSchema((v as Record<string, unknown>)[k], sub);
@@ -82,7 +82,7 @@ function fitToSchema(v: unknown, js: JsonSchema): unknown {
   return v;
 }
 
-function parseJson(raw: string): unknown {
+export function parseJson(raw: string): unknown {
   const t = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "");
   const a = t.indexOf("{"), b = t.lastIndexOf("}");
   return JSON.parse(a >= 0 && b > a ? t.slice(a, b + 1) : t);

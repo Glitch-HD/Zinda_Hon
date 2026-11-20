@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import OfficerActions from "@/components/OfficerActions";
+import AgentPanel from "@/components/AgentPanel";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 import { lookupIdentity } from "@/lib/case-service";
@@ -13,6 +14,11 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
   const identity = await lookupIdentity(c.pensionerId);
   // The AI panel shows the latest AI run, not an officer's later decision (which has no checks).
   const latest = c.decisions.find((d) => d.decidedBy === "ai");
+  const lastRun = await prisma.agentRun.findFirst({ where: { caseId: c.id, status: "done" }, orderBy: { createdAt: "desc" } });
+  const saved = lastRun?.report as (Record<string, unknown> & { guardrails?: unknown[] }) | null;
+  const initialAgent = lastRun && saved
+    ? { report: saved as never, guardrails: (saved.guardrails ?? []) as never, mode: lastRun.mode as "ai" | "checklist", model: lastRun.model, ms: lastRun.ms ?? 0, when: lastRun.createdAt.toISOString().slice(0, 16).replace("T", " ") + " UTC" }
+    : null;
   const trace = (latest?.auditTrace ?? {}) as { checks?: { check: string; status: string; score: number | null; detail: string }[]; confidence?: number; requiredConfidence?: number };
 
   return (
@@ -60,6 +66,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
           <OfficerActions caseId={c.id} closed={c.status === "VERIFIED" || c.status === "STOPPED"} />
         </div>
       </div>
+      <AgentPanel caseId={c.id} initial={initialAgent} />
       <div className="card mt-4">
         <h3 className="font-semibold">Decision history</h3>
         <table className="data">

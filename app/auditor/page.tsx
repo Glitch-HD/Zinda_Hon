@@ -3,16 +3,18 @@ import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 
 // Read-only view for the auditor: every action, every AI decision with its full trace, every consent change.
-export default async function Auditor({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+export default async function Auditor({ searchParams }: { searchParams: Promise<{ tab?: string; actor?: string }> }) {
   const user = await pageUser(["AUDITOR"]);
-  const tab = (await searchParams).tab ?? "decisions";
-  const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
+  const sp = await searchParams;
+  const tab = sp.tab ?? "decisions";
+  const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "agent", label: "AI case assistant" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
   return (
     <div>
       <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "How accurate the AI checks are, measured on labelled test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }]} />
-      <div className="flex gap-2 mb-3">{tabs.map((t) => <a key={t.id} href={`?tab=${t.id}`} className={`btn ${tab === t.id ? "" : "btn-ghost"}`}>{t.label}</a>)}</div>
+      <div className="flex flex-wrap gap-2 mb-3">{tabs.map((t) => <a key={t.id} href={`?tab=${t.id}`} className={`btn ${tab === t.id ? "" : "btn-ghost"}`}>{t.label}</a>)}</div>
       {tab === "decisions" && <Decisions tenantId={user.tenantId} />}
-      {tab === "log" && <Log tenantId={user.tenantId} />}
+      {tab === "agent" && <AgentRuns tenantId={user.tenantId} />}
+      {tab === "log" && <Log tenantId={user.tenantId} actor={sp.actor} />}
       {tab === "consent" && <Consents tenantId={user.tenantId} />}
     </div>
   );
@@ -36,14 +38,49 @@ async function Decisions({ tenantId }: { tenantId: string }) {
   );
 }
 
-async function Log({ tenantId }: { tenantId: string }) {
-  const rows = await prisma.auditLog.findMany({ where: { OR: [{ tenantId }, { tenantId: null }] }, orderBy: { createdAt: "desc" }, take: 200 });
+const ACTORS = ["USER", "AI", "AGENT", "SYSTEM", "API_CLIENT"] as const;
+
+async function Log({ tenantId, actor }: { tenantId: string; actor?: string }) {
+  const only = ACTORS.find((a) => a === actor);
+  const rows = await prisma.auditLog.findMany({ where: { OR: [{ tenantId }, { tenantId: null }], ...(only ? { actorType: only } : {}) }, orderBy: { createdAt: "desc" }, take: 200 });
   return (
     <div className="card overflow-x-auto">
+      <p className="text-sm mb-2">Show:{" "}
+        <a href="?tab=log" className={`badge mr-1 ${only ? "" : "badge-ok"}`}>everyone</a>
+        {ACTORS.map((a) => <a key={a} href={`?tab=log&actor=${a}`} className={`badge mr-1 ${only === a ? "badge-ok" : ""}`}>{a === "USER" ? "people" : a === "AI" ? "AI engine" : a === "AGENT" ? "AI case assistant" : a === "SYSTEM" ? "system" : "API clients"}</a>)}
+      </p>
       <table className="data"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
         <tbody>{rows.map((r) => (
-          <tr key={r.id}><td className="text-sm">{r.createdAt.toISOString().slice(0, 19).replace("T", " ")}</td><td>{r.actorType}{r.actorRole ? ` (${r.actorRole.toLowerCase()})` : ""}</td><td>{r.action}</td><td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td><td className="text-xs" style={{ maxWidth: 360 }}>{r.details ? JSON.stringify(r.details).slice(0, 220) : ""}</td></tr>
+          <tr key={r.id}><td className="text-sm">{r.createdAt.toISOString().slice(0, 19).replace("T", " ")}</td><td>{r.actorType}{r.actorRole ? ` (${r.actorRole.toLowerCase()})` : ""}{r.actorType === "AGENT" || r.actorType === "AI" ? <div className="text-xs muted">{r.actorId}</div> : null}</td><td>{r.action}</td><td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td><td className="text-xs" style={{ maxWidth: 360 }}>{r.details ? JSON.stringify(r.details).slice(0, 220) : ""}</td></tr>
         ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+// Every run of the officer's AI case assistant: who asked, what it checked, what it suggested,
+// and whether the safety rules had to correct it.
+async function AgentRuns({ tenantId }: { tenantId: string }) {
+  const runs = await prisma.agentRun.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 50, include: { case: { select: { year: true, pensioner: { select: { pensionNo: true } } } } } });
+  if (!runs.length) return <div className="card"><p className="muted">No officer has used the AI case assistant yet.</p></div>;
+  return (
+    <div className="card overflow-x-auto">
+      <p className="text-sm muted mb-2">The assistant only reads records and advises. Each tool it called is also a separate AGENT row in the audit log.</p>
+      <table className="data"><thead><tr><th>When</th><th>Case</th><th>Mode</th><th>Checks it ran</th><th>Suggested</th><th>Safety corrections</th></tr></thead>
+        <tbody>{runs.map((r) => {
+          const steps = (Array.isArray(r.steps) ? r.steps : []) as { tool?: string }[];
+          const rep = (r.report ?? {}) as { recommendation?: string; confidence?: number; guardrails?: { rule: string }[] };
+          return (
+            <tr key={r.id}>
+              <td className="text-sm">{r.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td>
+              <td>{r.case.pensioner.pensionNo} · {r.case.year}</td>
+              <td className="text-sm">{r.mode === "ai" ? `AI (${r.model})` : r.model ? `checklist after ${r.model.replace(" → checklist", "")}` : "checklist"}{r.status !== "done" ? <span className="badge badge-danger ml-1">{r.status}</span> : null}</td>
+              <td className="text-xs">{steps.map((s) => s.tool?.replaceAll("_", " ")).join(", ")}</td>
+              <td>{rep.recommendation ? `${rep.recommendation.replaceAll("_", " ")} (${Math.round((rep.confidence ?? 0) * 100)}%)` : "–"}</td>
+              <td className="text-xs">{rep.guardrails?.length ? rep.guardrails.map((g) => g.rule.replaceAll("_", " ")).join(", ") : "none"}</td>
+            </tr>
+          );
+        })}</tbody>
       </table>
     </div>
   );

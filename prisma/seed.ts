@@ -144,10 +144,22 @@ async function ensureHistory() {
     const officer = await prisma.user.findFirst({ where: { tenantId: t.id, role: "OFFICER" } });
     if (!rule) continue;
     const pensioners = await prisma.pensioner.findMany({ where: { tenantId: t.id }, orderBy: { pensionNo: "asc" } });
+    const deaths = await prisma.mockDeathRecord.findMany();
     let i = 0;
     for (const p of pensioners) {
+      // No made-up "verified" history after a recorded death: that would read as the system paying a dead person.
+      const died = deaths.find((d) => d.cnic && p.cnicMock && d.cnic === p.cnicMock)?.dateOfDeath ?? null;
       for (const year of [2024, 2025]) {
         i++;
+        if (died && Date.UTC(year, 10, 1) > died.getTime()) {
+          // Earlier seeds did make such rows; remove only those (seed history: no evidence, AI + seeded officer decisions only).
+          const old = await prisma.case.findUnique({ where: { pensionerId_year: { pensionerId: p.id, year } }, include: { _count: { select: { evidence: true, agentRuns: true, steps: true } } } });
+          if (old && old._count.evidence === 0 && old._count.agentRuns === 0 && old._count.steps === 0 && old.status === "VERIFIED") {
+            await prisma.decision.deleteMany({ where: { caseId: old.id } });
+            await prisma.case.delete({ where: { id: old.id } });
+          }
+          continue;
+        }
         const exists = await prisma.case.findUnique({ where: { pensionerId_year: { pensionerId: p.id, year } } });
         if (exists) continue;
         const r = (k: number) => ((i * 37 + k * 101) % 97) / 97; // 0..1, fixed per person and year

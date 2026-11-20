@@ -141,6 +141,7 @@ model Case {
   closedAt         DateTime?
 
   steps     CaseStep[]
+  agentRuns AgentRun[]
   evidence  Evidence[]
   decisions Decision[]
 
@@ -333,4 +334,23 @@ model MockDeathRecord {
   name        String
   dateOfDeath DateTime
   registeredAt String
+}
+
+// One investigation by the officer's AI case assistant (an agent that calls read-only tools).
+// It only advises: it can never approve, stop or change a case.
+model AgentRun {
+  id          String   @id @default(cuid())
+  tenantId    String
+  caseId      String
+  case        Case     @relation(fields: [caseId], references: [id])
+  startedById String
+  mode        String // "ai" (model chose the steps) or "checklist" (AI not available: fixed steps)
+  model       String?
+  status      String   @default("running") // running, done, failed
+  steps       Json     @default("[]")
+  report      Json?
+  ms          Int?
+  createdAt   DateTime @default(now())
+
+  @@index([caseId, createdAt])
 }
