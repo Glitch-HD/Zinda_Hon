@@ -82,7 +82,8 @@ describe("checklistReport", () => {
   });
   it("never approves before this year's proof is given", () => {
     expect(checklistReport({ ...NO_FACTS, proofMissing: true }, allChecks, "").recommendation).toBe("ask_more_proof");
-    expect(applyGuardrails(clean, { ...NO_FACTS, proofMissing: true }, allChecks).report.recommendation).toBe("officer_review");
+    expect(applyGuardrails(clean, { ...NO_FACTS, proofMissing: true }, allChecks).report.recommendation).toBe("ask_more_proof");
+    expect(applyGuardrails(clean, { ...NO_FACTS, proofMissing: true, duplicates: 1 }, allChecks).report.recommendation).toBe("officer_review");
   });
   it("sends mixed problems to the officer", () => {
     expect(checklistReport({ ...NO_FACTS, faceMismatch: true, duplicates: 1 }, allChecks, "").recommendation).toBe("officer_review");

@@ -407,4 +407,5 @@ export async function runCaseAgent(caseId: string, user: SessionUser, emit: (e: 
     details: { runId: run.id, mode: finalMode, recommendation: safe.recommendation, confidence: safe.confidence, toolsUsed: [...called], guardrails: notes.map((n) => n.rule), ms },
   });
   emit({ type: "report", report: safe, guardrails: notes, mode: finalMode, model, ms, runId: run.id });
+  return { runId: run.id, raw: report, report: safe, notes, facts: { ...ctx.facts }, called: [...called], mode: finalMode, model, ms, toolCalls: steps.length };
 }

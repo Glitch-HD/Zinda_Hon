@@ -102,11 +102,14 @@ export function applyGuardrails(report: AgentReport, facts: CaseFacts, called: S
   if (serious.length > 0 && r.recommendation === "approve") {
     // The model's own words were written for "approve", so they would mislead next to the corrected
     // suggestion. Replace them with the plain facts; the officer still sees what was overruled.
-    r.recommendation = "officer_review";
+    // If the only open problems are about this year's proof (no selfie yet, a failed blink test, a
+    // face or pension-book mismatch), the fix is to ask for proof again; otherwise an officer must look.
+    const PROOF = new Set<keyof CaseFacts>(["proofMissing", "livenessFailed", "faceMismatch", "documentInvalid"]);
+    r.recommendation = serious.every((s) => PROOF.has(s.key)) ? "ask_more_proof" : "officer_review";
     r.headline = `${serious.length} serious issue(s) found. The assistant's "approve" was overruled.`;
-    r.summary_en = `Safety check: ${serious.map((s) => s.text).join(" ")} The assistant had suggested approving; an officer must look at this case.`.slice(0, 800);
+    r.summary_en = `Safety check: ${serious.map((s) => s.text).join(" ")} The assistant had suggested approving; ${r.recommendation === "ask_more_proof" ? "ask the pensioner for this year's proof first." : "an officer must look at this case."}`.slice(0, 800);
     r.summary_ur = "حفاظتی جانچ: ریکارڈ میں سنگین مسئلہ ملا ہے۔ اے آئی نے منظوری کی تجویز دی تھی، مگر افسر کو خود دیکھنا ہوگا۔";
-    notes.push({ rule: "no_approve_with_open_risk", detail: "The assistant suggested approving, but a serious fact is open, so the suggestion was changed to officer review." });
+    notes.push({ rule: "no_approve_with_open_risk", detail: `The assistant suggested approving, but a serious fact is open, so the suggestion was changed to ${r.recommendation === "ask_more_proof" ? "asking for more proof" : "officer review"}.` });
   }
   if (serious.length > 0 && r.confidence > 0.6 && r.recommendation !== "investigate_stop") {
     r.confidence = 0.6;

@@ -74,6 +74,20 @@ investigation and the officer watches each step live:
   5. Confidence is capped at 60% while a serious fact is open.
 - **Limits:** at most 10 tool calls and 50 seconds; if the AI is slow, fails or no key is set, a fixed checklist finishes the job and says so.
 - **Audit:** the request, every tool call and the report are audit-log rows (`AGENT` actor), and each run is saved (`AgentRun`).
+- **Measured:** `/evaluation` runs the assistant on 10 labelled cases (5 with a problem planted in the demo data,
+  5 clean) and shows whether it found each problem by itself, whether its suggestion was safe before and after
+  the safety rules, and false alarms (`lib/agent-eval.ts`).
+
+## Evaluation
+
+`/evaluation` (admin presses Run) measures, on our own labelled data, with 95% error margins:
+
+- **Scam checker:** 100 invented messages (`data/eval-messages.ts`): 55 scams, 45 genuine; English, Urdu script and
+  Roman Urdu; 27 deliberately hard ones (real bank messages that mention OTPs, scams with no warning words).
+  Shows catches, false alarms, results by language and difficulty, and every wrong answer. Only the latest run counts.
+- **AI case assistant:** see above.
+- Runs go a few items per request with a progress bar, to stay inside the hosting time limit and Groq's free rate limit.
+  Test-set messages are kept off the Scam Map and the officer's message queue unless asked for.
 
 ## Demo accounts
 

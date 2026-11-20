@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 
 export default async function MessageReviews() {
   const user = await pageUser(["OFFICER"]);
-  const msgs = await prisma.checkedMessage.findMany({ where: { tenantId: user.tenantId }, orderBy: [{ reviewedLabel: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }], take: 100 });
+  const msgs = await prisma.checkedMessage.findMany({ where: { tenantId: user.tenantId, submittedById: { not: null } }, orderBy: [{ reviewedLabel: { sort: "asc", nulls: "first" } }, { createdAt: "desc" }], take: 100 });
   return (
     <div>
       <Header user={user} links={[{ href: "/officer", label: "← Queue" }]} />

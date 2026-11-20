@@ -94,7 +94,7 @@ async function structuredGroq<T extends z.ZodType>(schema: T, system: string, us
   const problems: string[] = [];
   for (const model of GROQ_MODELS) {
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const res = await fetch(`${process.env.GROQ_BASE_URL ?? "https://api.groq.com/openai/v1"}/chat/completions`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY}` },
         signal: AbortSignal.timeout(25_000),

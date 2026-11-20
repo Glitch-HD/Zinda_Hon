@@ -3,9 +3,13 @@ import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 
 // Scam Map (bonus): patterns of messages classified as scams, by area, type and day.
-export default async function ScamMap() {
+export default async function ScamMap({ searchParams }: { searchParams: Promise<{ test?: string }> }) {
+  const withTest = (await searchParams).test === "1";
   const user = await pageUser(["ADMIN", "OFFICER", "SHOPKEEPER", "AUDITOR"]);
-  const scams = await prisma.checkedMessage.findMany({ where: { tenantId: user.tenantId, label: "scam" }, orderBy: { createdAt: "desc" }, take: 1000 });
+  // Messages from the labelled test set (no submitter) are hidden by default: the map shows what real
+  // people reported. They can be shown on purpose, for a fuller demo, and the page says so.
+  const scams = await prisma.checkedMessage.findMany({ where: { tenantId: user.tenantId, label: "scam", ...(withTest ? {} : { submittedById: { not: null } }) }, orderBy: { createdAt: "desc" }, take: 1000 });
+  const hidden = withTest ? 0 : await prisma.checkedMessage.count({ where: { tenantId: user.tenantId, label: "scam", submittedById: null } });
   const by = (f: (m: (typeof scams)[number]) => string) => {
     const map = new Map<string, number>();
     for (const m of scams) map.set(f(m), (map.get(f(m)) ?? 0) + 1);
@@ -24,6 +28,9 @@ export default async function ScamMap() {
     <div className="space-y-4">
       <Header user={user} />
       <h2 className="text-2xl font-bold">🗺️ Scam map ({scams.length} scam messages)</h2>
+      <p className="text-sm muted">
+        {withTest ? <>Including messages from the labelled test set. <a className="underline" href="?">Show only real reports</a></> : <>Only messages people actually checked.{hidden > 0 && <> {hidden} test-set scams are hidden. <a className="underline" href="?test=1">Include them</a></>}</>}
+      </p>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card"><h3 className="font-semibold mb-2">By area</h3><Bars rows={areas} /></div>
         <div className="card"><h3 className="font-semibold mb-2">By type</h3><Bars rows={types} /></div>
