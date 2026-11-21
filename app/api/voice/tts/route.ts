@@ -73,7 +73,7 @@ export const GET = handle(async (req: Request) => {
     const cacheKey = `free|${lang}|${text}`;
     let audio = memoryCache.get(cacheKey);
     if (!audio) {
-      await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 15, 60);
+      await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 30, 60);
       audio = (await freeTts(text, lang)) ?? undefined;
       if (!audio) return NextResponse.json({ error: "Voice service not configured" }, { status: 503 });
       if (memoryCache.size > 300) memoryCache.clear();
@@ -85,7 +85,7 @@ export const GET = handle(async (req: Request) => {
   const cacheKey = `${voiceName}|${text}`;
   let audio = memoryCache.get(cacheKey);
   if (!audio) {
-    await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 15, 60);
+    await rateLimit(user ? `tts:${user.id}` : `tts:anon:${ip}`, user ? 40 : 30, 60);
     const ssml = `<speak version="1.0" xml:lang="${XML_LANG[lang]}"><voice name="${voiceName}"><prosody rate="-10%">${escapeXml(text)}</prosody></voice></speak>`;
     const res = await fetch(`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`, {
       method: "POST",

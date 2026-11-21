@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { speakUrdu, speakUrduAndWait, stopSpeaking } from "@/lib/client/voice";
-import { voiceOn } from "@/lib/client/prefs";
+import { speakUrdu, stopSpeaking, getVoiceChoice } from "@/lib/client/voice";
+import { voiceOn, getLang } from "@/lib/client/prefs";
 import { startListening, spokenDigits, LISTEN_ERROR, type Listening } from "@/lib/client/listen";
 
 // Create account for new people. It only sends a REQUEST: a pension officer checks it against the
@@ -72,7 +72,19 @@ function fromSpeech(kind: Kind, said: string, karachi: boolean) {
   if (kind === "pension") { const d = spokenDigits(said); return d ? `PEN-${karachi ? "K" : "H"}-${d}` : said.toUpperCase(); }
   return said.replace(/[۔.]+$/, "").trim();
 }
-const sayBack = (kind: Kind, v: string) => (kind === "digits" ? v.split("").join(" ") : v);
+
+/** Says one short line in ONE language (Urdu, or English if English-only is chosen) and waits until it has
+ *  really finished, so the microphone never starts while the phone is still talking. */
+async function say(ur: string, en: string) {
+  const lang = getLang();
+  await Promise.race([lang === "both" ? speakUrdu(ur) : speakUrdu(ur, en), new Promise((r) => setTimeout(r, 15000))]);
+}
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Fetches the spoken questions ahead of time so each one starts at once (the browser keeps them cached). */
+function warmUp(lines: { ur: string; en: string }[]) {
+  const lang = getLang() === "en" ? "en" : "ur";
+  for (const l of lines) void fetch(`/api/voice/tts?lang=${lang}&voice=${getVoiceChoice()}&text=${encodeURIComponent(lang === "en" ? l.en : l.ur)}`).catch(() => undefined);
+}
 
 export default function RegisterForm({ onDone }: { onDone: () => void }) {
   const [offices, setOffices] = useState<{ id: string; name: string; nameUr: string | null }[]>([]);
@@ -103,27 +115,32 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
     return () => { stopGuide.current = true; live.current?.stop(); };
   }, []);
 
-  /** Reads one question aloud, listens, and fills the answer in. Returns false if nothing usable was heard. */
+  /** Reads one question aloud, listens until she stops talking, and fills the answer in. */
   async function askField(field: Field): Promise<boolean> {
     stopSpeaking();
     setHint(null);
-    await speakUrduAndWait(field.askUr, 7000, field.askEn);
+    await say(field.askUr, field.askEn);
+    stopSpeaking();
+    await pause(200); // let the last sound die away so the mic does not hear the phone
     setListeningKey(field.key);
-    live.current = startListening(field.kind === "digits" || field.kind === "pension" ? 12000 : 7000);
+    const numbers = field.kind === "digits" || field.kind === "pension";
+    // Numbers: she may pause between digits, so wait a little longer before deciding she has finished.
+    live.current = startListening(numbers ? 25000 : 12000, numbers ? 2200 : 1300);
     const r = await live.current.result;
     live.current = null;
     setListeningKey(null);
     if (!r.text) {
       const p = LISTEN_ERROR[r.error ?? "no_speech"];
       setHint(p.en);
-      await speakUrduAndWait(p.ur, 5000, p.en);
+      await say(p.ur, p.en);
       return false;
     }
     const v = fromSpeech(field.kind, r.text, karachi);
-    if (!v) { setHint(`Heard "${r.text}" but found no digits. Say the numbers one by one.`); await speakUrduAndWait("ہندسے سمجھ نہیں آئے۔ ایک ایک ہندسہ بولیں۔", 5000, "I did not catch the digits. Say them one by one."); return false; }
+    if (!v) { setHint(`Heard "${r.text}" but found no digits. Say the numbers one by one.`); await say("ہندسے سمجھ نہیں آئے۔ ایک ایک ہندسہ بولیں۔", "I did not catch the digits. Say them one by one."); return false; }
     put(field.key, v);
-    if (field.key === "pin") await speakUrduAndWait("پن لکھ لیا۔ اسے یاد رکھیں۔", 5000, "PIN saved. Remember it."); // never read a PIN out loud
-    else await speakUrduAndWait(`میں نے لکھا: ${sayBack(field.kind, v)}`, 7000, `I wrote: ${sayBack(field.kind, v)}`);
+    setHint(null);
+    // A short "okay" only: the answer is shown in the box. (A PIN is never read out.)
+    await say("ٹھیک ہے۔", "Okay.");
     return true;
   }
 
@@ -139,14 +156,18 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
     stopGuide.current = false;
     setGuided(true);
     const list = [...fieldsFor(formRef.current), ...(formRef.current.assisted ? HELPER_FIELDS : [])].filter((x) => x.voice !== false);
-    for (const field of list) {
+    const todo = list.filter((x) => !formRef.current[x.key]);
+    todo.forEach((field, i) => { if (i < 2) warmUp([{ ur: field.askUr, en: field.askEn }]); });
+    for (const [i, field] of todo.entries()) {
       if (stopGuide.current) break;
+      const next = todo[i + 2];
+      if (next) warmUp([{ ur: next.askUr, en: next.askEn }]); // fetch a question ahead so it starts at once
       if (formRef.current[field.key]) continue;
       let ok = await askField(field);
       if (!ok && !stopGuide.current) ok = await askField(field); // one more try, then move on
     }
     if (!stopGuide.current) {
-      await speakUrduAndWait("شکریہ۔ سب لکھ لیا۔ کسی سے چیک کروا لیں، پھر نیچے سبز بٹن، چیک کے لیے بھیجیں، دبائیں۔", 9000, "Thank you, everything is written. Have someone check it, then press the green Send for checking button at the bottom.");
+      await say("شکریہ۔ سب لکھ لیا۔ کسی سے چیک کروا لیں، پھر نیچے سبز بٹن دبائیں۔", "Thank you, everything is written. Have someone check it, then press the green Send button at the bottom.");
     }
     setGuided(false);
   }

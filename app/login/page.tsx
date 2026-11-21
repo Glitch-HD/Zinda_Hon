@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import PensionerLogin from "@/components/PensionerLogin";
 import RegisterForm from "@/components/RegisterForm";
-import HeroScene from "@/components/HeroScene";
 import VoiceCommand from "@/components/ui/VoiceCommand";
 import { speakUrdu } from "@/lib/client/voice";
 import { setPrefsRole, voiceOn } from "@/lib/client/prefs";
@@ -112,13 +111,13 @@ export default function LoginPage() {
   return (
     <>
       <section className="hero-full">
-        <HeroScene />
+        <div className="hero-bg" aria-hidden="true" />
         <div className="hero-shade" aria-hidden="true" />
         <div className="hero-inner">
           <nav className="hero-nav" aria-label="Main">
             <span className="flex items-center gap-3">
               <Logo size={38} />
-              <span className="leading-tight"><span className="brand-word text-lg block">Zinda Hon</span><span className="ur always text-sm" style={{ lineHeight: 1.5, color: "#f6c66f" }}>زندہ ہوں</span></span>
+              <span className="leading-tight"><span className="brand-word text-lg block">Zinda Hon</span><span className="ur always text-sm" style={{ lineHeight: 1.5, color: "var(--hero-gold)" }}>زندہ ہوں</span></span>
             </span>
             <span className="hero-links">
               <a href="#how">How it works</a>
@@ -143,6 +142,11 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="hero-visual">
+              <figure className="hero-photo" aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/hero-couple.jpg" alt="" width={1176} height={700} fetchPriority="high" />
+              </figure>
             <div className="hero-card" id="start">
               {expired && (
                 <div className="hero-card-alert" role="status">
@@ -212,6 +216,7 @@ export default function LoginPage() {
                   </form>
                 )}
               </div>
+            </div>
             </div>
           </div>
         </div>

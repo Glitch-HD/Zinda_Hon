@@ -3,44 +3,44 @@
 /* Zinda Hon design tokens. Warm cream + deep green + marigold, chosen to feel calm and familiar
    (not like a bank or a government form). Every colour has a dark-mode twin. */
 :root {
-  --bg: #f5efe3;
-  --bg-2: #efe5d2;
+  --bg: #f6f2e9;
+  --bg-2: #ece5d6;
   --card: #fffdf8;
-  --card-2: #f8f2e6;
-  --ink: #1b2420;
-  --muted: #5c6a63;
-  --brand: #0d6b5a;
-  --brand-2: #12876f;
-  --brand-soft: #dcefe8;
+  --card-2: #f6f1e6;
+  --ink: #26261a;
+  --muted: #66654f;
+  --brand: #4b6b34;
+  --brand-2: #628a43;
+  --brand-soft: #e5ecd9;
   --brand-ink: #ffffff;
-  --accent: #e39a2d;
-  --accent-soft: #fbecd2;
-  --warn: #a85a06;
+  --accent: #d9735a;
+  --accent-soft: #f8e2d8;
+  --warn: #a3541a;
   --danger: #b42318;
   --ok: #157f3d;
-  --line: #e6dccb;
+  --line: #e4dccb;
   --shadow: 0 1px 2px rgba(60, 45, 20, .06), 0 8px 24px rgba(60, 45, 20, .08);
   --shadow-lg: 0 2px 4px rgba(60, 45, 20, .06), 0 18px 40px rgba(60, 45, 20, .14);
-  --ring: 0 0 0 3px rgba(18, 135, 111, .35);
+  --ring: 0 0 0 3px rgba(98, 138, 67, .4);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0e1512;
-    --bg-2: #121c18;
-    --card: #17211d;
-    --card-2: #1c2823;
-    --ink: #edf3ef;
-    --muted: #9fb1a9;
-    --brand: #2fbf9f;
-    --brand-2: #46d3b2;
-    --brand-soft: #173a31;
-    --brand-ink: #04211a;
-    --accent: #f2b45a;
-    --accent-soft: #3a2c16;
+    --bg: #12140d;
+    --bg-2: #171a11;
+    --card: #1b1e14;
+    --card-2: #222619;
+    --ink: #eef0e4;
+    --muted: #a9ab95;
+    --brand: #9cc27a;
+    --brand-2: #b3d493;
+    --brand-soft: #26331b;
+    --brand-ink: #142008;
+    --accent: #f0957c;
+    --accent-soft: #3d241c;
     --warn: #f5a524;
     --danger: #f87171;
     --ok: #4ade80;
-    --line: #26332d;
+    --line: #2d3222;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
     --shadow-lg: 0 2px 4px rgba(0, 0, 0, .3), 0 18px 40px rgba(0, 0, 0, .4);
   }
@@ -80,7 +80,7 @@ a { text-underline-offset: 3px; }
   .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
   .btn-ghost { background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
   .btn-ghost:hover { background: var(--card-2); filter: none; }
-  .btn-accent { background: linear-gradient(180deg, #f0ad43, var(--accent)); color: #2a1a02; box-shadow: 0 6px 16px rgba(227, 154, 45, .3); }
+  .btn-accent { background: linear-gradient(180deg, #ee9a7f, var(--accent)); color: #fff; box-shadow: 0 6px 16px rgba(217, 115, 90, .32); }
   .btn-danger { background: var(--danger); color: #fff; box-shadow: none; }
   .btn-big { min-height: 78px; font-size: 1.3rem; border-radius: 20px; width: 100%; }
   .btn-sm { min-height: 38px; padding: 0 12px; font-size: .9rem; border-radius: 10px; }
@@ -189,7 +189,7 @@ a.tile { color: inherit; text-decoration: none; }
 
 /* ---------- Microphone card ---------- */
 .mic-card { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1.5px dashed var(--brand-2); border-radius: 22px; padding: 14px; }
-.mic-btn { flex: none; width: 76px; height: 76px; border-radius: 999px; border: none; cursor: pointer; background: linear-gradient(180deg, var(--brand-2), var(--brand)); box-shadow: 0 8px 20px rgba(13,107,90,.35); display: grid; place-items: center; }
+.mic-btn { flex: none; width: 76px; height: 76px; border-radius: 999px; border: none; cursor: pointer; background: linear-gradient(180deg, var(--brand-2), var(--brand)); box-shadow: 0 8px 20px rgba(75,107,52,.35); display: grid; place-items: center; }
 .mic-btn.live { background: var(--danger); animation: pulse 1.2s ease-in-out infinite; }
 .mic-btn:disabled { opacity: .85; cursor: default; }
 @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(180,35,24,.45); } 50% { box-shadow: 0 0 0 14px rgba(180,35,24,0); } }
@@ -206,22 +206,22 @@ html[data-voice="1"] .tile { position: relative; }
    eight-point stars, and festival bunting (jhandiyan). Fraunces for English display.
    ===================================================================== */
 :root {
-  --indigo: #3f4fb8; --indigo-soft: #e4e7fb;
-  --marigold: #d98a12; --marigold-soft: #fcefd6;
+  --indigo: #4f6a7a; --indigo-soft: #e3eaec;
+  --marigold: #a8743c; --marigold-soft: #f3e6d4;
   --rose: #c03a6b; --rose-soft: #fbe3ec;
   --slate: #4b5563; --slate-soft: #e9e7e1;
-  --teal: #0f8a8a; --teal-soft: #d8f1ef;
-  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%230d6b5a' stroke-opacity='.075' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
+  --teal: #4f8463; --teal-soft: #dfece3;
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%234b6b34' stroke-opacity='.075' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3Cpath d='M0 0l8 8M64 0l-8 8M0 64l8-8M64 64l-8-8'/%3E%3C/g%3E%3C/svg%3E");
   --pattern-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/g%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --indigo: #9aa6ff; --indigo-soft: #23284a;
-    --marigold: #f2b45a; --marigold-soft: #3a2c16;
+    --indigo: #9fb8c6; --indigo-soft: #1f2a30;
+    --marigold: #d9a873; --marigold-soft: #33261a;
     --rose: #f08cb0; --rose-soft: #3b1d2a;
     --slate: #c3c9d1; --slate-soft: #2a2f33;
-    --teal: #4fd1c5; --teal-soft: #163634;
-    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%232fbf9f' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/g%3E%3C/svg%3E");
+    --teal: #8cc4a0; --teal-soft: #1b2e22;
+    --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%239cc27a' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M32 8l7 17 17 7-17 7-7 17-7-17-17-7 17-7z'/%3E%3Crect x='21' y='21' width='22' height='22' transform='rotate(45 32 32)'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/g%3E%3C/svg%3E");
   }
 }
 
@@ -239,7 +239,7 @@ h3 { font-weight: 700; }
 /* Festival bunting under the top bar */
 .bunting {
   height: 16px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='16' viewBox='0 0 150 16'%3E%3Cpath d='M0 0h150' stroke='%23a07a3c' stroke-width='1.2'/%3E%3Cpath d='M3 1h24L15 15z' fill='%230d6b5a'/%3E%3Cpath d='M33 1h24L45 15z' fill='%23e39a2d'/%3E%3Cpath d='M63 1h24L75 15z' fill='%23c03a6b'/%3E%3Cpath d='M93 1h24L105 15z' fill='%233f4fb8'/%3E%3Cpath d='M123 1h24L135 15z' fill='%2312876f'/%3E%3C/svg%3E") repeat-x;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='16' viewBox='0 0 150 16'%3E%3Cpath d='M0 0h150' stroke='%23a07a3c' stroke-width='1.2'/%3E%3Cpath d='M3 1h24L15 15z' fill='%234b6b34'/%3E%3Cpath d='M33 1h24L45 15z' fill='%23e8b4a0'/%3E%3Cpath d='M63 1h24L75 15z' fill='%23d9735a'/%3E%3Cpath d='M93 1h24L105 15z' fill='%23b08a5e'/%3E%3Cpath d='M123 1h24L135 15z' fill='%23628a43'/%3E%3C/svg%3E") repeat-x;
   opacity: .9;
 }
 
@@ -272,8 +272,8 @@ h3 { font-weight: 700; }
 
   .tile-hero {
     position: relative;
-    background: var(--pattern-light), radial-gradient(420px 220px at 95% 0%, rgba(240,173,67,.45), transparent 60%), linear-gradient(135deg, #0b5c4d, #12876f);
-    box-shadow: 0 18px 40px rgba(13,107,90,.35);
+    background: var(--pattern-light), radial-gradient(420px 220px at 95% 0%, rgba(217,115,90,.4), transparent 60%), linear-gradient(135deg, #0b5c4d, #12876f);
+    box-shadow: 0 18px 40px rgba(75,107,52,.35);
   }
   .tile-hero .tile-icon { width: 84px; height: 96px; font-size: 3rem; background: rgba(255,255,255,.16); box-shadow: 0 0 0 2px rgba(255,255,255,.28) inset; }
   .tile-hero .tile-en { font-family: "Fraunces", Georgia, serif; font-size: 1.2rem; }
@@ -368,19 +368,19 @@ body { overflow-x: clip; }
 .hero-full { position: relative; margin-inline: calc(50% - 50vw); margin-top: -20px; color: #fff; overflow: hidden; isolation: isolate; }
 @media (min-width: 768px) { .hero-full { margin-top: -32px; } }
 .hero-scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; }
-.hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(6,18,24,.82) 0%, rgba(6,18,24,.55) 42%, rgba(6,18,24,.08) 78%), linear-gradient(0deg, rgba(6,18,24,.6) 0%, transparent 35%); }
+.hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(28,30,16,.9) 0%, rgba(28,30,16,.72) 45%, rgba(28,30,16,.45) 100%), linear-gradient(0deg, rgba(20,22,12,.55) 0%, transparent 40%); }
 .hero-inner { max-width: 72rem; margin: 0 auto; padding: 16px 16px 56px; }
 @media (min-width: 768px) { .hero-inner { padding: 18px 32px 80px; } }
 .hero-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.2); }
 .hero-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .hero-links a, .hero-links button { background: none; border: none; color: rgba(255,255,255,.88); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; cursor: pointer; padding: 6px 0; }
-.hero-links a:hover, .hero-links button:hover { color: #f6c66f; }
+.hero-links a:hover, .hero-links button:hover { color: var(--hero-gold); }
 .hero-grid { display: grid; gap: 32px; padding-top: 44px; align-items: center; }
 @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.15fr .85fr; padding-top: 64px; } }
 .hero-eyebrow { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.28); font-size: .78rem; font-weight: 700; letter-spacing: .06em; backdrop-filter: blur(6px); }
-.hero-ur { font-size: 1.5rem; color: #f6c66f; margin-top: 18px; display: block; text-align: left; }
+.hero-ur { font-size: 1.5rem; color: var(--hero-gold); margin-top: 18px; display: block; text-align: left; }
 .hero-title { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(2.5rem, 5.6vw, 4.4rem); line-height: 1.04; letter-spacing: -.02em; margin-top: 6px; text-shadow: 0 2px 30px rgba(0,0,0,.35); }
-.hero-title em { font-style: italic; color: #f6c66f; font-weight: 500; }
+.hero-title em { font-style: italic; color: var(--hero-gold); font-weight: 500; }
 .hero-sub { max-width: 34rem; margin-top: 16px; font-size: 1.08rem; color: rgba(255,255,255,.86); }
 .btn-hero { min-height: 56px; padding: 0 24px; border-radius: 999px; font-size: 1.05rem; }
 .glass-btn { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.4); box-shadow: none; backdrop-filter: blur(8px); }
@@ -397,7 +397,7 @@ body { overflow-x: clip; }
 .hero-card-alert { padding: 10px 16px; background: var(--accent-soft); text-align: center; }
 .bubble { background: var(--card-2); border: 1px solid var(--line); border-radius: 4px 18px 18px 18px; padding: 10px 14px; font-size: .92rem; }
 .bubble .ur { line-height: 1.9; white-space: normal; }
-.choice-main { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border: none; border-radius: 20px; cursor: pointer; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 10px 24px rgba(13,107,90,.3); transition: transform .1s, filter .15s; }
+.choice-main { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border: none; border-radius: 20px; cursor: pointer; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 10px 24px rgba(75,107,52,.3); transition: transform .1s, filter .15s; }
 .choice-main:hover { filter: brightness(1.06); }
 .choice-main:active { transform: scale(.99); }
 .choice-ic { display: grid; place-items: center; width: 54px; height: 54px; flex: none; border-radius: 999px; background: rgba(255,255,255,.18); font-size: 1.9rem; }
@@ -519,3 +519,27 @@ body { overflow-x: clip; }
   .reg-step { padding: 12px; }
   .reg-step legend { flex-wrap: wrap; }
 }
+
+/* =====================================================================
+   v5: the garden photo. The hero shows it framed (sharp) on a blurred copy
+   of itself; the colours of the whole site come from it (moss green, linen,
+   warm wood, coral roses).
+   ===================================================================== */
+:root { --hero-gold: #ffc2a8; }
+.hero-full { background: #23261a; }
+.hero-bg { position: absolute; inset: -40px; z-index: -2; background: url("/hero-couple-bg.jpg") center / cover no-repeat; filter: blur(18px) saturate(1.15); }
+.hero-visual { display: grid; justify-items: end; gap: 0; }
+.hero-photo { width: 100%; max-width: 520px; margin: 0; aspect-ratio: 588 / 350; border-radius: 28px; overflow: hidden; border: 6px solid rgba(255, 253, 248, .85);
+  box-shadow: 0 30px 70px rgba(0,0,0,.45); transform: rotate(-1.5deg); }
+.hero-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero-visual .hero-card { margin-top: -64px; position: relative; z-index: 1; margin-right: -8px; }
+@media (min-width: 960px) { .hero-grid { grid-template-columns: 1fr 1fr; align-items: start; } .hero-copy { padding-top: 56px; } }
+@media (max-width: 959px) {
+  .hero-visual { justify-items: stretch; }
+  .hero-photo { max-width: none; transform: none; border-width: 4px; border-radius: 22px; }
+  .hero-visual .hero-card { margin-top: -36px; margin-right: 0; }
+}
+.how-n { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-accent, :root:not([data-theme="light"]) .how-n { color: #2b120b; } }
+@media (min-width: 960px) { .hero-grid { grid-template-columns: 1.08fr .92fr; } }
+.hero-title { font-size: clamp(2.4rem, 4.9vw, 4rem); }

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0d6b5a" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#4b6b34" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

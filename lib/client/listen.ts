@@ -27,8 +27,39 @@ export function canListen() {
 export type ListenResult = { text: string | null; error?: "no_permission" | "no_support" | "no_speech" | "network" };
 export type Listening = { result: Promise<ListenResult>; stop: () => void };
 
-/** Starts listening at once. Call stop() to finish early (the person taps the mic again); otherwise it stops after maxMs. */
-export function startListening(maxMs = 7000): Listening {
+/** Watches the microphone level and calls done() once the person has spoken and then gone quiet for
+ *  silenceMs (or if nobody speaks within waitMs). So we stop as soon as she finishes, not after a fixed time. */
+function stopOnSilence(stream: MediaStream, done: () => void, silenceMs: number, waitMs = 6000) {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return () => {};
+    const ctx = new Ctx();
+    const an = ctx.createAnalyser();
+    an.fftSize = 1024;
+    ctx.createMediaStreamSource(stream).connect(an);
+    const buf = new Uint8Array(an.fftSize);
+    const started = performance.now();
+    let heard = false;
+    let quietSince = started;
+    let floor = 0.015; // background noise, learnt in the first moments
+    const t = setInterval(() => {
+      an.getByteTimeDomainData(buf);
+      let sum = 0;
+      for (const v of buf) { const x = (v - 128) / 128; sum += x * x; }
+      const rms = Math.sqrt(sum / buf.length);
+      const now = performance.now();
+      if (now - started < 300) { floor = Math.max(floor, rms * 1.2); return; }
+      if (rms > Math.max(0.03, floor * 2.2)) { heard = true; quietSince = now; }
+      else if (heard && now - quietSince > silenceMs) done();
+      else if (!heard && now - started > waitMs) done();
+    }, 80);
+    return () => { clearInterval(t); void ctx.close().catch(() => undefined); };
+  } catch { return () => {}; }
+}
+
+/** Starts listening at once. Call stop() to finish early (the person taps the mic again); otherwise it stops
+ *  when she goes quiet for silenceMs after speaking, or after maxMs at most. */
+export function startListening(maxMs = 7000, silenceMs = 1300): Listening {
   let stopFn = () => {};
   const result = (async (): Promise<ListenResult> => {
     // 1. Our server (Whisper) when it is set up: best for Urdu, works on every phone and laptop.
@@ -41,8 +72,11 @@ export function startListening(maxMs = 7000): Listening {
         const done = new Promise<void>((r) => (rec.onstop = () => r()));
         rec.start();
         stopFn = () => rec.state !== "inactive" && rec.stop();
-        setTimeout(stopFn, maxMs);
+        const hardStop = setTimeout(stopFn, maxMs);
+        const unwatch = stopOnSilence(stream, () => stopFn(), silenceMs);
         await done;
+        clearTimeout(hardStop);
+        unwatch();
         stream.getTracks().forEach((t) => t.stop());
         const form = new FormData();
         form.append("audio", new Blob(chunks, { type: rec.mimeType || "audio/webm" }), "speech.webm");
