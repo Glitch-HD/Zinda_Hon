@@ -227,6 +227,24 @@ check((await widow.post(`/api/cases/${zainab.id}/evidence`, { type: "liveness", 
   const onMap = (await q(`select count(*)::int as n from "CheckedMessage" where text like 'flood test number%' and "submittedById" is not null`))[0]?.n;
   check(onMap === 0, "Poison the Scam Map with anonymous fake reports");
 }
+// --- Sister attack: Zainab's sister is registered herself (Fatima's record here) and looks like her.
+{
+  const A = (await q(`select "enrolledFaceDescriptor" as d from "Pensioner" where "pensionNo"='PEN-K-1001'`))[0]?.d;
+  const fat = (await q(`select id from "Pensioner" where "pensionNo"='PEN-K-1002'`))[0];
+  if (A?.length === 128 && fat) {
+    // A unit direction u and an orthogonal unit v, to place faces at chosen distances.
+    const u = A.map((_, i) => (i % 2 ? 1 : -1) / Math.sqrt(128));
+    const v = A.map((_, i) => (i < 64 ? 1 : -1) / Math.sqrt(128));
+    const Bf = A.map((x, i) => x + 0.45 * u[i]);                   // the sister's enrolled face: 0.45 from Zainab
+    const L = A.map((x, i) => x + 0.2854 * u[i] + 0.2508 * v[i]);  // the sister live: 0.38 from Zainab, 0.30 from herself
+    const enr = await sana.post(`/api/pensioners/${fat.id}/enroll-face`, { descriptor: Bf });
+    const zb = await (await fetch(`${B}/api/auth/pensioner/demo-book?no=PEN-K-1001`)).json();
+    const jar2 = (await fetch(`${B}/api/auth/pensioner/start`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ qrText: zb.qrText }) })).headers.get("set-cookie")?.split(";")[0];
+    const tk = await (await fetch(`${B}/api/auth/pensioner/challenge`, { method: "POST", headers: { cookie: jar2 } })).json();
+    const r = await fetch(`${B}/api/auth/pensioner/face`, { method: "POST", headers: { "content-type": "application/json", cookie: jar2 }, body: JSON.stringify({ descriptor: L, livenessPassed: true, ticket: tk.token, challenges: tk.sequence.map((action) => ({ action, done: true, ms: 900 })) }) });
+    check(enr.ok && r.status === 401, "Sister who looks alike logs in as the widow with her own face", `enrol ${enr.status}, login ${r.status}`);
+  }
+}
 const hdr = await fetch(`${B}/login`);
 check(hdr.headers.get("x-frame-options") === "DENY" && Boolean(hdr.headers.get("x-content-type-options")) && /frame-ancestors 'none'/.test(hdr.headers.get("content-security-policy") ?? ""), "Load the site inside another site's frame (clickjacking)");
 

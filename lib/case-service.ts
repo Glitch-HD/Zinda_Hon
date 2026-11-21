@@ -144,6 +144,8 @@ function caseDraw(caseId: string) {
 async function fraudSignals(c: { id: string; pensionerId: string; tenantId: string; year: number }, faceDistanceNow: number | null, faceDetails: unknown) {
   const flags: string[] = [];
   if ((faceDetails as { reusedFrom?: string | null } | null)?.reusedFrom) flags.push("face_numbers_reused");
+  // The live face looks at least as much like another registered pensioner (for example her sister).
+  if ((faceDetails as { otherPerson?: unknown } | null)?.otherPerson) flags.push("face_matches_another_pensioner");
   // The selfie did not come from the server-issued liveness check (sent on its own, or with a used ticket).
   if ((faceDetails as { livenessLinked?: boolean } | null)?.livenessLinked === false) flags.push("face_not_from_liveness_check");
   if (faceDistanceNow !== null && faceDistanceNow < 0.08) flags.push("face_too_identical_possible_replay");

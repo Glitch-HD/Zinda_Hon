@@ -10,6 +10,8 @@ import { verifyPensionBookQr } from "@/lib/qr";
 import { nameSimilarity, normalizeCnic } from "@/lib/names";
 import { createHash } from "node:crypto";
 import { followedSequence, verifyTicket } from "@/lib/liveness";
+import { closestOtherPensioner, looksLikeSomeoneElse } from "@/lib/face-guard";
+import { getActiveRule } from "@/lib/rules";
 
 /** A fingerprint of the face numbers (not reversible to a face). A real selfie never repeats exactly. */
 /** Best match of the QR's name against any run of the same number of words in the OCR text (0..1). */
@@ -69,7 +71,11 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
       ]);
       livenessLinked = Boolean(live) && !faceBefore;
     }
+    // Does this face look like ANOTHER registered pensioner (a sister, a daughter) at least as much?
+    const [other, rule] = await Promise.all([closestOtherPensioner(c.tenantId, c.pensionerId, body.descriptor), getActiveRule(c.tenantId)]);
+    const someoneElse = looksLikeSomeoneElse(score, other, rule.config.face.looseDistance);
     details = {
+      otherPerson: someoneElse && other ? { pensionNo: other.pensionNo, distance: Math.round(other.distance * 1000) / 1000 } : null,
       fp, reusedFrom: reused?.caseId ?? null, distance: score, quality: body.quality ?? null, nonce: t.ok ? t.nonce : null, livenessLinked,
       note: "Only the 128-number face descriptor was received; no photo stored." };
   } else if (body.type === "liveness") {

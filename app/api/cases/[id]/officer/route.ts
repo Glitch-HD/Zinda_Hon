@@ -33,7 +33,7 @@ async function approvalRisks(caseId: string, pensionerId: string, riskFlags: str
 }
 
 /** Risks so serious that one officer alone may not approve: a second, different officer must agree. */
-const HARD_RISKS = ["death_record_found", "bank_activity_after_death", "cnic_mismatch", "duplicate_person_records", "face_numbers_reused", "face_not_from_liveness_check", "face_too_identical_possible_replay", "ai_assistant_said_investigate", "no_live_proof_2_years"];
+const HARD_RISKS = ["death_record_found", "bank_activity_after_death", "cnic_mismatch", "duplicate_person_records", "face_numbers_reused", "face_not_from_liveness_check", "face_too_identical_possible_replay", "ai_assistant_said_investigate", "no_live_proof_2_years", "face_matches_another_pensioner"];
 
 // The human side of "I am not sure": only an officer can stop a pension, and must write a reason.
 const Body = z.object({
