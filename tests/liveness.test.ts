@@ -24,7 +24,8 @@ describe("server-issued liveness ticket", () => {
     expect(verifyTicket(t.token, "case2")).toEqual({ ok: false, reason: "other_case" });
     const [p, sig] = t.token.split(".");
     const data = JSON.parse(Buffer.from(p, "base64url").toString());
-    data.s = ["blink", "turn_left"];
+    // Change the order (the random order could already be the one we pick, so make sure it differs).
+    data.s = JSON.stringify(data.s) === JSON.stringify(["blink", "turn_left"]) ? ["turn_right", "blink"] : ["blink", "turn_left"];
     expect(verifyTicket(`${Buffer.from(JSON.stringify(data)).toString("base64url")}.${sig}`, "case1")).toEqual({ ok: false, reason: "bad_signature" });
     expect(verifyTicket(issueTicket("case1", Date.now() - 25 * 3600_000).token, "case1")).toEqual({ ok: false, reason: "expired" });
     expect(verifyTicket(undefined, "case1")).toEqual({ ok: false, reason: "missing" });
