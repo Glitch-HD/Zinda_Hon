@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Option from "@/components/ui/Option";
 import PensionerVoice from "@/components/PensionerVoice";
 import FacePrep from "@/components/FacePrep";
+import PageVoice from "@/components/PageVoice";
 import AreaWarning from "@/components/AreaWarning";
 import { areaScamWarning } from "@/lib/area-warning";
 import { pageUser } from "@/lib/page-auth";
@@ -18,6 +19,7 @@ export default async function PensionerHome() {
   return (
     <div className="max-w-4xl mx-auto">
       <Header user={user} />
+      <PageVoice role="PENSIONER" ur={`${statusUr}۔ ${canStart ? "شروع کرنے کے لیے سبز بٹن دبائیں۔" : ""}`} en={`${statusEn} ${canStart ? "Press the green button to start." : ""}`} />
       {!p || !c ? (
         <div className="card">No pension record linked to this account.</div>
       ) : (

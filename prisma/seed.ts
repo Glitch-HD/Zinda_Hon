@@ -84,6 +84,7 @@ async function ensureExtraPeople() {
 const ACCOUNTS: { legacy?: string; phone: string; password: string; pin?: string; role: string; name: string; area?: string; tenant: "karachi" | "hyderabad" }[] = [
   { legacy: "03000000001", phone: "03214417832", password: "Sana@Pension24", role: "OFFICER", name: "Sana Qureshi", tenant: "karachi" },
   { phone: "03332290615", password: "Bilal#Korangi7", role: "OFFICER", name: "Bilal Ahmed", tenant: "karachi" },
+  { phone: "03000000013", password: "Uzma@Check2", role: "OFFICER", name: "Uzma Khan", tenant: "karachi" },
   { legacy: "03000000011", phone: "03003108847", password: "Naveed!Hyd52", role: "OFFICER", name: "Naveed Memon", tenant: "hyderabad" },
   { legacy: "03000000002", phone: "03452876104", password: "Kamran$Admin9", role: "ADMIN", name: "Kamran Siddiqui", tenant: "karachi" },
   { phone: "03000000012", password: "Hira@Rules5", role: "ADMIN", name: "Hira Farooq", tenant: "karachi" },

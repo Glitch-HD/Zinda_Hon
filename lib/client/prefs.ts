@@ -25,7 +25,8 @@ export function setLang(l: Lang) {
 }
 
 // The voice guide is remembered separately for each kind of user on this device.
-// It is ON by default only for pensioners (who may not read); everyone else can switch it on.
+// It is ON by default for everyone the platform serves (pensioners, helpers, shopkeepers, and the front
+// page); office staff can read, so it starts OFF for them. Anyone can switch it on or off.
 let role = "guest";
 export function setPrefsRole(r: string) {
   role = r;
@@ -34,7 +35,7 @@ export function setPrefsRole(r: string) {
 }
 export function voiceOn(): boolean {
   const v = read(`${VOICE_KEY}_${role}`);
-  return v === null ? role === "PENSIONER" : v === "1";
+  return v === null ? ["PENSIONER", "HELPER", "SHOPKEEPER", "guest"].includes(role) : v === "1";
 }
 export function setVoice(on: boolean) {
   write(`${VOICE_KEY}_${role}`, on ? "1" : "0");

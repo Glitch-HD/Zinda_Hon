@@ -3,12 +3,14 @@ import MessageChecker from "@/components/MessageChecker";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 import Info from "@/components/ui/Info";
+import PageVoice from "@/components/PageVoice";
 
 export default async function Shopkeeper() {
   const user = await pageUser(["SHOPKEEPER"]);
   const mine = await prisma.checkedMessage.findMany({ where: { submittedById: user.id }, orderBy: { createdAt: "desc" }, take: 10 });
   return (
     <div>
+      <PageVoice role="SHOPKEEPER" ur="خوش آمدید۔ گاہک کو پنشن یا امداد کا کوئی پیغام آیا ہو تو پیسے بھیجنے سے پہلے اسے یہاں جانچیں۔" en="Welcome. If a customer got a pension or relief message, check it here before anyone sends money." />
       <Header user={user} links={[{ href: "/scam-map", label: "🗺️ Scam map", ur: "دھوکے کا نقشہ", info: { en: "See which areas are getting the most fake pension and relief messages right now.", ur: "دیکھیں کن علاقوں میں سب سے زیادہ جعلی پیغام آ رہے ہیں۔" } }]} />
       <div className="card card-soft mb-6 flex items-start gap-3">
         <span className="text-3xl">🏪</span>

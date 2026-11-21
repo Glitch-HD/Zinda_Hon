@@ -32,6 +32,25 @@ export async function canSpeakUrdu() {
 }
 
 type SpokenLang = "ur" | "en";
+
+// Browsers do not allow a page to make sound until the person has touched it once. If speech is blocked,
+// we keep it and say it at the first tap, key press or touch anywhere on the page.
+class Blocked extends Error {}
+let pending: { ur: string; en?: string } | null = null;
+let armed = false;
+function armReplay() {
+  if (armed || typeof window === "undefined") return;
+  armed = true;
+  const go = () => {
+    armed = false;
+    ["pointerdown", "keydown", "touchstart"].forEach((t) => window.removeEventListener(t, go, true));
+    const p = pending; pending = null;
+    window.dispatchEvent(new CustomEvent("zh-voice-pending", { detail: false }));
+    if (p) setTimeout(() => void speakUrdu(p.ur, p.en), 60);
+  };
+  ["pointerdown", "keydown", "touchstart"].forEach((t) => window.addEventListener(t, go, true));
+}
+export function hasPendingSpeech() { return pending !== null; }
 let token = 0; // each new speech gets a new token; older speech stops at the next step
 
 /** Which languages to say, following the language switch: اردو = Urdu, English = English,
@@ -66,12 +85,12 @@ async function sayOne(lang: SpokenLang, text: string, my: number): Promise<boole
         const blob = await res.blob();
         if (my !== token) return true;
         current = new Audio(URL.createObjectURL(blob));
-        await current.play();
+        try { await current.play(); } catch (e) { if ((e as Error).name === "NotAllowedError") throw new Blocked(); throw e; }
         await waitForAudio(current);
         return true;
       }
       if (res.status === 503) serverVoice = false;
-    } catch { /* fall through to the device's voice */ }
+    } catch (e) { if (e instanceof Blocked) throw e; /* fall through to the device's voice */ }
   }
   if (!("speechSynthesis" in window)) return false;
   const voices = await loadVoices();
@@ -88,11 +107,13 @@ async function sayOne(lang: SpokenLang, text: string, my: number): Promise<boole
   u.lang = pick.lang;
   u.voice = pick;
   u.rate = 0.9;
+  let blocked = false;
   await new Promise<void>((resolve) => {
     u.onend = () => resolve();
-    u.onerror = () => resolve();
+    u.onerror = (ev) => { blocked = ev.error === "not-allowed"; resolve(); };
     speechSynthesis.speak(u);
   });
+  if (blocked) throw new Blocked();
   return true;
 }
 
@@ -106,7 +127,17 @@ export async function speakUrdu(ur: string, en?: string) {
   let any = false;
   for (const part of plan(ur, en)) {
     if (my !== token) break;
-    const ok = await sayOne(part.lang, part.text, my);
+    let ok = false;
+    try {
+      ok = await sayOne(part.lang, part.text, my);
+    } catch (e) {
+      if (e instanceof Blocked) {
+        pending = { ur, en };
+        armReplay();
+        window.dispatchEvent(new CustomEvent("zh-voice-pending", { detail: true }));
+        return false;
+      }
+    }
     if (!ok && part.lang === "ur") window.dispatchEvent(new CustomEvent("zh-no-voice"));
     any ||= ok;
   }

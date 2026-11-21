@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import RegisterSW from "@/components/RegisterSW";
 import ErrorReporter from "@/components/ErrorReporter";
+import VoicePendingPill from "@/components/VoicePendingPill";
 import TopBar from "@/components/TopBar";
 import VoiceGuide from "@/components/VoiceGuide";
 import { PREFS_BOOT_SCRIPT } from "@/lib/prefs-boot";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <VoiceGuide />
         <RegisterSW />
         <ErrorReporter />
+        <VoicePendingPill />
       </body>
     </html>
   );

@@ -146,6 +146,7 @@ All people are invented. The phone numbers are never contacted (SMS is simulated
 | --- | --- | --- | --- | --- |
 | Pension officer (Karachi) | Sana Qureshi | 03214417832 | Sana@Pension24 | |
 | Pension officer (Karachi) | Bilal Ahmed | 03332290615 | Bilal#Korangi7 | |
+| Pension officer (Karachi, second check) | Uzma Khan | 03000000013 | Uzma@Check2 | Confirms risky approvals another officer proposed |
 | Pension officer (Hyderabad) | Naveed Memon | 03003108847 | Naveed!Hyd52 | |
 | Admin | Kamran Siddiqui | 03452876104 | Kamran$Admin9 | |
 | Admin (second approver) | Hira Farooq | 03000000012 | Hira@Rules5 | |

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export default function OfficerActions({ caseId, closed }: { caseId: string; closed: boolean }) {
+export default function OfficerActions({ caseId, closed, aiSaysInvestigate = false, secondOfficerNeeded = false }: { caseId: string; closed: boolean; aiSaysInvestigate?: boolean; secondOfficerNeeded?: boolean }) {
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -22,6 +22,7 @@ export default function OfficerActions({ caseId, closed }: { caseId: string; clo
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) { setMsg(data.error ?? "Failed"); return; }
+    if (data.pending) { setMsg(data.message); setTimeout(() => window.location.reload(), 3500); return; }
     window.location.reload();
   }
 
@@ -29,13 +30,15 @@ export default function OfficerActions({ caseId, closed }: { caseId: string; clo
   return (
     <div className="mt-4 space-y-2">
       <textarea id="officer-notes" aria-label="Officer notes" className="input" style={{ minHeight: 80, paddingTop: 8 }} placeholder="Your notes (required to stop a pension)" value={note} onChange={(e) => setNote(e.target.value)} />
+      {aiSaysInvestigate && <p className="text-sm" style={{ color: "var(--danger)" }}>⛔ The AI assistant advised investigating before paying. Approving needs your own written check (not the pasted AI notes) and a second officer to confirm.</p>}
+      {secondOfficerNeeded && <p className="text-sm" style={{ color: "var(--warn)" }}>👥 Another officer has proposed approving this case. If you have checked it yourself, you can confirm (Approve) or refuse (Stop / Ask for more proof).</p>}
       <div className="flex flex-wrap gap-2">
-        <button className="btn" disabled={busy} onClick={() => act("approve")}>✅ Approve, pension continues</button>
+        <button className="btn" style={aiSaysInvestigate ? { background: "var(--card)", color: "var(--ink)", border: "1.5px solid var(--danger)", boxShadow: "none" } : undefined} disabled={busy} onClick={() => act("approve")}>{secondOfficerNeeded ? "✅ Confirm approval as 2nd officer" : aiSaysInvestigate ? "⚠️ Approve anyway (needs a 2nd officer)" : "✅ Approve, pension continues"}</button>
         <button className="btn btn-ghost" disabled={busy} onClick={() => act("ask_more_proof")}>📷 Ask for more proof</button>
         <button className="btn" style={{ background: "var(--danger)" }} disabled={busy} onClick={() => act("stop")}>⛔ Stop pension</button>
         <button className="btn btn-ghost" disabled={busy} onClick={() => act("assign_to_me")}>Assign to me</button>
       </div>
-      {msg && <p role="alert" style={{ color: "var(--danger)" }}>{msg}</p>}
+      {msg && <p role="alert" style={{ color: msg.startsWith("Not approved yet") ? "var(--warn)" : "var(--danger)" }}>{msg}</p>}
     </div>
   );
 }

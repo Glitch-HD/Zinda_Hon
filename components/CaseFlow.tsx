@@ -5,6 +5,7 @@ import { isSlowNetwork } from "@/lib/client/prefetch";
 import QrScanner from "./QrScanner";
 import { enqueue, flush, newActionId, pendingCount } from "@/lib/client/queue";
 import { speakUrdu } from "@/lib/client/voice";
+import { voiceOn } from "@/lib/client/prefs";
 import Info from "./ui/Info";
 
 // The one end-to-end task: a yearly proof-of-life, designed for someone who cannot read.
@@ -66,6 +67,8 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
     try {
       const saved = localStorage.getItem(storageKey) as Step | null;
       if (saved && saved !== "result") setStep(saved);
+      const now = saved && saved !== "result" ? saved : "intro";
+      if (initialStatus !== "VERIFIED" && now in SAY && voiceOn()) setTimeout(() => void speakUrdu(SAY[now as keyof typeof SAY], SAY_EN[now as keyof typeof SAY]), 500);
     } catch { /* ignore */ }
     const update = () => { setOnline(navigator.onLine); setQueued(pendingCount()); };
     update();

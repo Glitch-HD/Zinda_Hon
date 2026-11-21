@@ -388,3 +388,29 @@ model RuleChangeRequest {
 
   @@index([tenantId, status])
 }
+
+// A new person asking for an account. Nothing is created until a pension officer has checked them
+// against the mock NADRA record (and, for a pensioner, the pension record), so nobody can sign up as
+// someone else. Only mock CNICs (starting 00000) and mock phone numbers are accepted.
+model Registration {
+  id           String    @id @default(cuid())
+  tenantId     String
+  role         String // PENSIONER, HELPER or SHOPKEEPER
+  name         String
+  cnic         String
+  phone        String
+  dateOfBirth  DateTime?
+  area         String?
+  pensionNo    String?
+  passwordHash String
+  pinHash      String?
+  checks       Json // what the automatic checks found, shown to the officer
+  status       String    @default("pending") // pending, approved, rejected
+  decidedBy    String?
+  decidedNote  String?
+  decidedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([tenantId, status])
+  @@index([phone])
+}

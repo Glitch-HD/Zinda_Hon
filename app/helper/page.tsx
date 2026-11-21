@@ -4,6 +4,7 @@ import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
 import Info from "@/components/ui/Info";
 import FacePrep from "@/components/FacePrep";
+import PageVoice from "@/components/PageVoice";
 import AreaWarning from "@/components/AreaWarning";
 import { areaScamWarning } from "@/lib/area-warning";
 
@@ -20,6 +21,7 @@ export default async function HelperHome() {
   const warning = await areaScamWarning(user.tenantId, me?.area);
   return (
     <div>
+      <PageVoice role="HELPER" ur={`خوش آمدید۔ آپ ${links.length} خاندانوں کی مدد کرتے ہیں۔ کسی خاندان کے لیے کام کرنے کو اس کا بٹن دبائیں۔`} en={`Welcome. You help ${links.length} families. Press a family's button to act for them.`} />
       <Header user={user} links={[{ href: "/check-message", label: "🛡️ Check a message", ur: "پیغام جانچیں", info: { en: "Check if an SMS or WhatsApp message a family received is a scam.", ur: "جانچیں کہ کسی خاندان کو آیا پیغام دھوکہ تو نہیں۔" } }]} />
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>

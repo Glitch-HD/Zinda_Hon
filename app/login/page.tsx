@@ -2,22 +2,23 @@
 import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import PensionerLogin from "@/components/PensionerLogin";
+import RegisterForm from "@/components/RegisterForm";
 import HeroScene from "@/components/HeroScene";
 import VoiceCommand from "@/components/ui/VoiceCommand";
 import { speakUrdu } from "@/lib/client/voice";
-import { setPrefsRole } from "@/lib/client/prefs";
+import { setPrefsRole, voiceOn } from "@/lib/client/prefs";
 
 // Front page. Urdu first, one big picture button per kind of person, each with an ⓘ that explains it.
 // Pensioners never type: they log in with their pension book QR + face (or a PIN they can say or tap).
 // Helpers, shopkeepers and staff can read, so they use phone + password.
 
-type View = "choose" | "pensioner" | "helper" | "shopkeeper" | "staff";
+type View = "choose" | "pensioner" | "helper" | "shopkeeper" | "staff" | "register";
 
 const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا سبز بٹن دبائیں، یا مائیک دبا کر بولیں۔";
 
 const GREETING_EN = "Welcome to Zinda Hon. If you receive a pension, press the big green button, or press the mic and speak.";
 
-const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner">, { en: string; ur: string; icon: string }> = {
+const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner" | "register">, { en: string; ur: string; icon: string }> = {
   helper: { en: "Helper login", ur: "مددگار لاگ اِن", icon: "🤝" },
   shopkeeper: { en: "Shopkeeper login", ur: "دکاندار لاگ اِن", icon: "🏪" },
   staff: { en: "Pension office staff", ur: "پنشن آفس عملہ", icon: "🏛️" },
@@ -33,6 +34,7 @@ const TEST_LOGINS = [
   { icon: "👴🏽", label: "Ghulam Rasool", role: "Pensioner", phone: "03317065529", pw: "Rasool1949" },
   { icon: "🧑‍💼", label: "Sana Qureshi", role: "Officer, Karachi", phone: "03214417832", pw: "Sana@Pension24" },
   { icon: "🧑‍💼", label: "Bilal Ahmed", role: "Officer, Karachi", phone: "03332290615", pw: "Bilal#Korangi7" },
+  { icon: "🧑‍💼", label: "Uzma Khan", role: "Officer, Karachi (2nd check)", phone: "03000000013", pw: "Uzma@Check2" },
   { icon: "🧑‍💼", label: "Naveed Memon", role: "Officer, Hyderabad", phone: "03003108847", pw: "Naveed!Hyd52" },
   { icon: "⚙️", label: "Kamran Siddiqui", role: "Admin", phone: "03452876104", pw: "Kamran$Admin9" },
   { icon: "⚙️", label: "Hira Farooq", role: "Admin (2nd approver)", phone: "03000000012", pw: "Hira@Rules5" },
@@ -63,6 +65,13 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [expired, setExpired] = useState(false);
   useEffect(() => { setExpired(new URLSearchParams(window.location.search).has("expired")); }, []);
+  // Say hello out loud when the front page opens (or at the first tap, if the browser blocks sound).
+  useEffect(() => {
+    setPrefsRole("guest");
+    if (!voiceOn()) return;
+    const t = setTimeout(() => void speakUrdu(GREETING, GREETING_EN), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   async function login(p = phone, pw = password) {
     setBusy(true);
@@ -142,7 +151,7 @@ export default function LoginPage() {
               <div className="hero-card-head">
                 <span className="hero-card-avatar"><Logo size={34} /></span>
                 <span className="flex-1 min-w-0">
-                  <b className="block">{view === "choose" ? <><span className="en">Who are you?</span> <span className="ur">آپ کون ہیں؟</span></> : view === "pensioner" ? <><span className="en">Pensioner login</span> <span className="ur">پنشنر لاگ اِن</span></> : <><span className="en">{FORM_TITLE[view].en}</span> <span className="ur">{FORM_TITLE[view].ur}</span></>}</b>
+                  <b className="block">{view === "choose" ? <><span className="en">Who are you?</span> <span className="ur">آپ کون ہیں؟</span></> : view === "pensioner" ? <><span className="en">Pensioner login</span> <span className="ur">پنشنر لاگ اِن</span></> : view === "register" ? <><span className="en">Create account</span> <span className="ur">نیا اکاؤنٹ</span></> : <><span className="en">{FORM_TITLE[view].en}</span> <span className="ur">{FORM_TITLE[view].ur}</span></>}</b>
                   <span className="text-xs muted"><span className="live-dot" /> Online · tap or speak</span>
                 </span>
                 {view !== "choose" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← <span className="en">Back</span><span className="ur">واپس</span></button>}
@@ -150,6 +159,7 @@ export default function LoginPage() {
 
               <div className="hero-card-body">
                 {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
+                {view === "register" && <RegisterForm onDone={() => open("choose")} />}
 
                 {view === "choose" && (
                   <>
@@ -164,6 +174,7 @@ export default function LoginPage() {
                       <button className="choice-pill" data-say="میں دکاندار ہوں" data-say-en="I run a shop" onClick={() => open("shopkeeper")}>🏪 <span className="en">I run a shop</span><span className="ur">دکاندار</span></button>
                       <button className="choice-pill" data-say="پنشن آفس عملہ" data-say-en="Pension office staff" onClick={() => open("staff")}>🏛️ <span className="en">Pension office</span><span className="ur">عملہ</span></button>
                     </div>
+                    <button type="button" className="reg-link" data-say="نیا اکاؤنٹ بنائیں" data-say-en="Create a new account" onClick={() => open("register")}>✨ <span className="en">New here? <b>Create an account</b></span><span className="ur">نئے ہیں؟ اکاؤنٹ بنائیں</span></button>
                     <div className="hero-card-mic">
                       <VoiceCommand
                         promptUr="بولیں: پنشن، مددگار، یا دکان۔"
@@ -179,7 +190,7 @@ export default function LoginPage() {
                   </>
                 )}
 
-                {view !== "choose" && view !== "pensioner" && (
+                {view !== "choose" && view !== "pensioner" && view !== "register" && (
                   <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
                     <label className="block space-y-1">
                       <span className="text-sm font-semibold"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>

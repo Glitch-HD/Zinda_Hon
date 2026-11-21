@@ -18,6 +18,7 @@ const widow = await login("03026619470", "Zainab786");
 const officer = await login("03214417832", "Sana@Pension24");
 const helper = await login("03012654398", "Rubina@Lyari8");
 const officer2 = await login("03332290615", "Bilal#Korangi7");
+const officer3 = await login("03000000013", "Uzma@Check2");
 ok(widow.res.ok && officer.res.ok && helper.res.ok, "demo users can log in");
 
 // Role enforcement on the server.
@@ -59,7 +60,13 @@ ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: J
 // Separation of duties: the officer who enrolled her face may not approve her; a second officer can.
 ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Called her; book was photocopied by a shop. Verified in person." }) })).status === 403, "the officer who enrolled the face cannot also approve");
 ok((await officer2.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "x" }) })).status === 400, "approving despite open risks needs a written check");
-ok((await officer2.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Called her; book was photocopied by a shop. Verified in person." }) })).ok, "a second officer approves with a written check");
+ok((await officer2.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "AI case assistant (summary)\nAI: looks fine\n- point one" }) })).status === 400, "text pasted from the AI does not count as the officer's own check");
+const ap = await officer2.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Called her; book was photocopied by a shop. Verified in person." }) });
+if (ap.status === 202) {
+  ok((await ap.json()).pending === true, "a serious risk turns one officer's approval into a proposal");
+  ok((await officer2.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Called her; book was photocopied by a shop. Verified in person." }) })).status === 409, "the same officer cannot confirm their own proposal");
+  ok((await officer3.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Second check: saw her at the office with the original book today." }) })).ok, "a different officer confirms the approval");
+} else ok(ap.ok, "a second officer approves with a written check");
 
 // Consent withdrawal really cuts off the helper.
 const consents = (await (await widow.call("/api/consents")).json()).consents;
@@ -103,6 +110,24 @@ ok(appr.ok && (await appr.json()).version > 0, "a second admin approves it and i
 const stricter = structuredClone(looser); stricter.face.strictDistance = 0.4;
 const strictRes = await kamran.call("/api/admin/rules", { method: "POST", body: JSON.stringify({ config: stricter, note: "smoke: back to stricter" }) });
 ok(strictRes.ok && (await strictRes.json()).version > 0, "a stricter change applies at once");
+
+// Create account: only mock CNICs and phones, a pending sign-up cannot log in, an officer approves it.
+const reg = (b) => fetch(`${BASE}/api/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) });
+const offices = (await (await fetch(`${BASE}/api/auth/register`)).json()).offices;
+const khi = offices.find((o) => /Karachi/.test(o.name));
+const fatima = { tenantId: khi.id, role: "PENSIONER", name: "Fatima Begum", cnic: "00000-1000002-4", phone: "03000000099", dateOfBirth: "1948-07-01", pensionNo: "PEN-K-1002", password: "Fatima1948" };
+ok((await reg({ ...fatima, cnic: "42101-1234567-1" })).status === 400, "a real-looking CNIC is refused");
+ok((await reg({ ...fatima, phone: "03211234567" })).status === 400, "a real-looking phone number is refused");
+ok((await reg(fatima)).ok, "a new pensioner can send a sign-up");
+const early = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: fatima.phone, password: fatima.password }) });
+ok(early.status === 403, "a sign-up cannot log in before an officer checks it");
+const pendingReg = (await (await officer.call("/api/registrations")).json()).registrations?.find((x) => x.phone === fatima.phone);
+ok(pendingReg, "the officer sees the new sign-up");
+if (pendingReg) {
+  ok((await widow.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve" }) })).status === 403, "a pensioner cannot approve sign-ups");
+  ok((await officer.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "" }) })).ok, "the officer approves the sign-up");
+  ok((await login(fatima.phone, fatima.password)).res.ok, "after approval the new pensioner can log in");
+}
 
 // Error monitoring: a phone's crash report is stored and the health check counts errors.
 ok((await fetch(`${BASE}/api/client-error`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "smoke test crash", page: "/smoke" }) })).ok, "a phone can report a crash");

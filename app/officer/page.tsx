@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
+import SignupReview, { type SignupRow } from "@/components/SignupReview";
 import { PageTitle, SectionHead, Stat, greeting, initials } from "@/components/ui/Dash";
 
 type Row = { id: string; year: number; status: string; pensioner: { name: string; pensionNo: string } };
@@ -54,6 +55,7 @@ export default async function OfficerQueue() {
     orderBy: [{ year: "desc" }, { updatedAt: "desc" }],
     take: 120,
   });
+  const signups = await prisma.registration.findMany({ where: { tenantId: user.tenantId, status: "pending" }, orderBy: { createdAt: "asc" }, take: 30 });
   // Every active pensioner without a face yet: those with their own app account AND those a helper
   // acts for. (The list column can be empty or NULL, so filter here.)
   const notEnrolled = (await prisma.pensioner.findMany({
@@ -102,6 +104,13 @@ export default async function OfficerQueue() {
           <Link className="btn" href={`/officer/case/${c.id}`}>Review →</Link>
         </div>
       ))}
+
+      {signups.length > 0 && (
+        <>
+          <SectionHead title="✨ New sign-ups to check" count={signups.length} sub="People who made an account. Check the records below, then approve or reject. No account works until you do." />
+          <SignupReview rows={signups.map((r) => ({ id: r.id, role: r.role, name: r.name, cnic: r.cnic, phone: r.phone, area: r.area, pensionNo: r.pensionNo, createdAt: r.createdAt.toISOString(), checks: r.checks as SignupRow["checks"] }))} />
+        </>
+      )}
 
       {notEnrolled.length > 0 && (
         <>

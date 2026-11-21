@@ -37,7 +37,7 @@ function notesText(d: Done) {
   const r = d.report;
   const lines = [
     `AI case assistant (${d.mode === "ai" ? d.model ?? "AI" : "fixed checklist"}): ${REC[r.recommendation].label.replace("Suggests: ", "")}, ${Math.round(r.confidence * 100)}% sure.`,
-    r.headline,
+    `AI: ${r.headline}`,
     ...r.findings.filter((f) => f.severity !== "ok").map((f) => `- ${f.text}`),
     "I checked these points myself before deciding.",
   ];
