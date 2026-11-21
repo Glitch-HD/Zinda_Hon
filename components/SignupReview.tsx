@@ -11,10 +11,10 @@ export type SignupRow = {
   checks: { spokenInUrdu?: boolean; pensionTypeMismatch?: boolean; pensionType?: string; husbandOnNadra?: string | null; husbandNadraSimilarity?: number | null; husbandOnPensionRecord?: string | null; husbandPensionSimilarity?: number | null; husbandDeathFound?: boolean; husbandDeathName?: string | null; husbandDeathDate?: string | null; husbandDeathDateMatches?: boolean | null; husbandDeathRegisteredAt?: string | null; nadraFound?: boolean; nadraName?: string | null; nameSimilarity?: number | null; dobMatches?: boolean | null; deathRecordFound?: boolean; pensionRecordName?: string; pensionNameSimilarity?: number; pensionCnicMatches?: boolean | null };
 };
 
-const ROLE: Record<string, string> = { PENSIONER: "👵🏽 Pensioner", HELPER: "🤝 Helper", SHOPKEEPER: "🏪 Shopkeeper" };
+const ROLE: Record<string, string> = { PENSIONER: "Pensioner", HELPER: "Helper", SHOPKEEPER: "Shopkeeper" };
 
 function Check({ ok, text }: { ok: boolean | null | undefined; text: string }) {
-  return <li>{ok === true ? "✅" : ok === false ? "⛔" : "⚠️"} {text}</li>;
+  return <li>{ok === true ? "" : ok === false ? "" : ""} {text}</li>;
 }
 
 function Row({ r }: { r: SignupRow }) {
@@ -33,18 +33,18 @@ function Row({ r }: { r: SignupRow }) {
       setState(action === "approve" ? "approved" : "rejected");
     } catch (e) { setMsg(e instanceof Error ? e.message : "Could not save"); } finally { setBusy(false); }
   }
-  if (state !== "open") return <div className="card text-sm">{state === "approved" ? "✅" : "❌"} {r.name}: sign-up {state}.{state === "approved" ? " They can log in now." : ""}</div>;
+  if (state !== "open") return <div className="card text-sm">{state === "approved" ? "" : ""} {r.name}: sign-up {state}.{state === "approved" ? " They can log in now." : ""}</div>;
   return (
     <div className="card space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <b>{r.name}</b><span className="badge">{ROLE[r.role] ?? r.role}</span>
         <span className="muted text-sm">CNIC {r.cnic.replace(/^(\d{5})(\d{7})(\d)$/, "$1-$2-$3")} · {r.phone}{r.area ? ` · ${r.area}` : ""}{r.pensionNo ? ` · ${r.pensionNo}` : ""}</span>
       </div>
-      {r.details?.shopName && <p className="text-sm">🏪 <b>{r.details.shopName}</b>{r.details.shopAddress ? `, ${r.details.shopAddress}` : ""}</p>}
+      {r.details?.shopName && <p className="text-sm"><b>{r.details.shopName}</b>{r.details.shopAddress ? `, ${r.details.shopAddress}` : ""}</p>}
       {r.details?.pensionType === "family" && (
-        <p className="text-sm">🕊️ Widow&apos;s pension. Late husband: <b>{r.details.husbandName}</b>{r.details.husbandCnic ? `, CNIC ${r.details.husbandCnic.replace(/^(\d{5})(\d{7})(\d)$/, "$1-$2-$3")}` : ""}{r.details.husbandDeathDate ? `, died ${r.details.husbandDeathDate}` : ""}{r.details.deathCertNo ? `, death certificate ${r.details.deathCertNo}` : ", no death certificate number given"}</p>
+        <p className="text-sm">Widow&apos;s pension. Late husband: <b>{r.details.husbandName}</b>{r.details.husbandCnic ? `, CNIC ${r.details.husbandCnic.replace(/^(\d{5})(\d{7})(\d)$/, "$1-$2-$3")}` : ""}{r.details.husbandDeathDate ? `, died ${r.details.husbandDeathDate}` : ""}{r.details.deathCertNo ? `, death certificate ${r.details.deathCertNo}` : ", no death certificate number given"}</p>
       )}
-      {r.assistedBy && <p className="text-sm" style={{ color: "var(--warn)" }}>🧑‍🤝‍🧑 Filled in for her by <b>{r.assistedBy.name}</b> ({r.assistedBy.relation}, {r.assistedBy.phone}). Confirm with her directly before approving.</p>}
+      {r.assistedBy && <p className="text-sm" style={{ color: "var(--warn)" }}>Filled in for her by <b>{r.assistedBy.name}</b> ({r.assistedBy.relation}, {r.assistedBy.phone}). Confirm with her directly before approving.</p>}
       <ul className="text-sm space-y-1" style={{ listStyle: "none", padding: 0 }}>
         <Check ok={c.nadraFound} text={c.nadraFound ? `NADRA (mock) has this CNIC: "${c.nadraName}", name match ${pct(c.nameSimilarity)}` : "No NADRA (mock) record for this CNIC"} />
         {c.nadraFound && <Check ok={c.dobMatches} text={c.dobMatches === null || c.dobMatches === undefined ? "Date of birth not given" : c.dobMatches ? "Date of birth matches" : "Date of birth does not match"} />}
@@ -57,11 +57,11 @@ function Row({ r }: { r: SignupRow }) {
         </>}
         {r.role === "PENSIONER" && <Check ok={c.pensionCnicMatches ?? null} text={`Pension record "${c.pensionRecordName}", name match ${pct(c.pensionNameSimilarity)}, CNIC ${c.pensionCnicMatches ? "matches" : c.pensionCnicMatches === false ? "does NOT match" : "not on file"}`} />}
       </ul>
-      <textarea className="input" rows={2} placeholder="Your note: how you checked this person (needed if anything above is not ✅, or to reject)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <textarea className="input" rows={2} placeholder="Your note: how you checked this person (needed if anything above is not , or to reject)" value={note} onChange={(e) => setNote(e.target.value)} />
       {msg && <p role="alert" className="text-sm" style={{ color: "var(--danger)" }}>{msg}</p>}
       <div className="flex gap-2 flex-wrap">
-        <button className="btn btn-sm" disabled={busy || c.deathRecordFound} onClick={() => decide("approve")}>✅ Approve account</button>
-        <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => decide("reject")}>❌ Reject</button>
+        <button className="btn btn-sm" disabled={busy || c.deathRecordFound} onClick={() => decide("approve")}>Approve account</button>
+        <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => decide("reject")}>Reject</button>
       </div>
     </div>
   );

@@ -71,7 +71,7 @@ export default async function Evaluation() {
   return (
     <div className="space-y-4">
       <Header user={user} />
-      <h2 className="text-2xl font-bold">📊 Evaluation</h2>
+      <h2 className="text-2xl font-bold">Evaluation</h2>
       <p className="muted">All numbers are measured on our own labelled test data. Small sample sizes mean wide error margins; we show them honestly.</p>
       <div className="card">
         <h3 className="font-semibold">Scam checker ({msgs.length} labelled messages: {scams.length} scams, {genuine.length} genuine)</h3>
@@ -143,7 +143,7 @@ async function AgentEval({ tenantId, isAdmin }: { tenantId: string; isAdmin: boo
   const word = (r?: string) => r?.replaceAll("_", " ") ?? "–";
   return (
     <div className="card">
-      <h3 className="font-semibold">🕵️ AI case assistant ({AGENT_EVAL_CASES.length} labelled cases: {AGENT_EVAL_CASES.filter((c) => c.planted).length} with a planted problem, {AGENT_EVAL_CASES.filter((c) => !c.planted).length} clean)</h3>
+      <h3 className="font-semibold">AI case assistant ({AGENT_EVAL_CASES.length} labelled cases: {AGENT_EVAL_CASES.filter((c) => c.planted).length} with a planted problem, {AGENT_EVAL_CASES.filter((c) => !c.planted).length} clean)</h3>
       <p className="text-sm muted">The demo data hides real-world problems on purpose. We check whether the assistant finds them by itself, and whether its suggestion is safe. {runId ? `Latest run ${last?.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC${rows.length < AGENT_EVAL_CASES.length ? `, partial: ${rows.length} of ${AGENT_EVAL_CASES.length}` : ""}.` : "Not run yet."}</p>
       {ran.length > 0 && (
         <>
@@ -174,7 +174,7 @@ async function AgentEval({ tenantId, isAdmin }: { tenantId: string; isAdmin: boo
           <p className="text-sm muted mt-2">When the AI is not available the fixed checklist answers; those rows find every problem by design, so read &quot;Finished by the AI&quot; with the other numbers.</p>
         </>
       )}
-      {isAdmin && <RunEvalButton endpoint="/api/admin/run-agent-eval" label="▶️ Run the case assistant test set (about 3 minutes)" pauseMs={4000} />}
+      {isAdmin && <RunEvalButton endpoint="/api/admin/run-agent-eval" label="▶Run the case assistant test set (about 3 minutes)" pauseMs={4000} />}
     </div>
   );
 }

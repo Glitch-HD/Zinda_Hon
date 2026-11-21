@@ -20,7 +20,7 @@ export default function MockNadraLoader({ records }: { records: Rec[] }) {
       <label className="block space-y-1">
         <span className="text-sm font-semibold">Mock NADRA record (fake CNIC)</span>
         <select className="input" value={cnic} onChange={(e) => { setCnic(e.target.value); setMsg(null); setKey((k) => k + 1); }}>
-          {list.map((r) => <option key={r.cnic} value={r.cnic}>{r.hasFace ? "🪪" : "⬜"} {r.label}</option>)}
+          {list.map((r) => <option key={r.cnic} value={r.cnic}>{r.hasFace ? "" : ""} {r.label}</option>)}
         </select>
       </label>
       <p className="text-sm">The volunteer looks at the camera; press <b>Start camera</b>. This stands in for the CNIC photo NADRA would already hold.</p>
@@ -36,7 +36,7 @@ export default function MockNadraLoader({ records }: { records: Rec[] }) {
         }
       }} />
       {msg && <p role="status" className={msg.ok ? "badge badge-ok" : "badge badge-danger"} style={{ whiteSpace: "normal", display: "block", padding: 10 }}>{msg.text}</p>}
-      <button className="btn btn-ghost" onClick={wipe}>🧹 Delete all demo faces (do this after judging)</button>
+      <button className="btn btn-ghost" onClick={wipe}>Delete all demo faces (do this after judging)</button>
     </div>
   );
 }

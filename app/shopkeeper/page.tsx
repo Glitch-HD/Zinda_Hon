@@ -11,9 +11,9 @@ export default async function Shopkeeper() {
   return (
     <div>
       <PageVoice role="SHOPKEEPER" ur="خوش آمدید۔ گاہک کو پنشن یا امداد کا کوئی پیغام آیا ہو تو پیسے بھیجنے سے پہلے اسے یہاں جانچیں۔" en="Welcome. If a customer got a pension or relief message, check it here before anyone sends money." />
-      <Header user={user} links={[{ href: "/scam-map", label: "🗺️ Scam map", ur: "دھوکے کا نقشہ", info: { en: "See which areas are getting the most fake pension and relief messages right now.", ur: "دیکھیں کن علاقوں میں سب سے زیادہ جعلی پیغام آ رہے ہیں۔" } }]} />
+      <Header user={user} links={[{ href: "/scam-map", label: "Scam map", ur: "دھوکے کا نقشہ", info: { en: "See which areas are getting the most fake pension and relief messages right now.", ur: "دیکھیں کن علاقوں میں سب سے زیادہ جعلی پیغام آ رہے ہیں۔" } }]} />
       <div className="card card-soft mb-6 flex items-start gap-3">
-        <span className="text-3xl">🏪</span>
+        <span className="text-3xl"></span>
         <p className="flex-1"><span className="en">Customers show you suspicious &quot;pension&quot; or &quot;relief payment&quot; messages? Check them here before anyone sends money.</span><span className="ur">گاہک پنشن یا امداد کا مشکوک پیغام دکھائیں؟ پیسے بھیجنے سے پہلے یہاں جانچیں۔</span></p>
         <Info en="Every check also feeds the Scam Map, so officers can warn an area when a new scam starts." ur="ہر جانچ دھوکے کے نقشے میں جاتی ہے تاکہ افسر علاقے کو خبردار کر سکیں۔" />
       </div>

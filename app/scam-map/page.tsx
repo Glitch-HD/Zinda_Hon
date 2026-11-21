@@ -27,7 +27,7 @@ export default async function ScamMap({ searchParams }: { searchParams: Promise<
   return (
     <div className="space-y-4">
       <Header user={user} />
-      <h2 className="text-2xl font-bold">🗺️ Scam map ({scams.length} scam messages)</h2>
+      <h2 className="text-2xl font-bold">Scam map ({scams.length} scam messages)</h2>
       <p className="text-sm muted">
         {withTest ? <>Including messages from the labelled test set. <a className="underline" href="?">Show only real reports</a></> : <>Only messages people actually checked.{hidden > 0 && <> {hidden} test-set scams are hidden. <a className="underline" href="?test=1">Include them</a></>}</>}
       </p>

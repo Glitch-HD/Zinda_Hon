@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import type { ReactNode } from "react";
 
 // Small building blocks shared by the staff dashboards (officer, admin, auditor).
@@ -21,7 +22,7 @@ export function PageTitle({ title, sub, right }: { title: ReactNode; sub?: React
 export function Stat({ n, label, icon, tone }: { n: ReactNode; label: ReactNode; icon?: string; tone?: "warn" | "danger" | "ok" }) {
   return (
     <div className={`stat${tone ? ` stat-${tone}` : ""}`}>
-      {icon && <span className="stat-i" aria-hidden>{icon}</span>}
+      {icon && <span className="stat-i" aria-hidden><Icon e={typeof icon === "string" ? icon : undefined} size={22} /></span>}
       <div className="stat-n">{n}</div>
       <div className="stat-l">{label}</div>
     </div>

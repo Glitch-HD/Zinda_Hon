@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import { useRef, useState } from "react";
 import QrScanner from "./QrScanner";
 import FaceCapture, { type FaceResult } from "./FaceCapture";
@@ -147,12 +148,12 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
       {step === "book" && (
         <div className="card space-y-5" style={{ padding: 22 }}>
           <div className="text-center space-y-1">
-            <div className="text-7xl">📖</div>
+            <div className="text-7xl"></div>
             <p className="ur text-2xl font-semibold">اپنی پنشن بک کا کیو آر دکھائیں</p>
             <p className="en muted">Show the QR code inside your pension book to the camera.</p>
           </div>
           <div className="flex gap-2 items-center">
-            <button className="btn btn-ghost flex-1" onClick={() => speakUrdu(SAY.book, SAY_EN.book)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+            <button className="btn btn-ghost flex-1" onClick={() => speakUrdu(SAY.book, SAY_EN.book)} data-no-voice><span className="ur">سنیں</span><span className="en">Listen</span></button>
             <Info en="The QR code is printed inside your pension book by the pension office. It proves the book is real. Hold the book open in front of the back camera." ur="پنشن بک کے اندر چھپا ہوا کیو آر کوڈ ثابت کرتا ہے کہ بک اصلی ہے۔ بک کھول کر فون کے پیچھے والے کیمرے کے سامنے رکھیں۔" />
           </div>
           <QrScanner onResult={onBook} />
@@ -165,7 +166,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
                 { no: "PEN-K-1011", name: "Sakina Baloch" },
                 { no: "PEN-K-1012", name: "Ghulam Rasool" },
               ].map((b) => (
-                <button key={b.no} className="btn btn-ghost btn-sm w-full" disabled={busy} onClick={() => useSampleBook(b.no)} data-no-voice>📘 {b.name}</button>
+                <button key={b.no} className="btn btn-ghost btn-sm w-full" disabled={busy} onClick={() => useSampleBook(b.no)} data-no-voice>{b.name}</button>
               ))}
             </div>
           </details>
@@ -184,8 +185,8 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
           <FaceCapture key={faceKey} onDone={onFace} />
           {busy && <p className="text-center"><span className="en">Checking your face…</span> <span className="ur">چہرہ جانچا جا رہا ہے</span></p>}
           <div className={`grid gap-2 ${error ? "grid-cols-2" : "grid-cols-1"}`}>
-            {error && <button className="btn btn-ghost" data-say="دوبارہ کوشش کریں" onClick={() => { setError(null); setFaceKey((k) => k + 1); }}>🔁 <span className="en">Try again</span><span className="ur">دوبارہ</span></button>}
-            {who.hasPin && <button className={error ? "btn" : "btn btn-ghost btn-sm"} data-no-voice onClick={() => { setError(null); setStep("pin"); void speakUrdu(SAY.pin, SAY_EN.pin); }}>🔢 <span className="en">Use PIN instead</span><span className="ur">پن استعمال کریں</span></button>}
+            {error && <button className="btn btn-ghost" data-say="دوبارہ کوشش کریں" onClick={() => { setError(null); setFaceKey((k) => k + 1); }}><span className="en">Try again</span><span className="ur">دوبارہ</span></button>}
+            {who.hasPin && <button className={error ? "btn" : "btn btn-ghost btn-sm"} data-no-voice onClick={() => { setError(null); setStep("pin"); void speakUrdu(SAY.pin, SAY_EN.pin); }}><span className="en">Use PIN instead</span><span className="ur">پن استعمال کریں</span></button>}
           </div>
         </div>
       )}
@@ -199,7 +200,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
           {!who.hasFace && (
             <div className="card-soft text-sm" role="note" style={{ border: "1px solid var(--accent)", borderRadius: 14, padding: "10px 12px" }}>
               <p className="ur" style={{ whiteSpace: "normal" }}>آپ کا چہرہ ابھی رجسٹر نہیں ہوا، اس لیے اس بار پن استعمال کریں۔ پنشن آفس ایک بار آپ کا چہرہ رجسٹر کرے گا، پھر کیمرے سے لاگ اِن ہو گا۔</p>
-              <p className="en">📷 Your face is not registered yet, so use your PIN this time. A pension officer registers your face once (Officer → Enrol faces); after that you log in with the camera.</p>
+              <p className="en">Your face is not registered yet, so use your PIN this time. A pension officer registers your face once (Officer → Enrol faces); after that you log in with the camera.</p>
             </div>
           )}
           <div className="flex justify-center gap-4" aria-label={`${pin.length} of 4 digits entered`}>
@@ -207,7 +208,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
           </div>
           <div className="flex items-center gap-3">
             <button className={`mic-btn ${listening ? "live" : ""}`} style={{ width: 64, height: 64 }} disabled={busy} onClick={sayPin} aria-label={listening ? "Stop listening" : "Say your PIN"} data-no-voice>
-              <span className="text-3xl">{listening ? "⏹️" : "🎤"}</span>
+              <Icon name={listening ? "stop" : "mic"} size={28} />
             </button>
             <div className="flex-1">
               <p className="ur font-semibold">{listening ? "پن بولیں، پھر دوبارہ دبائیں" : "مائیک دبا کر پن بولیں"}</p>
@@ -224,7 +225,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
             <button className="pinkey" style={{ fontSize: "1.2rem" }} disabled={busy || !pin} onClick={() => setPin(pin.slice(0, -1))} aria-label="Delete" data-say="مٹائیں">⌫</button>
             <button className="pinkey" disabled={busy} onClick={() => press("0")} aria-label="0" data-no-voice>0<span className="block text-sm muted ur always" style={{ lineHeight: 1.2 }}>۰</span></button>
             {who.hasFace ? (
-              <button className="pinkey" style={{ fontSize: "1.2rem" }} onClick={() => { setPin(""); setError(null); setStep("face"); }} aria-label="Use face instead" data-say="چہرے سے لاگ اِن">🙂</button>
+              <button className="pinkey" style={{ fontSize: "1.2rem" }} onClick={() => { setPin(""); setError(null); setStep("face"); }} aria-label="Use face instead" data-say="چہرے سے لاگ اِن"></button>
             ) : <span />}
           </div>
         </div>

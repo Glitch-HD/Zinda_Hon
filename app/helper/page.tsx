@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
@@ -22,7 +23,7 @@ export default async function HelperHome() {
   return (
     <div>
       <PageVoice role="HELPER" ur={`خوش آمدید۔ آپ ${links.length} خاندانوں کی مدد کرتے ہیں۔ کسی خاندان کے لیے کام کرنے کو اس کا بٹن دبائیں۔`} en={`Welcome. You help ${links.length} families. Press a family's button to act for them.`} />
-      <Header user={user} links={[{ href: "/check-message", label: "🛡️ Check a message", ur: "پیغام جانچیں", info: { en: "Check if an SMS or WhatsApp message a family received is a scam.", ur: "جانچیں کہ کسی خاندان کو آیا پیغام دھوکہ تو نہیں۔" } }]} />
+      <Header user={user} links={[{ href: "/check-message", label: "Check a message", ur: "پیغام جانچیں", info: { en: "Check if an SMS or WhatsApp message a family received is a scam.", ur: "جانچیں کہ کسی خاندان کو آیا پیغام دھوکہ تو نہیں۔" } }]} />
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
           <h2 className="text-2xl font-bold"><span className="en">Families you help ({links.length})</span></h2><p className="ur text-xl">جن خاندانوں کی آپ مدد کرتے ہیں ({links.length})</p>
@@ -40,12 +41,12 @@ export default async function HelperHome() {
           return (
             <div key={p.id} className="card flex flex-col gap-3" style={{ padding: 18 }}>
               <div className="flex items-start gap-3">
-                <div className="text-4xl">{c?.status === "VERIFIED" ? "✅" : c?.status === "STOPPED" ? "⛔" : c?.status === "WITH_OFFICER" ? "🧑‍💼" : c?.status === "NEEDS_PROOF" ? "📷" : "⏳"}</div>
+                <div className="status-ic status-ic-sm" data-status={c?.status ?? "none"}><Icon name={c?.status === "VERIFIED" ? "check" : c?.status === "STOPPED" ? "alert" : c?.status === "WITH_OFFICER" ? "user" : c?.status === "NEEDS_PROOF" ? "camera" : "clock"} size={26} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-lg">{p.name}</div>
                   {p.nameUr && <div className="ur text-lg" style={{ lineHeight: 1.8 }}>{p.nameUr}</div>}
                   <div className="text-sm muted">{p.pensionNo} · {c ? (c.status === "VERIFIED" ? "approved, case closed" : c.status === "STOPPED" ? "pension stopped, case closed" : c.status.replaceAll("_", " ").toLowerCase()) : "no case"}</div>
-                  <div className="text-xs muted mt-1">{consent ? `Permission: ${consent.fields.join(", ")}` : "⛔ Permission withdrawn"}</div>
+                  <div className="text-xs muted mt-1">{consent ? `Permission: ${consent.fields.join(", ")}` : "Permission withdrawn"}</div>
                 </div>
               </div>
               {canAct && c && c.status !== "VERIFIED" && c.status !== "STOPPED"

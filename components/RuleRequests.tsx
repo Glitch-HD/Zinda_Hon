@@ -25,7 +25,7 @@ export default function RuleRequests({ requests }: { requests: Req[] }) {
               <><span className="text-sm muted">Waiting for a second admin.</span><button className="btn btn-ghost btn-sm" onClick={() => act(r.id, "cancel")}>Cancel my change</button></>
             ) : (
               <><input className="input" style={{ maxWidth: 280 }} placeholder="Your reason (saved in the audit log)" value={note} onChange={(e) => setNote(e.target.value)} />
-                <button className="btn btn-sm" onClick={() => act(r.id, "approve")}>✅ Approve as second admin</button>
+                <button className="btn btn-sm" onClick={() => act(r.id, "approve")}>Approve as second admin</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => act(r.id, "reject")}>✖ Reject</button></>
             )}
           </div>

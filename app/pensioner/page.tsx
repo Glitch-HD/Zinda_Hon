@@ -1,3 +1,4 @@
+import Icon from "@/components/ui/Icon";
 import Header from "@/components/Header";
 import Option from "@/components/ui/Option";
 import PensionerVoice from "@/components/PensionerVoice";
@@ -26,7 +27,7 @@ export default async function PensionerHome() {
       ) : (
         <div className="space-y-6">
           <div className="card status-arch text-center space-y-2 md:pb-8" data-say={statusUr}>
-            <div className="text-7xl">{c.status === "VERIFIED" ? "✅" : c.status === "STOPPED" ? "⛔" : c.status === "WITH_OFFICER" ? "🧑‍💼" : c.status === "NEEDS_PROOF" ? "📷" : "⏳"}</div>
+            <div className="status-ic" data-status={c.status}><Icon name={c.status === "VERIFIED" ? "check" : c.status === "STOPPED" ? "alert" : c.status === "WITH_OFFICER" ? "user" : c.status === "NEEDS_PROOF" ? "camera" : "clock"} size={44} /></div>
             <p className="ur text-2xl md:text-3xl">{statusUr}</p>
             <p className="en muted">{c.year}: {statusEn}</p>
             {(c.status === "VERIFIED" || c.status === "STOPPED") && c.closedAt && <p className="text-sm muted">Closed on {c.closedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>}

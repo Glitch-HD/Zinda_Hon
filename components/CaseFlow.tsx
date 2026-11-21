@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import { useCallback, useEffect, useState } from "react";
 import FaceCapture, { type FaceResult, type Ticket } from "./FaceCapture";
 import { isSlowNetwork } from "@/lib/client/prefetch";
@@ -136,7 +137,7 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
   const stepsDone = { intro: 0, face: 1, document: 2, submit: 3, result: 3 }[step];
 
   if (initialStatus === "VERIFIED") {
-    return <div className="card text-center max-w-2xl mx-auto space-y-2" style={{ padding: 28 }}><div className="text-7xl">✅</div><p className="ur text-2xl">آپ کا اس سال کا ثبوتِ حیات مکمل ہے۔</p><p className="en">Your proof-of-life for this year is complete.</p></div>;
+    return <div className="card text-center max-w-2xl mx-auto space-y-2" style={{ padding: 28 }}><div className="text-7xl"></div><p className="ur text-2xl">آپ کا اس سال کا ثبوتِ حیات مکمل ہے۔</p><p className="en">Your proof-of-life for this year is complete.</p></div>;
   }
 
   const STEPS = [
@@ -148,13 +149,13 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
       <div className="flex justify-between items-center text-sm">
-        <span>{online ? <>🟢 <span className="en">Online</span><span className="both-only"> · </span><span className="ur">آن لائن</span></> : <>🔴 <span className="en">Offline: steps are saved on this phone</span><span className="ur">انٹرنیٹ نہیں، قدم محفوظ ہیں</span></>}</span>
+        <span>{online ? <><span className="en">Online</span><span className="both-only"> · </span><span className="ur">آن لائن</span></> : <><span className="en">Offline: steps are saved on this phone</span><span className="ur">انٹرنیٹ نہیں، قدم محفوظ ہیں</span></>}</span>
         {queued > 0 && <span className="badge badge-warn">{queued} <span className="en">step(s) waiting to send</span><span className="ur">قدم بھیجنے باقی</span></span>}
       </div>
       <div className="grid grid-cols-3 gap-3" aria-label={`Step ${stepsDone} of 3`}>
         {STEPS.map((st, i) => (
           <div key={st.en} className="text-center rounded-2xl py-3" style={{ background: i < stepsDone ? "var(--brand)" : "var(--card)", color: i < stepsDone ? "var(--brand-ink)" : "var(--ink)", border: "1px solid var(--line)" }}>
-            <div className="text-3xl">{i < stepsDone ? "✔️" : st.icon}</div>
+            <div className="flex justify-center"><Icon e={i < stepsDone ? "" : st.icon} size={28} /></div>
             <div className="text-xs font-semibold"><span className="ur" style={{ lineHeight: 1.8 }}>{st.ur}</span><span className="both-only"> </span><span className="en">{st.en}</span></div>
           </div>
         ))}
@@ -163,12 +164,12 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
       {step === "intro" && (
         <div className="card space-y-5 text-center" style={{ padding: 24 }}>
           <div className="flex justify-end -mb-6"><Info en="Once a year you must show you are alive so your pension continues. Three steps: a photo with a small movement, a scan of your pension book, then send. Your progress is saved after every step, even without internet." ur="سال میں ایک بار ثبوتِ حیات دینا ہوتا ہے۔ تین قدم: تصویر، پنشن بک، بھیجیں۔ ہر قدم کے بعد آپ کا کام محفوظ ہو جاتا ہے، انٹرنیٹ نہ ہو تب بھی۔" /></div>
-          <div className="text-7xl">👵🏽</div>
+          <div className="text-7xl"></div>
           <p className="ur text-2xl">{pensionerName}، اپنی پنشن جاری رکھنے کے لیے ثبوتِ حیات دیں</p>
           <p className="en muted">Prove you are alive so your pension continues. 3 short steps.</p>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.intro, SAY_EN.intro)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.intro, SAY_EN.intro)}><span className="ur">سنیں</span><span className="en">Listen</span></button>
           {!enrolled && <NadraFace pensionerId={pensionerId} onDone={() => setEnrolled(true)} />}
-          <button className="btn btn-big" data-no-voice disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start</span></span></button>
+          <button className="btn btn-big" data-no-voice disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start</span></span></button>
         </div>
       )}
 
@@ -178,16 +179,16 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
             <p className="text-xl"><span className="ur">قدم ۱: اپنی تصویر</span><span className="both-only"> · </span><span className="en font-semibold">Step 1: your photo</span></p>
             <Info en="Look at the camera. You will be asked to blink or turn your head so we know it is really you and not a printed photo. Only 128 numbers about your face are sent, never the photo." ur="کیمرے میں دیکھیں۔ آنکھ جھپکانے یا سر موڑنے کو کہا جائے گا تاکہ پتا چلے یہ آپ ہی ہیں۔ تصویر فون سے باہر نہیں جاتی۔" />
           </div>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.face, SAY_EN.face)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.face, SAY_EN.face)}><span className="ur">سنیں</span><span className="en">Listen</span></button>
           {visit === "asked" ? (
-            <div className="text-center space-y-2" role="status"><div className="text-6xl">🧑‍💼</div><p className="ur text-xl">پنشن افسر آپ سے رابطہ کرے گا۔ آپ کی پنشن بند نہیں ہو گی۔</p><p className="en">A pension officer will contact you to check in person. Your pension is not stopped.</p></div>
+            <div className="text-center space-y-2" role="status"><div className="text-6xl"></div><p className="ur text-xl">پنشن افسر آپ سے رابطہ کرے گا۔ آپ کی پنشن بند نہیں ہو گی۔</p><p className="en">A pension officer will contact you to check in person. Your pension is not stopped.</p></div>
           ) : (
             <>
               <FaceCapture onDone={onFace} getTicket={getTicket} onSlow={() => setSlow(true)} />
               {busy && <p><span className="en">Saving…</span> <span className="ur">محفوظ ہو رہا ہے</span></p>}
               <div className={slow ? "card card-soft space-y-2" : "space-y-2"}>
-                {slow && <p className="text-sm"><span className="en">📶 The signal is weak or the face check could not load. You can ask a pension officer to check you in person instead.</span> <span className="ur">سگنل کمزور ہے؟ افسر کو گھر بلانے کی درخواست کریں۔</span></p>}
-                <button className={slow ? "btn w-full" : "btn btn-ghost btn-sm"} disabled={visit === "asking"} onClick={askVisit}>🏠 <span className="en">Weak signal or no camera? Ask an officer to visit</span> <span className="ur">افسر کو بلائیں</span></button>
+                {slow && <p className="text-sm"><span className="en">The signal is weak or the face check could not load. You can ask a pension officer to check you in person instead.</span> <span className="ur">سگنل کمزور ہے؟ افسر کو گھر بلانے کی درخواست کریں۔</span></p>}
+                <button className={slow ? "btn w-full" : "btn btn-ghost btn-sm"} disabled={visit === "asking"} onClick={askVisit}><span className="en">Weak signal or no camera? Ask an officer to visit</span> <span className="ur">افسر کو بلائیں</span></button>
               </div>
             </>
           )}
@@ -200,7 +201,7 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
             <p className="text-xl"><span className="ur">قدم ۲: پنشن بک</span><span className="both-only"> · </span><span className="en font-semibold">Step 2: pension book</span></p>
             <Info en="Open your pension book and hold its QR code in front of the back camera. The QR is signed by the pension office, so a changed or fake book is caught." ur="پنشن بک کھول کر اس کا کیو آر فون کے پیچھے والے کیمرے کے سامنے رکھیں۔ جعلی یا بدلی ہوئی بک پکڑی جاتی ہے۔" />
           </div>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.document, SAY_EN.document)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.document, SAY_EN.document)}><span className="ur">سنیں</span><span className="en">Listen</span></button>
           <QrScanner onResult={onQr} />
         </div>
       )}
@@ -211,7 +212,7 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
             <p className="text-xl"><span className="ur">قدم ۳: بھیج دیں</span><span className="both-only"> · </span><span className="en font-semibold">Step 3: send</span></p>
             <Info en="Sends your steps for checking. If everything is clear, you are approved straight away. If not, we ask for one more photo or a pension officer looks at it. Your pension is never stopped by the computer." ur="آپ کے قدم جانچ کے لیے بھیجے جائیں گے۔ سب ٹھیک ہو تو فوراً منظوری۔ ورنہ دوبارہ تصویر یا افسر دیکھے گا۔ کمپیوٹر کبھی پنشن بند نہیں کرتا۔" />
           </div>
-          <button className="btn btn-big" data-no-voice disabled={busy} onClick={submit}><span className="text-3xl">📨</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">بھیجیں</span><span className="en text-sm font-semibold opacity-90">Send</span></span></button>
+          <button className="btn btn-big" data-no-voice disabled={busy} onClick={submit}><span className="text-3xl"></span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">بھیجیں</span><span className="en text-sm font-semibold opacity-90">Send</span></span></button>
           {busy && <p><span className="en">Checking…</span> <span className="ur">جانچ ہو رہی ہے</span></p>}
           {note && <p role="status" style={{ color: "var(--warn)" }}>{note}</p>}
         </div>
@@ -219,11 +220,11 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
 
       {step === "result" && result && (
         <div className="card space-y-5 text-center" style={{ padding: 24 }}>
-          <div className="text-7xl">{result.outcome === "APPROVE" ? "✅" : result.outcome === "ASK_MORE_PROOF" ? "📷" : "🧑‍💼"}</div>
+          <div className="text-7xl">{result.outcome === "APPROVE" ? "" : result.outcome === "ASK_MORE_PROOF" ? "" : ""}</div>
           <p className="ur text-2xl">{result.reasonUr}</p>
           <p className="en muted">{result.reasonEn}</p>
-          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(result.reasonUr, result.reasonEn)}>🔊 <span className="ur">دوبارہ سنیں</span><span className="en">Listen again</span></button>
-          {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" data-no-voice onClick={() => restartFor(result.askFor)}><span className="text-3xl">🔁</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">دوبارہ کریں</span><span className="en text-sm font-semibold opacity-90">Try again</span></span></button>}
+          <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(result.reasonUr, result.reasonEn)}><span className="ur">دوبارہ سنیں</span><span className="en">Listen again</span></button>
+          {result.outcome === "ASK_MORE_PROOF" && <button className="btn btn-big" data-no-voice onClick={() => restartFor(result.askFor)}><span className="text-3xl"></span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">دوبارہ کریں</span><span className="en text-sm font-semibold opacity-90">Try again</span></span></button>}
         </div>
       )}
     </div>

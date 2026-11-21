@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import { useRef, useState } from "react";
 import { startListening, matchCommand, LISTEN_ERROR, type Listening } from "@/lib/client/listen";
 import { speakUrdu, stopSpeaking } from "@/lib/client/voice";
@@ -44,14 +45,14 @@ export default function VoiceCommand({ promptUr, promptEn, commands }: { promptU
   return (
     <div className="mic-card" data-no-voice>
       <button type="button" className={`mic-btn ${listening ? "live" : ""}`} onClick={tap} disabled={state === "thinking"} aria-label={listening ? "Stop listening" : "Speak / بولیں"}>
-        <span className="text-4xl">{listening ? "⏹️" : state === "thinking" ? "⏳" : "🎤"}</span>
+        <Icon name={listening ? "stop" : state === "thinking" ? "clock" : "mic"} size={34} />
       </button>
       <div className="flex-1 min-w-0">
         <p className="ur text-xl font-semibold">{listening ? "بولیں… ختم ہو تو دوبارہ دبائیں" : "مائیک دبائیں اور بولیں"}</p>
         <p className="en text-sm font-semibold">{listening ? "Listening… tap again when you finish" : "Tap the mic and say what you want"}</p>
         <p className="ur text-sm muted" style={{ whiteSpace: "normal" }}>{promptUr}</p>
         <p className="en text-xs muted">{promptEn}</p>
-        {heard && <p className="text-sm mt-1">🗣️ “{heard}”</p>}
+        {heard && <p className="text-sm mt-1">“{heard}”</p>}
         {problem && <p className="text-sm" style={{ color: "var(--warn)" }}><span className="ur" style={{ whiteSpace: "normal" }}>{problem.ur}</span><span className="both-only"> </span><span className="en">{problem.en}</span></p>}
       </div>
     </div>

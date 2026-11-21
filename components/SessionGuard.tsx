@@ -57,7 +57,7 @@ export default function SessionGuard({ userId, userName }: { userId: string; use
     return (
       <div className="overlay" role="alertdialog" aria-modal="true">
         <div className="card space-y-3 max-w-md text-center" style={{ padding: 24 }}>
-          <div className="text-5xl">🔀</div>
+          <div className="text-5xl"></div>
           <h2 className="text-xl font-bold">You logged in as someone else in another window</h2>
           <p className="muted">This window was for <b>{userName}</b>, but this browser is now logged in as <b>{other.name}</b>. One browser can only be logged in as one person at a time.</p>
           <p className="text-sm">To test two people side by side, open the second one in a <b>private / incognito window</b> or a different browser.</p>
@@ -73,11 +73,11 @@ export default function SessionGuard({ userId, userName }: { userId: string; use
     return (
       <div className="overlay" role="alertdialog" aria-modal="true">
         <div className="card space-y-3 max-w-sm text-center" style={{ padding: 24 }}>
-          <div className="text-5xl">⏳</div>
+          <div className="text-5xl"></div>
           <p className="ur text-xl">آپ {secondsLeft} سیکنڈ میں لاگ آؤٹ ہو جائیں گے</p>
           <p className="en font-semibold">For your safety you will be logged out in {secondsLeft} seconds.</p>
           <button className="btn btn-big" onClick={() => { lastActive.current = 0; lastRenew.current = 0; lastActive.current = Date.now(); setSecondsLeft(null); void fetch("/api/auth/refresh", { method: "POST" }); }}>
-            <span className="text-3xl">👍</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">میں یہیں ہوں</span><span className="en text-sm font-semibold opacity-90">I&apos;m still here</span></span>
+            <span className="text-3xl"></span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">میں یہیں ہوں</span><span className="en text-sm font-semibold opacity-90">I&apos;m still here</span></span>
           </button>
         </div>
       </div>

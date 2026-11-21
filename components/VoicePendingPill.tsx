@@ -12,7 +12,7 @@ export default function VoicePendingPill() {
   if (!show) return null;
   return (
     <button type="button" className="voice-pill" data-no-voice onClick={() => setShow(false)} aria-live="polite">
-      🔊 <span className="ur">سننے کے لیے کہیں بھی چھوئیں</span> <span className="en">Tap anywhere to hear</span>
+      <span className="ur">سننے کے لیے کہیں بھی چھوئیں</span> <span className="en">Tap anywhere to hear</span>
     </button>
   );
 }

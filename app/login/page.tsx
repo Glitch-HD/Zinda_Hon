@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
@@ -141,16 +142,16 @@ export default function LoginPage() {
 
           <div className="hero-grid">
             <div className="hero-copy">
-              <span className="hero-eyebrow">✦ Pension proof-of-life · Prototype</span>
+              <span className="hero-eyebrow">Pension proof-of-life · Prototype</span>
               <p className="ur hero-ur">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
               <h1 className="hero-title">Prove you are alive,<br />from <em>your own</em> home.</h1>
               <p className="en hero-sub">Once a year, widows and retired people keep their pension going with a pension book and a smile at the camera. No forms, no queues, no fingerprints.</p>
               <div className="flex flex-wrap gap-3 mt-6">
-                <button className="btn btn-accent btn-hero hero-cta-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>👵🏽 <span className="en">I get a pension</span><span className="ur">میں پنشنر ہوں</span></button>
-                <button className="btn glass-btn btn-hero" data-no-voice onClick={() => speakUrdu(GREETING, GREETING_EN)}>🔊 <span className="en">Listen</span><span className="ur">سنیں</span></button>
+                <button className="btn btn-accent btn-hero hero-cta-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}><span className="en">I get a pension</span><span className="ur">میں پنشنر ہوں</span></button>
+                <button className="btn glass-btn btn-hero" data-no-voice onClick={() => speakUrdu(GREETING, GREETING_EN)}><span className="en">Listen</span><span className="ur">سنیں</span></button>
               </div>
               <div className="hero-chips">
-                <span>📖 Pension book QR</span><span>🙂 Face + blink</span><span>📶 Works offline</span><span>🔊 Urdu voice</span>
+                <span>Pension book QR</span><span>Face + blink</span><span>Works offline</span><span>Urdu voice</span>
               </div>
             </div>
 
@@ -188,16 +189,16 @@ export default function LoginPage() {
                   <>
                     <div className="bubble"><span className="en">Welcome! Tap who you are, or press the mic and say it.</span> <span className="ur">خوش آمدید! بتائیں آپ کون ہیں، یا مائیک دبا کر بولیں۔</span></div>
                     <button className="choice-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>
-                      <span className="choice-ic">👵🏽</span>
+                      <span className="choice-ic"><Icon name="user" size={28} /></span>
                       <span className="flex-1 text-left"><span className="ur block text-xl" style={{ lineHeight: 1.8 }}>میں پنشنر ہوں</span><span className="en block font-bold">I get a pension</span><span className="block text-xs" style={{ opacity: .85 }}>No typing. Show your pension book, then your face.</span></span>
                       <span aria-hidden>→</span>
                     </button>
                     <div className="choice-row">
-                      <button className="choice-pill" data-say="میں مددگار ہوں" data-say-en="I help families" onClick={() => open("helper")}>🤝 <span className="en">I help families</span><span className="ur">مددگار</span></button>
-                      <button className="choice-pill" data-say="میں دکاندار ہوں" data-say-en="I run a shop" onClick={() => open("shopkeeper")}>🏪 <span className="en">I run a shop</span><span className="ur">دکاندار</span></button>
-                      <button className="choice-pill" data-say="پنشن آفس عملہ" data-say-en="Pension office staff" onClick={() => open("staff")}>🏛️ <span className="en">Pension office</span><span className="ur">عملہ</span></button>
+                      <button className="choice-pill" data-say="میں مددگار ہوں" data-say-en="I help families" onClick={() => open("helper")}><span className="en">I help families</span><span className="ur">مددگار</span></button>
+                      <button className="choice-pill" data-say="میں دکاندار ہوں" data-say-en="I run a shop" onClick={() => open("shopkeeper")}><span className="en">I run a shop</span><span className="ur">دکاندار</span></button>
+                      <button className="choice-pill" data-say="پنشن آفس عملہ" data-say-en="Pension office staff" onClick={() => open("staff")}><span className="en">Pension office</span><span className="ur">عملہ</span></button>
                     </div>
-                    <button type="button" className="reg-link" data-say="نیا اکاؤنٹ بنائیں" data-say-en="Create a new account" onClick={() => open("register")}>✨ <span className="en">New here? <b>Create an account</b></span><span className="ur">نئے ہیں؟ اکاؤنٹ بنائیں</span></button>
+                    <button type="button" className="reg-link" data-say="نیا اکاؤنٹ بنائیں" data-say-en="Create a new account" onClick={() => open("register")}><span className="en">New here? <b>Create an account</b></span><span className="ur">نئے ہیں؟ اکاؤنٹ بنائیں</span></button>
                     <div className="hero-card-mic">
                       <VoiceCommand
                         promptUr="بولیں: پنشن، مددگار، یا دکان۔"
@@ -239,7 +240,7 @@ export default function LoginPage() {
           <div className="signup-wrap">
             <div className="signup-head">
               <div>
-                <p className="eyebrow">✨ <span className="en">New here</span> <span className="ur">نئے ہیں؟</span></p>
+                <p className="eyebrow"><span className="en">New here</span> <span className="ur">نئے ہیں؟</span></p>
                 <h2><span className="en">Create your account</span> <span className="ur">اپنا اکاؤنٹ بنائیں</span></h2>
                 <p className="muted"><span className="en">Fill this once. A pension officer checks it against the records, then your account opens.</span> <span className="ur">ایک بار فارم بھریں۔ پنشن افسر ریکارڈ سے ملا کر اکاؤنٹ کھولے گا۔</span></p>
               </div>
@@ -250,34 +251,44 @@ export default function LoginPage() {
         </section>
       )}
 
-      <section className="gov-figures" aria-label="At a glance">
+      <section className="gov-figures band-top" aria-label="At a glance">
         <div><b>3</b><span className="en">steps a year</span><span className="ur">قدم، سال میں ایک بار</span></div>
         <div><b>~2 min</b><span className="en">from your own home</span><span className="ur">گھر بیٹھے</span></div>
         <div><b>0</b><span className="en">office visits needed</span><span className="ur">آفس جانے کی ضرورت نہیں</span></div>
         <div><b>اردو</b><span className="en">voice on every page</span><span className="ur">ہر صفحے پر آواز</span></div>
       </section>
 
-      <section id="services" className="gov-services">
+      <section id="services" className="gov-services band band-tint">
         <p className="eyebrow">Online services · آن لائن خدمات</p>
         <h2>What would you like to do?</h2>
         <div className="gov-svc-grid">
-          <button type="button" className="gov-svc" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}><span className="gov-svc-ic">👵🏽</span><b className="en">Prove I am alive</b><span className="ur">ثبوتِ حیات دیں</span><small>Face check and pension book, from home</small></button>
-          <button type="button" className="gov-svc" onClick={() => open("register")}><span className="gov-svc-ic">📝</span><b className="en">Create an account</b><span className="ur">اکاؤنٹ بنائیں</span><small>For widows, helpers and shops</small></button>
-          <button type="button" className="gov-svc" onClick={() => open("helper")}><span className="gov-svc-ic">🤝</span><b className="en">Helper log in</b><span className="ur">مددگار</span><small>Act for families who gave permission</small></button>
-          <button type="button" className="gov-svc" onClick={() => open("shopkeeper")}><span className="gov-svc-ic">🏪</span><b className="en">Shop counter</b><span className="ur">دکان</span><small>Assisted proof of life at a local shop</small></button>
-          <a className="gov-svc" href="/check-message"><span className="gov-svc-ic">🛡️</span><b className="en">Is this message a scam?</b><span className="ur">پیغام جانچیں</span><small>Check an SMS or WhatsApp before you reply</small></a>
-          <button type="button" className="gov-svc" onClick={() => open("staff")}><span className="gov-svc-ic">🏛️</span><b className="en">Staff log in</b><span className="ur">عملہ</span><small>Officers, administrators and auditors</small></button>
+          <button type="button" className="gov-svc" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}><span className="gov-svc-ic"><Icon e="👵🏽" size={26} /></span><b className="en">Prove I am alive</b><span className="ur">ثبوتِ حیات دیں</span><small>Face check and pension book, from home</small></button>
+          <button type="button" className="gov-svc" onClick={() => open("register")}><span className="gov-svc-ic"><Icon e="📝" size={26} /></span><b className="en">Create an account</b><span className="ur">اکاؤنٹ بنائیں</span><small>For widows, helpers and shops</small></button>
+          <button type="button" className="gov-svc" onClick={() => open("helper")}><span className="gov-svc-ic"><Icon e="🤝" size={26} /></span><b className="en">Helper log in</b><span className="ur">مددگار</span><small>Act for families who gave permission</small></button>
+          <button type="button" className="gov-svc" onClick={() => open("shopkeeper")}><span className="gov-svc-ic"><Icon e="🏪" size={26} /></span><b className="en">Shop counter</b><span className="ur">دکان</span><small>Assisted proof of life at a local shop</small></button>
+          <a className="gov-svc" href="/check-message"><span className="gov-svc-ic"><Icon e="🛡️" size={26} /></span><b className="en">Is this message a scam?</b><span className="ur">پیغام جانچیں</span><small>Check an SMS or WhatsApp before you reply</small></a>
+          <button type="button" className="gov-svc" onClick={() => open("staff")}><span className="gov-svc-ic"><Icon e="🏛️" size={26} /></span><b className="en">Staff log in</b><span className="ur">عملہ</span><small>Officers, administrators and auditors</small></button>
         </div>
       </section>
 
-      <section id="how" className="how">
+      <section className="band band-green" aria-label="Why it is safe">
+        <p className="eyebrow">Safe and fair · محفوظ اور منصفانہ</p>
+        <h2>A computer never stops a pension</h2>
+        <div className="trust-grid">
+          <div><Icon name="user" size={34} /><h3>An officer decides the hard cases</h3><p>If anything looks wrong, a trained pension officer checks it. Only an officer can stop a pension, and must write why.</p><p className="ur">مشکل کیس افسر خود دیکھتا ہے۔</p></div>
+          <div><Icon name="lock" size={34} /><h3>Your data, your permission</h3><p>See who can see your information and take permission back at any time. Only numbers describing your face are kept, never the photo.</p><p className="ur">آپ کی معلومات، آپ کی اجازت۔</p></div>
+          <div><Icon name="wifi" size={34} /><h3>Works without internet</h3><p>Every step is saved on the phone and sent when the signal returns. Urdu voice guides those who cannot read.</p><p className="ur">انٹرنیٹ کے بغیر بھی کام کرتا ہے۔</p></div>
+        </div>
+      </section>
+
+      <section id="how" className="how band">
         <p className="eyebrow text-center">How it works · یہ کیسے کام کرتا ہے</p>
         <h2 className="text-center text-3xl md:text-4xl mt-1">Three steps, about two minutes</h2>
         <div className="how-grid">
           {HOW.map((h, i) => (
             <div key={h.en} className="how-step">
               <span className="how-n">{i + 1}</span>
-              <div className="text-4xl">{h.icon}</div>
+              <div className="how-ic"><Icon e={h.icon} size={30} /></div>
               <div className="ur text-lg font-semibold" style={{ lineHeight: 1.9 }}>{h.ur}</div>
               <div className="en font-semibold">{h.en}</div>
               <p className="text-sm muted">{HOW_MORE[i]}</p>
@@ -288,7 +299,7 @@ export default function LoginPage() {
 
       {SHOW_TEST_LOGINS && view === "choose" && (
         <details className="card tl" data-no-voice>
-          <summary className="tl-sum"><span>🧪 Test logins <span className="muted font-normal text-sm">· one tap, for judges and testing</span></span><span className="tl-chev" aria-hidden>▾</span></summary>
+          <summary className="tl-sum"><span>Test logins <span className="muted font-normal text-sm">· one tap, for judges and testing</span></span><span className="tl-chev" aria-hidden>▾</span></summary>
           <p className="muted text-xs mt-1">Pensioners here skip the pension book and face steps.</p>
           {groups.map((g) => (
             <div key={g.title} className="mt-4">
@@ -296,7 +307,7 @@ export default function LoginPage() {
               <div className="tl-grid">
                 {g.items.map((d) => (
                   <button key={d.phone} type="button" className="tl-btn" disabled={busy} onClick={() => login(d.phone, d.pw)}>
-                    <span className="tl-ic">{d.icon}</span>
+                    <span className="tl-ic"><Icon e={d.icon} size={18} /></span>
                     <span className="min-w-0"><span className="tl-name">{d.label}</span><span className="tl-role">{opening === d.phone ? "Opening…" : d.role}</span></span>
                   </button>
                 ))}

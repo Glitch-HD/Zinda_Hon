@@ -15,10 +15,10 @@ export default async function Auditor({ searchParams }: { searchParams: Promise<
     prisma.auditLog.count({ where: { tenantId: user.tenantId, createdAt: { gte: day } } }),
     prisma.auditLog.count({ where: { tenantId: user.tenantId, action: { in: ["face_reenrolled", "correction_refused_sensitive_field", "rule_change_proposed", "rule_change_self_approval_refused", "face_enrol_refused_same_face"] } } }),
   ]);
-  const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "risky", label: "⚠️ Risky actions" }, { id: "agent", label: "AI case assistant" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
+  const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "risky", label: "Risky actions" }, { id: "agent", label: "AI case assistant" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
   return (
     <div>
-      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "How accurate the AI checks are, measured on labelled test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }]} />
+      <Header user={user} links={[{ href: "/evaluation", label: "Evaluation", info: { en: "How accurate the AI checks are, measured on labelled test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }]} />
       <PageTitle title="Audit and oversight" sub="Read-only. Every action by a person, the AI or the case assistant, with the full reasoning behind each decision." />
       <div className="stats">
         <Stat n={decisions} label="Decisions on record" icon="⚖️" />
@@ -47,7 +47,7 @@ async function Decisions({ tenantId }: { tenantId: string }) {
           <summary className="cursor-pointer flex flex-wrap items-center gap-2">
             <b>{d.case.pensioner.pensionNo}</b>
             <span className={`badge ${OUTCOME_CLS[d.outcome] ?? ""}`}>{d.outcome.replaceAll("_", " ").toLowerCase()}</span>
-            <span className="badge">{d.decidedBy === "ai" ? "🤖 AI engine" : "🧑‍💼 officer"}</span>
+            <span className="badge">{d.decidedBy === "ai" ? "AI engine" : "officer"}</span>
             <span className="muted text-sm">confidence {(d.confidence * 100).toFixed(2)}% · rule v{d.ruleVersion.version}</span>
             <span className="muted text-sm" style={{ marginInlineStart: "auto" }}>{d.createdAt.toISOString().slice(0, 16).replace("T", " ")}</span>
           </summary>

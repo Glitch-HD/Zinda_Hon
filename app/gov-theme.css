@@ -232,3 +232,100 @@ h1, h2 { font-weight: 700; }
 .hero-inner { padding-bottom: 40px; }
 @media (min-width: 960px) { .hero-copy { padding-top: 24px; } .hero-grid { padding-top: 28px; } }
 .hero-title { font-size: clamp(2.1rem, 3.8vw, 3.2rem); line-height: 1.12; }
+
+/* =====================================================================
+   v2: clean and breathable. Pure white page, solid green blocks with white
+   text for contrast, much more space between everything, no emojis (line icons).
+   ===================================================================== */
+:root { --bg: #ffffff; --card-2: #f5f8f6; --line: #dde5e0; --tint: #f1f7f3; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0d1310; --tint: #121b16; } }
+body { line-height: 1.65; font-size: 16.5px; }
+main { padding-top: 40px !important; padding-bottom: 24px !important; }
+.ico { flex: none; display: inline-block; vertical-align: middle; }
+
+/* More air inside and between blocks */
+@layer components {
+  .card { padding: 28px; }
+  .tile { padding: 22px; gap: 18px; }
+  .tile-col { padding: 30px 18px; min-height: 200px; }
+  .tile-icon { width: 60px; height: 60px; background: var(--brand-soft); color: var(--brand); }
+  .tile-hero .tile-icon { color: #fff; background: rgba(255,255,255,.14); }
+  .btn { min-height: 52px; padding: 0 24px; }
+  .input { min-height: 54px; }
+  table.data td { padding: 14px 12px; }
+  table.data th { padding: 12px; }
+}
+main .space-y-2 > :not(:last-child) { margin-block-end: .75rem; }
+main .space-y-3 > :not(:last-child) { margin-block-end: 1.1rem; }
+main .space-y-4 > :not(:last-child) { margin-block-end: 1.5rem; }
+main .space-y-5 > :not(:last-child), main .space-y-6 > :not(:last-child) { margin-block-end: 2.25rem; }
+main .gap-3 { gap: 1rem; }
+main .gap-4 { gap: 1.5rem; }
+main .mb-4 { margin-bottom: 1.75rem; }
+main .mb-6 { margin-bottom: 2.5rem; }
+.hud { margin-bottom: 40px; }
+.page-title { margin: 8px 0 32px; }
+.stats { gap: 20px; margin-bottom: 40px; }
+.stat { padding: 22px 22px; }
+.stat-i { color: var(--brand); top: 20px; right: 20px; }
+.section-head { margin: 56px 0 18px; }
+.qcard { padding: 20px 22px; gap: 18px; }
+.qcard + .qcard { margin-top: 16px; }
+.mini-grid { gap: 12px; }
+.mini { padding: 12px 14px; }
+
+/* Front page: full-width bands, each its own screen of content */
+.band { margin-inline: calc(50% - 50vw); padding: 96px max(20px, calc(50vw - 36rem)); scroll-margin-top: 0; }
+.band-tint { background: var(--tint); border-block: 1px solid var(--line); }
+.band-green { background: var(--brand); color: #fff; }
+.band-green .eyebrow { color: var(--hero-gold); }
+.band-green h2 { color: #fff; font-size: clamp(1.7rem, 3.4vw, 2.4rem); margin: 6px 0 40px; }
+.band h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); }
+.trust-grid { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.trust-grid > div { padding: 30px 28px; border: 1px solid rgba(255,255,255,.22); border-radius: 6px; background: rgba(255,255,255,.06); }
+.trust-grid .ico { color: var(--hero-gold); margin-bottom: 14px; }
+.trust-grid h3 { font-size: 1.15rem; margin-bottom: 8px; color: #fff; }
+.trust-grid p { color: rgba(255,255,255,.86); }
+.trust-grid .ur { color: var(--hero-gold); margin-top: 8px; line-height: 1.9; }
+
+.hero-full { min-height: calc(100vh - 150px); }
+.hero-inner { padding-top: 24px; padding-bottom: 96px; }
+.hero-chips { display: none; }
+.hero-grid { gap: 56px; }
+.hero-card-body { padding: 22px; gap: 16px; }
+
+.gov-figures { margin-top: 0; border: 0; border-bottom: 1px solid var(--line); box-shadow: none; margin-inline: calc(50% - 50vw); padding-inline: max(20px, calc(50vw - 36rem)); }
+.gov-figures > div { padding: 40px 12px; }
+.gov-figures b { font-size: 2.2rem; }
+
+.gov-services.band { padding-top: 96px; }
+.gov-services h2 { margin-bottom: 40px; }
+.gov-svc-grid { gap: 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.gov-svc { padding: 28px 26px; gap: 6px; }
+.gov-svc-ic { width: 54px; height: 54px; color: var(--brand); margin-bottom: 12px; }
+
+.how.band { padding-top: 96px; padding-bottom: 96px; }
+.how-grid { gap: 28px; margin-top: 44px; }
+.how-step { padding: 48px 28px 32px; gap: 8px; }
+.how-ic { color: var(--brand); display: flex; justify-content: center; margin-bottom: 6px; }
+.tl { margin-top: 64px; }
+.tl-grid { gap: 12px; }
+.tl-ic { color: var(--brand); }
+.choice-ic { color: #fff; }
+.gov-foot { margin-top: 96px; }
+
+/* Signed-in pages: big status icon in a circle instead of an emoji */
+.status-ic { display: grid; place-items: center; width: 84px; height: 84px; margin: 0 auto 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); }
+.status-ic[data-status="STOPPED"] { background: color-mix(in srgb, var(--danger) 12%, var(--card)); color: var(--danger); }
+.status-ic[data-status="NEEDS_PROOF"], .status-ic[data-status="DUE"] { background: var(--accent-soft); color: var(--warn); }
+.status-ic-sm { width: 48px; height: 48px; margin: 0; flex: none; }
+
+/* Empty boxes left where an emoji used to be */
+main .text-3xl:empty, main .text-4xl:empty, main .text-5xl:empty, main .text-6xl:empty, main .text-7xl:empty, .tile-icon:empty, .stat-i:empty, .tl-ic:empty { display: none; }
+
+@media (max-width: 640px) {
+  .band { padding-block: 64px; }
+  main { padding-top: 24px !important; }
+  .card { padding: 20px; }
+  .hero-full { min-height: 0; }
+}

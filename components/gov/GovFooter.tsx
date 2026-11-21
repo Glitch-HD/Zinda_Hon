@@ -27,9 +27,9 @@ export default function GovFooter() {
         </div>
         <div className="gov-foot-col">
           <h4>Contact (simulated)</h4>
-          <p>☎ 0300-0000000</p>
-          <p>✉ help@zindahon.example</p>
-          <p>🕘 Online 24 hours; offices Mon to Fri, 9 AM to 5 PM</p>
+          <p>Phone: 0300-0000000</p>
+          <p>Email: help@zindahon.example</p>
+          <p>Online 24 hours; offices Mon to Fri, 9 AM to 5 PM</p>
         </div>
       </div>
       <div className="gov-foot-bar">

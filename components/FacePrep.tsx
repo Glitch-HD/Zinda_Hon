@@ -41,13 +41,13 @@ export default function FacePrep({ who = "you" }: { who?: "you" | "families" }) 
 
   if (state === "checking" || state === "unsupported") return null;
   if (state === "ready") {
-    return <p className="text-sm muted" data-no-voice>✅ <span className="en">Face check is saved on this phone and works without internet.</span> <span className="ur">چہرے کی جانچ اس فون پر محفوظ ہے، انٹرنیٹ کے بغیر بھی چلے گی۔</span></p>;
+    return <p className="text-sm muted" data-no-voice><span className="en">Face check is saved on this phone and works without internet.</span> <span className="ur">چہرے کی جانچ اس فون پر محفوظ ہے، انٹرنیٹ کے بغیر بھی چلے گی۔</span></p>;
   }
   const secs = estimateSeconds(left || faceBytes());
   const slow = isSlowNetwork();
   return (
     <div className="card card-soft space-y-2" data-no-voice>
-      <p className="font-semibold">📶 <span className="en">Get the face check ready ({mb(left || faceBytes())} MB, once)</span> <span className="ur">چہرے کی جانچ پہلے سے تیار کریں</span></p>
+      <p className="font-semibold"><span className="en">Get the face check ready ({mb(left || faceBytes())} MB, once)</span> <span className="ur">چہرے کی جانچ پہلے سے تیار کریں</span></p>
       <p className="text-sm muted">
         {who === "families" ? "Download once on Wi-Fi, then you can do the face check for every family even where there is no signal." : "Download once, then the yearly face check works even with no signal."}
         {" "}On this connection it takes {humanTime(secs)}.{slow ? " Your signal is slow: if you can, do this on Wi-Fi (a shop, a mosque or the helper's phone). If the photo step will not work, you can ask an officer to visit instead." : ""}
@@ -60,7 +60,7 @@ export default function FacePrep({ who = "you" }: { who?: "you" | "families" }) 
           <p className="text-sm muted mt-1">{mb(progress.done)} of {mb(progress.total)} MB. You can keep using the app.</p>
         </div>
       )}
-      {(state === "missing" || state === "error") && <button className="btn" onClick={download}>⬇️ <span className="en">{state === "error" ? "Try the download again" : "Download now"}</span> <span className="ur">ابھی ڈاؤن لوڈ کریں</span></button>}
+      {(state === "missing" || state === "error") && <button className="btn" onClick={download}><span className="en">{state === "error" ? "Try the download again" : "Download now"}</span> <span className="ur">ابھی ڈاؤن لوڈ کریں</span></button>}
       {error && <p className="text-sm" role="alert" style={{ color: "var(--danger)" }}>{error}. The parts already downloaded are kept; press again to continue.</p>}
     </div>
   );

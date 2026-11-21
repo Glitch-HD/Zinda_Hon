@@ -1,5 +1,6 @@
 import Link from "next/link";
 import GovSeal from "./GovSeal";
+import Icon from "@/components/ui/Icon";
 
 // Government-portal masthead: white band with the seal and service name, then a green menu bar.
 // Our own prototype service; it does not claim to be any real department.
@@ -25,7 +26,7 @@ export default function GovMasthead() {
           </span>
         </Link>
         <div className="gov-help">
-          <span className="gov-help-ic" aria-hidden>☎</span>
+          <span className="gov-help-ic" aria-hidden><Icon name="phone" size={20} /></span>
           <span className="leading-tight">
             <span className="gov-help-l">Helpline (mock)</span>
             <b className="gov-help-n">0300-0000000</b>

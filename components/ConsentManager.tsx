@@ -30,8 +30,8 @@ export default function ConsentManager() {
   return (
     <div className="space-y-4">
       <div className="card">
-        <h2 className="text-xl font-bold">🔐 Who can see my data <span className="ur">میرا ڈیٹا کون دیکھ سکتا ہے</span></h2>
-        <button className="btn btn-ghost mt-2" onClick={() => speakUrdu("یہاں آپ دیکھ سکتے ہیں کہ آپ کا ڈیٹا کس کے پاس ہے۔ آپ اجازت واپس لے سکتے ہیں۔", "Here you can see who has your data. You can take back permission.")}>🔊 <span className="ur">سنیں</span></button>
+        <h2 className="text-xl font-bold">Who can see my data <span className="ur">میرا ڈیٹا کون دیکھ سکتا ہے</span></h2>
+        <button className="btn btn-ghost mt-2" onClick={() => speakUrdu("یہاں آپ دیکھ سکتے ہیں کہ آپ کا ڈیٹا کس کے پاس ہے۔ آپ اجازت واپس لے سکتے ہیں۔", "Here you can see who has your data. You can take back permission.")}><span className="ur">سنیں</span></button>
       </div>
       {data.consents.map((c) => (
         <div key={c.id} className="card space-y-2">
@@ -46,17 +46,17 @@ export default function ConsentManager() {
               </label>
             ))}
           </div>}
-          {c.granteeType === "nadra" && <p className="text-sm muted">🪪 <span className="en">Your face print was copied from your CNIC photo at NADRA (simulated) so you did not have to visit the office. Withdrawing deletes it at once; next year you can agree again or enrol at the office.</span><span className="ur">آپ کے شناختی کارڈ کی تصویر سے چہرے کی پہچان لی گئی تاکہ آفس نہ جانا پڑے۔ اجازت واپس لینے پر یہ فوراً مٹ جائے گی۔</span></p>}
+          {c.granteeType === "nadra" && <p className="text-sm muted"><span className="en">Your face print was copied from your CNIC photo at NADRA (simulated) so you did not have to visit the office. Withdrawing deletes it at once; next year you can agree again or enrol at the office.</span><span className="ur">آپ کے شناختی کارڈ کی تصویر سے چہرے کی پہچان لی گئی تاکہ آفس نہ جانا پڑے۔ اجازت واپس لینے پر یہ فوراً مٹ جائے گی۔</span></p>}
           {c.granteeType === "nadra" && c.withdrawnAt ? null : c.granteeType === "department" && !c.withdrawnAt
-            ? <p className="text-sm muted">🏛️ <span className="en">The pension office needs your bank account to pay you, so this one cannot be withdrawn here. Talk to an officer to stop the pension.</span><span className="ur">پنشن آفس کو پنشن بھیجنے کے لیے بینک اکاؤنٹ چاہیے، اس لیے یہ اجازت یہاں واپس نہیں ہو سکتی۔</span></p>
+            ? <p className="text-sm muted"><span className="en">The pension office needs your bank account to pay you, so this one cannot be withdrawn here. Talk to an officer to stop the pension.</span><span className="ur">پنشن آفس کو پنشن بھیجنے کے لیے بینک اکاؤنٹ چاہیے، اس لیے یہ اجازت یہاں واپس نہیں ہو سکتی۔</span></p>
             : c.withdrawnAt
-            ? <button className="btn btn-ghost" onClick={() => act(c.id, { action: "restore" })}>↩️ Give permission again</button>
-            : <button className="btn" style={{ background: "var(--danger)" }} onClick={() => act(c.id, { action: "withdraw" })}>⛔ <span className="ur">اجازت واپس لیں</span> · Withdraw</button>}
+            ? <button className="btn btn-ghost" onClick={() => act(c.id, { action: "restore" })}>↩ Give permission again</button>
+            : <button className="btn" style={{ background: "var(--danger)" }} onClick={() => act(c.id, { action: "withdraw" })}><span className="ur">اجازت واپس لیں</span> · Withdraw</button>}
         </div>
       ))}
       {msg && <p role="status" className="card">{msg}</p>}
       <form className="card space-y-2" onSubmit={correction}>
-        <h3 className="font-semibold">✏️ My data is wrong <span className="ur">میرا ڈیٹا غلط ہے</span></h3>
+        <h3 className="font-semibold">My data is wrong <span className="ur">میرا ڈیٹا غلط ہے</span></h3>
         <select name="field" className="input">
           <option value="name">Name</option><option value="fatherOrHusbandName">Husband or father&apos;s name</option><option value="dateOfBirth">Date of birth</option><option value="cnicMock">CNIC</option><option value="bankAccountNo">Bank account</option>
         </select>

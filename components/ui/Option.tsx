@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import Link from "next/link";
 import Info from "./Info";
 
@@ -27,7 +28,7 @@ export default function Option({ icon, ur, en, hintEn, hintUr, info, say, sayEn,
   const cls = `tile tone-${tone} ${variant === "hero" ? "tile-hero" : ""} ${variant === "compact" ? "tile-compact" : ""} ${variant === "normal" ? "tile-col" : ""}`;
   const body = (
     <>
-      <span className="tile-icon">{icon}</span>
+      <span className="tile-icon"><Icon e={icon} size={30} /></span>
       <span className="tile-text">
         <span className="ur block tile-ur">{ur}</span>
         <span className="en block tile-en">{en}</span>

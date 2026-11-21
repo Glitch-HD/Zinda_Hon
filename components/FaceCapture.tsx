@@ -88,19 +88,18 @@ export default function FaceCapture({ withLiveness = true, onDone, getTicket, on
         <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
         {current && (
           <div className="absolute inset-x-0 bottom-0 p-3 text-center" style={{ background: "rgba(0,0,0,.6)", color: "#fff" }}>
-            <div className="text-5xl">{PROMPT[current].icon}</div>
-            <div className="ur text-2xl">{PROMPT[current].ur}</div>
+                        <div className="ur text-2xl">{PROMPT[current].ur}</div>
             <div className="en text-sm">{PROMPT[current].en}</div>
           </div>
         )}
         {phase === "loading" && <div className="absolute inset-0 grid place-items-center text-white text-center p-3">{toDownload > 0 ? `Loading face check… first time downloads ${mb(toDownload)} MB (${humanTime(estimateSeconds(toDownload))} on this connection), then it is saved on the phone.` : "Starting the face check…"}</div>}
-        {phase === "capturing" && <div className="absolute inset-x-0 top-0 p-2 text-center text-white" style={{ background: "rgba(0,0,0,.5)" }}>📸 <span className="en">Hold still…</span> <span className="ur">رُکے رہیں</span></div>}
+        {phase === "capturing" && <div className="absolute inset-x-0 top-0 p-2 text-center text-white" style={{ background: "rgba(0,0,0,.5)" }}><span className="en">Hold still…</span> <span className="ur">رُکے رہیں</span></div>}
       </div>
       {(phase === "idle" || phase === "error") && (
-        <button className="btn btn-big" onClick={start}><span className="text-3xl">📷</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">تصویر شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start camera</span></span></button>
+        <button className="btn btn-big" onClick={start}><span className="text-3xl"></span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">تصویر شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start camera</span></span></button>
       )}
       {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-      {phase === "idle" && toDownload > 0 && <p className="text-sm muted">📶 <span className="en">First time only: {mb(toDownload)} MB to download, {humanTime(estimateSeconds(toDownload))} on this connection.</span></p>}
+      {phase === "idle" && toDownload > 0 && <p className="text-sm muted"><span className="en">First time only: {mb(toDownload)} MB to download, {humanTime(estimateSeconds(toDownload))} on this connection.</span></p>}
       <p className="muted text-xs"><span className="en">Only 128 numbers describing the face are sent. The photo never leaves this phone.</span><span className="ur">صرف چہرے کے ۱۲۸ نمبر بھیجے جاتے ہیں، تصویر فون سے باہر نہیں جاتی۔</span></p>
     </div>
   );

@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import { useEffect, useRef, useState } from "react";
 
 // The officer's AI case assistant, shown on a case page. The officer presses one button and watches
@@ -108,11 +109,11 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
     <section className="card mt-4" aria-labelledby="agent-h">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 id="agent-h" className="font-semibold text-lg">🕵️ AI case assistant <span className="ur">اے آئی معاون</span></h3>
+          <h3 id="agent-h" className="font-semibold text-lg">AI case assistant <span className="ur">اے آئی معاون</span></h3>
           <p className="muted text-sm">It picks its own checks across the mock NADRA, death registry, bank and our records, then writes you a report. It only advises; you decide.</p>
         </div>
         <button className="btn" onClick={investigate} disabled={running} aria-describedby="agent-h">
-          {running ? "Investigating…" : done ? "🔁 Investigate again" : "🕵️ Investigate with AI assistant"}
+          {running ? "Investigating…" : done ? "Investigate again" : "Investigate with AI assistant"}
         </button>
       </div>
 
@@ -126,7 +127,7 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
               const t = TOOL_LABEL[s.tool] ?? { icon: "🔧", label: s.tool };
               return (
                 <li key={s.n} className="flex gap-2 items-start" style={{ borderInlineStart: "3px solid var(--line)", paddingInlineStart: 10 }}>
-                  <span aria-hidden>{t.icon}</span>
+                  <Icon e={t.icon} size={18} />
                   <div className="min-w-0">
                     <div className="text-sm"><b>{s.n}. {t.label}</b> <span className="muted">· {s.ms} ms</span></div>
                     {s.thought && <div className="text-sm muted" style={{ fontStyle: "italic" }}>“{s.thought}”</div>}
@@ -135,9 +136,9 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
                 </li>
               );
             })}
-            {running && <li className="text-sm muted">⏳ Thinking about the next check…</li>}
+            {running && <li className="text-sm muted">Thinking about the next check…</li>}
           </ol>
-          {notes.map((n, i) => <p key={i} className="text-sm mt-2" style={{ color: "var(--warn)" }}>ℹ️ {n}</p>)}
+          {notes.map((n, i) => <p key={i} className="text-sm mt-2" style={{ color: "var(--warn)" }}>ℹ{n}</p>)}
         </div>
       )}
 
@@ -147,7 +148,7 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
         <div className="mt-4" style={{ border: "1px solid var(--line)", borderRadius: 14, padding: 14, background: "var(--card-2)" }}>
           {showSaved && done.when && <p className="text-sm muted mb-2">Last report, {done.when}. Press “Investigate again” for a fresh one.</p>}
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`badge ${REC[r.recommendation].cls}`} style={{ fontSize: ".9rem" }}>{REC[r.recommendation].icon} {REC[r.recommendation].label}</span>
+            <span className={`badge ${REC[r.recommendation].cls}`} style={{ fontSize: ".9rem" }}>{REC[r.recommendation].label}</span>
             <span className="badge">{Math.round(r.confidence * 100)}% sure</span>
             <span className="badge">{done.mode === "ai" ? `AI: ${done.model}` : done.model ? `Checklist (${done.model.replace(" → checklist", "")} gave up)` : "Fixed checklist"}</span>
             <span className="muted text-sm">{(done.ms / 1000).toFixed(1)} s</span>
@@ -162,7 +163,7 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
               <li key={i} className="text-sm flex flex-wrap gap-2 items-start">
                 <span className={`badge ${SEV[f.severity]}`}>{f.severity}</span>
                 <span className="min-w-0" style={{ flex: "1 1 14rem" }}>{f.text}</span>
-                <span className="badge" title="The check this finding came from">{TOOL_LABEL[f.source]?.icon} {f.source.replaceAll("_", " ")}</span>
+                <span className="badge" title="The check this finding came from">{f.source.replaceAll("_", " ")}</span>
               </li>
             ))}
           </ul>
@@ -177,13 +178,13 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
 
           {done.guardrails.length > 0 && (
             <div className="mt-3 text-sm" style={{ borderInlineStart: "3px solid var(--warn)", paddingInlineStart: 10 }}>
-              <b>🛡️ Safety rules corrected the assistant</b>
+              <b>Safety rules corrected the assistant</b>
               <ul className="list-disc ms-5">{done.guardrails.map((g, i) => <li key={i}>{g.detail}</li>)}</ul>
             </div>
           )}
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
-            <button className="btn btn-ghost" onClick={addToNotes}>📝 Use as my notes</button>
+            <button className="btn btn-ghost" onClick={addToNotes}>Use as my notes</button>
             {copied && <span className="text-sm" style={{ color: "var(--ok)" }}>Added to your notes. Edit them before you decide.</span>}
           </div>
           <p className="text-sm muted mt-2">Suggestion only. The assistant cannot approve or stop a pension; you decide. Every step it took is in the audit log.</p>

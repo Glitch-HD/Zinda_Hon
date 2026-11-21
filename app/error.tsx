@@ -9,12 +9,12 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
   }, [error]);
   return (
     <div className="card max-w-xl mx-auto text-center space-y-3 mt-8" role="alert">
-      <div className="text-6xl">⚠️</div>
+      <div className="text-6xl"></div>
       <p className="ur text-2xl">کچھ غلط ہو گیا۔ آپ کا کام محفوظ ہے۔</p>
       <p>Something went wrong. Your saved steps are safe on this phone.</p>
       <div className="flex gap-2 justify-center">
-        <button className="btn" onClick={reset}>🔁 Try again</button>
-        <a className="btn btn-ghost" href="/">🏠 Home</a>
+        <button className="btn" onClick={reset}>Try again</button>
+        <a className="btn btn-ghost" href="/">Home</a>
       </div>
     </div>
   );

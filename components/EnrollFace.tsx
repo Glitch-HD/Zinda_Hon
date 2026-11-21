@@ -14,7 +14,7 @@ export default function EnrollFace({ pensioners, initial }: { pensioners: { id: 
       <label className="block space-y-1">
         <span className="text-sm font-semibold">Pensioner</span>
         <select className="input" value={selected} onChange={(e) => { setSelected(e.target.value); setMsg(null); setKey((k) => k + 1); }}>
-          {list.map((p) => <option key={p.id} value={p.id}>{p.enrolled ? "✅" : "⬜"} {p.label}</option>)}
+          {list.map((p) => <option key={p.id} value={p.id}>{p.enrolled ? "" : ""} {p.label}</option>)}
         </select>
       </label>
       {current?.enrolled && (

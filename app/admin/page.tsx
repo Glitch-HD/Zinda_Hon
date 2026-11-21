@@ -35,7 +35,7 @@ export default async function Admin() {
   ]);
   return (
     <div className="space-y-4">
-      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "Accuracy of the face and scam checks on test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }, { href: "/scam-map", label: "🗺️ Scam map", info: { en: "Where scam messages are being reported, by area.", ur: "دھوکے کے پیغام کہاں سے آ رہے ہیں۔" } }, { href: "/admin/mock-nadra", label: "🪪 Mock NADRA", info: { en: "Simulated NADRA: load the demo CNIC photo so a pensioner can prove she is alive without an office visit.", ur: "نادرا (نقلی): شناختی کارڈ کی تصویر۔" } }, { href: "/docs", label: "🔌 API docs", info: { en: "Public REST API documentation (OpenAPI) for banks and departments.", ur: "بینکوں اور محکموں کے لیے اے پی آئی۔" } }]} />
+      <Header user={user} links={[{ href: "/evaluation", label: "Evaluation", info: { en: "Accuracy of the face and scam checks on test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }, { href: "/scam-map", label: "Scam map", info: { en: "Where scam messages are being reported, by area.", ur: "دھوکے کے پیغام کہاں سے آ رہے ہیں۔" } }, { href: "/admin/mock-nadra", label: "Mock NADRA", info: { en: "Simulated NADRA: load the demo CNIC photo so a pensioner can prove she is alive without an office visit.", ur: "نادرا (نقلی): شناختی کارڈ کی تصویر۔" } }, { href: "/docs", label: "API docs", info: { en: "Public REST API documentation (OpenAPI) for banks and departments.", ur: "بینکوں اور محکموں کے لیے اے پی آئی۔" } }]} />
       <PageTitle title={<>{greeting()}, {user.name.split(" ")[0]}</>} sub={`${tenant?.name ?? ""} · rules version ${active.version} active`} />
       <div className="stats">
         <Stat n={`v${active.version}`} label="Active rules" icon="📐" />
@@ -44,7 +44,7 @@ export default async function Admin() {
         <Stat n={trusts.filter((t) => t.level !== "good").length} label="Helpers to watch" icon="🤝" tone={trusts.some((t) => t.level === "risky") ? "danger" : "warn"} />
       </div>
       <nav className="pillnav" aria-label="Sections">
-        <a href="#rules">📐 Rules</a><a href="#approvals">👥 Approvals</a><a href="#health">🩺 Health</a><a href="#history">🕘 History</a><a href="#helpers">🤝 Helpers</a><a href="#users">👤 Users</a><a href="#keys">🔑 API keys</a>
+        <a href="#rules">Rules</a><a href="#approvals">Approvals</a><a href="#health">Health</a><a href="#history">History</a><a href="#helpers">Helpers</a><a href="#users">Users</a><a href="#keys">API keys</a>
       </nav>
       <div className="card" id="rules">
         <h2 className="text-xl font-bold">Proof-of-life rules (active: version {active.version})</h2>
@@ -57,7 +57,7 @@ export default async function Admin() {
         <RuleRequests requests={pending.map((r) => ({ id: r.id, baseVersion: r.baseVersion, note: r.note, loosened: r.loosened, proposedBy: r.proposedBy, proposerName: nameOf.get(r.proposedBy) ?? "another admin", createdAt: r.createdAt.toISOString(), mine: r.proposedBy === user.id }))} />
       </div>
       <div className="card overflow-x-auto">
-        <h3 className="font-semibold" id="health">🩺 System health (last 24 hours)</h3>
+        <h3 className="font-semibold" id="health">System health (last 24 hours)</h3>
         <div className="grid gap-2 sm:grid-cols-3 mt-2">
           <div className="card card-soft"><div className="text-2xl font-bold">{errors.total}</div><div className="text-sm muted">errors (server and phones)</div></div>
           <div className="card card-soft"><div className="text-2xl font-bold">{scamNoAi} / {scamTotal}</div><div className="text-sm muted">message checks without the AI (signs only)</div></div>
@@ -65,7 +65,7 @@ export default async function Admin() {
         </div>
         {errors.groups.length > 0 ? (
           <table className="data mt-3"><thead><tr><th>Where</th><th>Error</th><th>Times</th><th>Last</th></tr></thead>
-            <tbody>{errors.groups.map((g, i) => <tr key={i}><td>{g.source === "client" ? "📱 phone" : "🖥️ server"} {g.route ?? ""}</td><td className="text-sm">{g.message}</td><td>{g.count}</td><td>{g.last?.toISOString().slice(11, 16)} UTC</td></tr>)}</tbody></table>
+            <tbody>{errors.groups.map((g, i) => <tr key={i}><td>{g.source === "client" ? "phone" : "server"} {g.route ?? ""}</td><td className="text-sm">{g.message}</td><td>{g.count}</td><td>{g.last?.toISOString().slice(11, 16)} UTC</td></tr>)}</tbody></table>
         ) : <p className="text-sm muted mt-2">No errors recorded. Server errors and crashes on people&apos;s phones show up here automatically.</p>}
       </div>
       <div className="card overflow-x-auto">
@@ -75,7 +75,7 @@ export default async function Admin() {
         </table>
       </div>
       <div className="card">
-        <h3 className="font-semibold" id="helpers">🤝 Helper trust scores</h3>
+        <h3 className="font-semibold" id="helpers">Helper trust scores</h3>
         <p className="text-sm muted mb-2">Lowest first. Officers see the same score on every case a helper submitted.</p>
         <div className="space-y-2">{trusts.map((t) => <div key={t.helperId}><b>{t.name}</b> <HelperTrustCard t={t} compact /></div>)}</div>
       </div>

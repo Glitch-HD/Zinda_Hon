@@ -1,4 +1,5 @@
 "use client";
+import Icon from "@/components/ui/Icon";
 import { useEffect, useRef, useState } from "react";
 import { speakUrdu, stopSpeaking, getVoiceChoice } from "@/lib/client/voice";
 import { voiceOn, getLang } from "@/lib/client/prefs";
@@ -199,7 +200,7 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
 
   if (done) return (
     <div className="space-y-3">
-      <div className="bubble">✅ {done}</div>
+      <div className="bubble">{done}</div>
       <button type="button" className="btn w-full" data-say="واپس شروع پر جائیں" data-say-en="Back to start" onClick={onDone}><span className="en">Back to start</span><span className="ur">واپس</span></button>
     </div>
   );
@@ -224,7 +225,7 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
           />
           {field.voice !== false && (
             <button type="button" className={`reg-mic ${isLive ? "live" : ""}`} onClick={() => void micFor(field)} aria-label={isLive ? "Stop listening" : `Say ${field.en}`} data-no-voice>
-              {isLive ? "⏹️" : "🎤"}
+              <Icon name={isLive ? "stop" : "mic"} size={18} />
             </button>
           )}
         </span>
@@ -238,7 +239,7 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
     { id: "you", icon: "🪪", en: f.assisted ? "About her" : "About you", ur: "ذاتی معلومات", fields: pick(["name", "cnic", "phone", "dateOfBirth", "area"]) },
     { id: "husband", icon: "🕊️", en: "Late husband", ur: "مرحوم شوہر", fields: pick(["husbandName", "husbandCnic", "husbandDeathDate", "deathCertNo"]) },
     { id: "shop", icon: "🏪", en: "Your shop", ur: "دکان", fields: pick(["shopName", "shopAddress"]) },
-    { id: "login", icon: f.role === "PENSIONER" ? "📖" : "🔐", en: f.role === "PENSIONER" ? "Pension book and log in" : "How you will log in", ur: "پنشن بک اور لاگ اِن", fields: pick(["pensionNo", "pin", "password"]) },
+    { id: "login", icon: f.role === "PENSIONER" ? "" : "", en: f.role === "PENSIONER" ? "Pension book and log in" : "How you will log in", ur: "پنشن بک اور لاگ اِن", fields: pick(["pensionNo", "pin", "password"]) },
   ].filter((g) => g.fields.length);
 
   return (
@@ -248,13 +249,13 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
           <p className="reg-label" data-say="آپ کون ہیں؟" data-say-en="Who are you?"><span className="en">Who is signing up?</span> <span className="ur">آپ کون ہیں؟</span></p>
           <div className="choice-row">
             {ROLES.map((r) => (
-              <button key={r.id} type="button" className={`choice-pill ${f.role === r.id ? "is-on" : ""}`} aria-pressed={f.role === r.id} data-say={r.ur} data-say-en={r.en} onClick={() => put("role", r.id)}>{r.icon} <span className="en">{r.en}</span><span className="ur">{r.ur}</span></button>
+              <button key={r.id} type="button" className={`choice-pill ${f.role === r.id ? "is-on" : ""}`} aria-pressed={f.role === r.id} data-say={r.ur} data-say-en={r.en} onClick={() => put("role", r.id)}><Icon e={r.icon} size={18} /> <span className="en">{r.en}</span><span className="ur">{r.ur}</span></button>
             ))}
           </div>
           {f.role === "PENSIONER" && (
             <div className="choice-row">
-              <button type="button" className={`choice-pill ${f.pensionType === "family" ? "is-on" : ""}`} aria-pressed={f.pensionType === "family"} data-say="بیوہ کی پنشن، شوہر کی وفات کے بعد" data-say-en="Widow's pension, after my husband passed away" onClick={() => put("pensionType", "family")}>🕊️ <span className="en">Widow&apos;s pension</span><span className="ur">بیوہ کی پنشن</span></button>
-              <button type="button" className={`choice-pill ${f.pensionType === "self" ? "is-on" : ""}`} aria-pressed={f.pensionType === "self"} data-say="میری اپنی پنشن، ریٹائرمنٹ کی" data-say-en="My own pension, from retirement" onClick={() => put("pensionType", "self")}>🧓 <span className="en">My own pension</span><span className="ur">اپنی پنشن</span></button>
+              <button type="button" className={`choice-pill ${f.pensionType === "family" ? "is-on" : ""}`} aria-pressed={f.pensionType === "family"} data-say="بیوہ کی پنشن، شوہر کی وفات کے بعد" data-say-en="Widow's pension, after my husband passed away" onClick={() => put("pensionType", "family")}><span className="en">Widow&apos;s pension</span><span className="ur">بیوہ کی پنشن</span></button>
+              <button type="button" className={`choice-pill ${f.pensionType === "self" ? "is-on" : ""}`} aria-pressed={f.pensionType === "self"} data-say="میری اپنی پنشن، ریٹائرمنٹ کی" data-say-en="My own pension, from retirement" onClick={() => put("pensionType", "self")}><span className="en">My own pension</span><span className="ur">اپنی پنشن</span></button>
             </div>
           )}
           <label className="block space-y-1 reg-office"><span className="text-sm font-semibold" data-say="اپنا پنشن آفس چنیں" data-say-en="Choose your pension office">Pension office <span className="ur muted">پنشن آفس</span></span>
@@ -263,7 +264,7 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
         </div>
         <div className="reg-side">
           <button type="button" className={`reg-voice ${guided ? "live" : ""}`} onClick={() => void fillByVoice()} data-no-voice>
-            <span className="text-3xl">{guided ? "⏹️" : "🎙️"}</span>
+            <Icon name={guided ? "stop" : "mic"} size={28} />
             <span className="flex-1 text-left">
               <b className="block"><span className="ur">{guided ? "روکیں" : "آواز سے فارم بھریں"}</span> <span className="en">{guided ? "Stop" : "Fill the form by voice"}</span></b>
               <span className="text-xs" style={{ opacity: .85 }}>{guided ? "Listening and asking one question at a time…" : "I ask each question out loud, you answer. No reading needed."}</span>
@@ -279,13 +280,13 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
 
       {f.assisted && (
         <fieldset className="reg-step reg-helper">
-          <legend><span className="reg-num">✋</span> <span className="en">Who is helping</span> <span className="ur">مددگار</span></legend>
+          <legend><span className="reg-num"></span> <span className="en">Who is helping</span> <span className="ur">مددگار</span></legend>
           <div className="reg-grid">{HELPER_FIELDS.map(renderField)}</div>
         </fieldset>
       )}
       {groups.map((g, i) => (
         <fieldset key={g.id} className="reg-step">
-          <legend><span className="reg-num">{i + 1}</span> {g.icon} <span className="en">{g.en}</span> <span className="ur">{g.ur}</span></legend>
+          <legend><span className="reg-num">{i + 1}</span> <span className="en">{g.en}</span> <span className="ur">{g.ur}</span></legend>
           <div className="reg-grid">{g.fields.map(renderField)}</div>
         </fieldset>
       ))}

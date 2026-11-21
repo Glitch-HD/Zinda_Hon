@@ -19,7 +19,7 @@ function CaseTable({ rows }: { rows: Row[] }) {
               <td className="muted">{c.pensioner.pensionNo}</td>
               <td><span className={STATUS_BADGE[c.status]}>{c.status.replaceAll("_", " ").toLowerCase()}</span></td>
               <td>{c.year}</td>
-              <td style={{ textAlign: "right" }}>{c.status === "VERIFIED" || c.status === "STOPPED" ? <Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}#reopen`}>↩️ View / reopen</Link> : <Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}`}>Open</Link>}</td>
+              <td style={{ textAlign: "right" }}>{c.status === "VERIFIED" || c.status === "STOPPED" ? <Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}#reopen`}>View / reopen</Link> : <Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}`}>Open</Link>}</td>
             </tr>
           ))}
         </tbody>
@@ -78,7 +78,7 @@ export default async function OfficerQueue() {
 
   return (
     <div>
-      <Header user={user} links={[{ href: "/officer/enroll", label: "📷 Enrol faces", info: { en: "Register a pensioner's face once at the office. Only 128 numbers are stored, never the photo.", ur: "دفتر میں ایک بار چہرہ رجسٹر کریں۔" } }, { href: "/officer/pension-books", label: "📖 Pension books", info: { en: "Print pension book QR codes. Each is signed so edits (like a changed amount) are caught.", ur: "پنشن بک کے دستخط شدہ کیو آر پرنٹ کریں۔" } }, { href: "/officer/messages", label: "🛡️ Scam reviews", info: { en: "Messages the AI was unsure about. Your label also makes the accuracy numbers honest.", ur: "وہ پیغام جن پر اے آئی کو یقین نہیں تھا۔" } }]} />
+      <Header user={user} links={[{ href: "/officer/enroll", label: "Enrol faces", info: { en: "Register a pensioner's face once at the office. Only 128 numbers are stored, never the photo.", ur: "دفتر میں ایک بار چہرہ رجسٹر کریں۔" } }, { href: "/officer/pension-books", label: "Pension books", info: { en: "Print pension book QR codes. Each is signed so edits (like a changed amount) are caught.", ur: "پنشن بک کے دستخط شدہ کیو آر پرنٹ کریں۔" } }, { href: "/officer/messages", label: "Scam reviews", info: { en: "Messages the AI was unsure about. Your label also makes the accuracy numbers honest.", ur: "وہ پیغام جن پر اے آئی کو یقین نہیں تھا۔" } }]} />
       <PageTitle
         title={<>{greeting()}, {user.name.split(" ")[0]}</>}
         sub={queue.length ? `${queue.length} case${queue.length > 1 ? "s" : ""} need your decision. Highest risk first.` : "Nothing is waiting for you right now."}
@@ -91,11 +91,11 @@ export default async function OfficerQueue() {
       </div>
 
       {notes.length > 0 && (
-        <div className="card card-soft mb-4 text-sm"><b>🔔 {notes.length} new:</b> {notes.map((n) => n.body).join(" · ")}</div>
+        <div className="card card-soft mb-4 text-sm"><b>{notes.length} new:</b> {notes.map((n) => n.body).join(" · ")}</div>
       )}
 
       <SectionHead title="Review queue" count={queue.length} sub="Sorted by risk, then lowest confidence. Only an officer can approve or stop these." />
-      {queue.length === 0 && <div className="card text-center muted" style={{ padding: 28 }}>🎉 Nothing waiting. Cases the AI is not sure about will appear here.</div>}
+      {queue.length === 0 && <div className="card text-center muted" style={{ padding: 28 }}>Nothing waiting. Cases the AI is not sure about will appear here.</div>}
       {queue.map((c) => (
         <div key={c.id} className="qcard" style={{ borderInlineStartColor: c.priority >= 10 ? "var(--danger)" : "var(--accent)" }}>
           <div className="avatar">{initials(c.pensioner.name)}</div>
@@ -113,14 +113,14 @@ export default async function OfficerQueue() {
 
       {signups.length > 0 && (
         <>
-          <SectionHead title="✨ New sign-ups to check" count={signups.length} sub="People who made an account. Check the records below, then approve or reject. No account works until you do." />
+          <SectionHead title="New sign-ups to check" count={signups.length} sub="People who made an account. Check the records below, then approve or reject. No account works until you do." />
           <SignupReview rows={signups.map((r) => ({ id: r.id, role: r.role, name: r.name, cnic: r.cnic, phone: r.phone, area: r.area, pensionNo: r.pensionNo, createdAt: r.createdAt.toISOString(), checks: r.checks as SignupRow["checks"], details: r.details as SignupRow["details"], assistedBy: r.assistedBy as SignupRow["assistedBy"] }))} />
         </>
       )}
 
       {notEnrolled.length > 0 && (
         <>
-          <SectionHead title="📷 Faces to enrol" count={notEnrolled.length} sub="They (or their helper) cannot do the face check until you enrol them once." />
+          <SectionHead title="Faces to enrol" count={notEnrolled.length} sub="They (or their helper) cannot do the face check until you enrol them once." />
           <div className="card">
             <div className="mini-grid">
               {notEnrolled.slice(0, 8).map((p) => <EnrolLink key={p.id} p={p} />)}

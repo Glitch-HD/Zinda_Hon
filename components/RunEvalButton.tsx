@@ -3,7 +3,7 @@ import { useState } from "react";
 
 // Runs a labelled test set a few items per request (see the API routes), showing progress, so a long
 // run never hits the hosting time limit. Waits a little between batches to stay under the free AI rate limit.
-export default function RunEvalButton({ endpoint = "/api/admin/run-eval", label = "▶️ Run the labelled test set", pauseMs = 1500 }: { endpoint?: string; label?: string; pauseMs?: number }) {
+export default function RunEvalButton({ endpoint = "/api/admin/run-eval", label = "▶Run the labelled test set", pauseMs = 1500 }: { endpoint?: string; label?: string; pauseMs?: number }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ next: number; total: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);

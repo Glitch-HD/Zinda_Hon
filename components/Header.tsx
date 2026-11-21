@@ -34,7 +34,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
           <span className="hud-avatar" aria-hidden>{initials}</span>
           <span className="leading-tight min-w-0">
             <b className="block truncate">{user.name}</b>
-            <span className="hud-role">{role.icon} <span className="en">{role.en}</span><span className="ur">{role.ur}</span></span>
+            <span className="hud-role"><span className="en">{role.en}</span><span className="ur">{role.ur}</span></span>
           </span>
           <LogoutButton />
         </div>
