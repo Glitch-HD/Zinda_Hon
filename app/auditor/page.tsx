@@ -1,17 +1,32 @@
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
+import { PageTitle, Stat } from "@/components/ui/Dash";
 
 // Read-only view for the auditor: every action, every AI decision with its full trace, every consent change.
 export default async function Auditor({ searchParams }: { searchParams: Promise<{ tab?: string; actor?: string }> }) {
   const user = await pageUser(["AUDITOR"]);
   const sp = await searchParams;
   const tab = sp.tab ?? "decisions";
+  const day = new Date(Date.now() - 86400_000);
+  const [decisions, officerOverrides, actions24h, risky] = await Promise.all([
+    prisma.decision.count({ where: { case: { tenantId: user.tenantId } } }),
+    prisma.decision.count({ where: { case: { tenantId: user.tenantId }, decidedBy: { not: "ai" } } }),
+    prisma.auditLog.count({ where: { tenantId: user.tenantId, createdAt: { gte: day } } }),
+    prisma.auditLog.count({ where: { tenantId: user.tenantId, action: { in: ["face_reenrolled", "correction_refused_sensitive_field", "rule_change_proposed", "rule_change_self_approval_refused", "face_enrol_refused_same_face"] } } }),
+  ]);
   const tabs = [{ id: "decisions", label: "AI decisions" }, { id: "risky", label: "⚠️ Risky actions" }, { id: "agent", label: "AI case assistant" }, { id: "log", label: "Audit log" }, { id: "consent", label: "Consent records" }];
   return (
     <div>
       <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "How accurate the AI checks are, measured on labelled test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }]} />
-      <div className="flex flex-wrap gap-2 mb-3">{tabs.map((t) => <a key={t.id} href={`?tab=${t.id}`} className={`btn ${tab === t.id ? "" : "btn-ghost"}`}>{t.label}</a>)}</div>
+      <PageTitle title="Audit and oversight" sub="Read-only. Every action by a person, the AI or the case assistant, with the full reasoning behind each decision." />
+      <div className="stats">
+        <Stat n={decisions} label="Decisions on record" icon="⚖️" />
+        <Stat n={officerOverrides} label="Made by an officer" icon="🧑‍💼" tone="warn" />
+        <Stat n={actions24h} label="Actions in the last 24 h" icon="📜" tone="ok" />
+        <Stat n={risky} label="Risky actions to check" icon="⚠️" tone={risky ? "danger" : "ok"} />
+      </div>
+      <div className="flex flex-wrap gap-2 mb-3">{tabs.map((t) => <a key={t.id} href={`?tab=${t.id}`} className={`btn btn-sm ${tab === t.id ? "" : "btn-ghost"}`}>{t.label}</a>)}</div>
       {tab === "decisions" && <Decisions tenantId={user.tenantId} />}
       {tab === "risky" && <Risky tenantId={user.tenantId} />}
       {tab === "agent" && <AgentRuns tenantId={user.tenantId} />}
@@ -21,14 +36,20 @@ export default async function Auditor({ searchParams }: { searchParams: Promise<
   );
 }
 
+const OUTCOME_CLS: Record<string, string> = { APPROVE: "badge-ok", OFFICER_APPROVED: "badge-ok", ASK_MORE_PROOF: "badge-warn", SEND_TO_OFFICER: "badge-warn", OFFICER_STOPPED: "badge-danger" };
+
 async function Decisions({ tenantId }: { tenantId: string }) {
   const ds = await prisma.decision.findMany({ where: { case: { tenantId } }, orderBy: { createdAt: "desc" }, take: 50, include: { ruleVersion: { select: { version: true } }, case: { include: { pensioner: { select: { pensionNo: true } } } } } });
   return (
     <div className="space-y-3">
       {ds.map((d) => (
-        <details key={d.id} className="card">
-          <summary className="cursor-pointer">
-            <b>{d.case.pensioner.pensionNo}</b> · {d.outcome} · confidence {(d.confidence * 100).toFixed(3)}% · rule v{d.ruleVersion.version} · {d.decidedBy === "ai" ? "AI engine" : "officer"} · {d.createdAt.toISOString().slice(0, 16).replace("T", " ")}
+        <details key={d.id} className="card" style={{ padding: "12px 16px" }}>
+          <summary className="cursor-pointer flex flex-wrap items-center gap-2">
+            <b>{d.case.pensioner.pensionNo}</b>
+            <span className={`badge ${OUTCOME_CLS[d.outcome] ?? ""}`}>{d.outcome.replaceAll("_", " ").toLowerCase()}</span>
+            <span className="badge">{d.decidedBy === "ai" ? "🤖 AI engine" : "🧑‍💼 officer"}</span>
+            <span className="muted text-sm">confidence {(d.confidence * 100).toFixed(2)}% · rule v{d.ruleVersion.version}</span>
+            <span className="muted text-sm" style={{ marginInlineStart: "auto" }}>{d.createdAt.toISOString().slice(0, 16).replace("T", " ")}</span>
           </summary>
           <p className="mt-2"><b>What the user was told:</b> {d.reasonEn} <span className="ur">{d.reasonUr}</span></p>
           <p className="mt-2"><b>Full trace</b> (input, rule version, confidence, result):</p>

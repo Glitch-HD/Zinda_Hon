@@ -2,6 +2,39 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
+import { PageTitle, SectionHead, Stat, greeting, initials } from "@/components/ui/Dash";
+
+type Row = { id: string; year: number; status: string; pensioner: { name: string; pensionNo: string } };
+
+function CaseTable({ rows }: { rows: Row[] }) {
+  return (
+    <div className="card overflow-x-auto" style={{ padding: 8 }}>
+      <table className="data">
+        <thead><tr><th>Name</th><th>Pension no.</th><th>Status</th><th>Year</th><th></th></tr></thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.id}>
+              <td><span className="inline-flex items-center gap-2"><span className="avatar" style={{ width: 30, height: 30, borderRadius: 9, fontSize: ".72rem" }}>{initials(c.pensioner.name)}</span>{c.pensioner.name}</span></td>
+              <td className="muted">{c.pensioner.pensionNo}</td>
+              <td><span className={STATUS_BADGE[c.status]}>{c.status.replaceAll("_", " ").toLowerCase()}</span></td>
+              <td>{c.year}</td>
+              <td style={{ textAlign: "right" }}><Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}`}>Open</Link></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EnrolLink({ p }: { p: { id: string; name: string; pensionNo: string } }) {
+  return (
+    <Link href={`/officer/enroll?p=${p.id}`} className="mini">
+      <span className="avatar">{initials(p.name)}</span>
+      <span className="min-w-0"><b className="text-sm">{p.name}</b><small>{p.pensionNo} · tap to enrol</small></span>
+    </Link>
+  );
+}
 
 const STATUS_BADGE: Record<string, string> = {
   WITH_OFFICER: "badge badge-warn", NEEDS_PROOF: "badge", IN_PROGRESS: "badge", DUE: "badge", VERIFIED: "badge badge-ok", STOPPED: "badge badge-danger",
@@ -19,7 +52,7 @@ export default async function OfficerQueue() {
     where: { tenantId: user.tenantId, status: { not: "WITH_OFFICER" } },
     include: { pensioner: { select: { name: true, pensionNo: true } } },
     orderBy: [{ year: "desc" }, { updatedAt: "desc" }],
-    take: 60,
+    take: 120,
   });
   // Every active pensioner without a face yet: those with their own app account AND those a helper
   // acts for. (The list column can be empty or NULL, so filter here.)
@@ -28,62 +61,73 @@ export default async function OfficerQueue() {
     select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true },
     orderBy: { pensionNo: "asc" },
   })).filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
+  const year = new Date().getFullYear();
+  const thisYear = others.filter((c) => c.year === year);
+  const earlier = others.filter((c) => c.year !== year);
+  const dueThisYear = thisYear.filter((c) => c.status !== "VERIFIED" && c.status !== "STOPPED").length;
+  const verifiedThisYear = thisYear.filter((c) => c.status === "VERIFIED").length;
   const notes = await prisma.notification.findMany({ where: { userId: user.id, read: false }, orderBy: { createdAt: "desc" }, take: 5 });
 
   return (
     <div>
       <Header user={user} links={[{ href: "/officer/enroll", label: "📷 Enrol faces", info: { en: "Register a pensioner's face once at the office. Only 128 numbers are stored, never the photo.", ur: "دفتر میں ایک بار چہرہ رجسٹر کریں۔" } }, { href: "/officer/pension-books", label: "📖 Pension books", info: { en: "Print pension book QR codes. Each is signed so edits (like a changed amount) are caught.", ur: "پنشن بک کے دستخط شدہ کیو آر پرنٹ کریں۔" } }, { href: "/officer/messages", label: "🛡️ Scam reviews", info: { en: "Messages the AI was unsure about. Your label also makes the accuracy numbers honest.", ur: "وہ پیغام جن پر اے آئی کو یقین نہیں تھا۔" } }]} />
-      {notEnrolled.length > 0 && (
-        <div className="card mb-5" style={{ borderColor: "var(--accent)", borderWidth: 2 }}>
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <h2 className="text-lg font-bold">📷 Faces waiting to be enrolled ({notEnrolled.length})</h2>
-            <span className="muted text-sm">They (or their helper) cannot do the face check until you enrol them once.</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {notEnrolled.map((p) => <Link key={p.id} href={`/officer/enroll?p=${p.id}`} className="btn btn-accent btn-sm">Enrol {p.name} · {p.pensionNo}</Link>)}
-          </div>
-        </div>
-      )}
+      <PageTitle
+        title={<>{greeting()}, {user.name.split(" ")[0]}</>}
+        sub={queue.length ? `${queue.length} case${queue.length > 1 ? "s" : ""} need your decision. Highest risk first.` : "Nothing is waiting for you right now."}
+      />
+      <div className="stats">
+        <Stat n={queue.length} label="Waiting for your review" icon="🧑‍💼" tone={queue.length ? "danger" : "ok"} />
+        <Stat n={dueThisYear} label={`Still due in ${year}`} icon="⏳" tone="warn" />
+        <Stat n={verifiedThisYear} label={`Verified in ${year}`} icon="✅" tone="ok" />
+        <Stat n={notEnrolled.length} label="Faces to enrol" icon="📷" tone={notEnrolled.length ? "warn" : "ok"} />
+      </div>
+
       {notes.length > 0 && (
-        <div className="card mb-4"><b>🔔 {notes.length} new</b>: {notes.map((n) => n.body).join(" · ")}</div>
+        <div className="card card-soft mb-4 text-sm"><b>🔔 {notes.length} new:</b> {notes.map((n) => n.body).join(" · ")}</div>
       )}
-      <h2 className="text-xl font-bold mb-2">Review queue ({queue.length})</h2>
-      <p className="muted text-sm mb-2">Sorted by risk (highest first), then by confidence (lowest first). Only you can approve or stop these.</p>
-      <div className="card mb-6 overflow-x-auto">
-        <table className="data">
-          <thead><tr><th>Pension no.</th><th>Name</th><th>Risk flags</th><th>Confidence</th><th>Priority</th><th>Assigned</th><th></th></tr></thead>
-          <tbody>
-            {queue.length === 0 && <tr><td colSpan={7} className="muted">Nothing waiting. 🎉</td></tr>}
-            {queue.map((c) => (
-              <tr key={c.id}>
-                <td>{c.pensioner.pensionNo}</td>
-                <td>{c.pensioner.name}</td>
-                <td>{c.riskFlags.map((f) => <span key={f} className="badge badge-danger mr-1 mb-1">{f.replaceAll("_", " ")}</span>)}</td>
-                <td>{c.confidence === null ? "–" : `${(c.confidence * 100).toFixed(2)}%`}</td>
-                <td>{c.priority}</td>
-                <td>{c.assignedOfficer?.name ?? "–"}</td>
-                <td><Link className="btn" href={`/officer/case/${c.id}`}>Review</Link></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <h2 className="text-xl font-bold mb-2">All other cases</h2>
-      <div className="card overflow-x-auto">
-        <table className="data">
-          <thead><tr><th>Pension no.</th><th>Name</th><th>Status</th><th>Year</th><th></th></tr></thead>
-          <tbody>
-            {others.map((c) => (
-              <tr key={c.id}>
-                <td>{c.pensioner.pensionNo}</td><td>{c.pensioner.name}</td>
-                <td><span className={STATUS_BADGE[c.status]}>{c.status.replaceAll("_", " ").toLowerCase()}</span></td>
-                <td>{c.year}</td>
-                <td><Link className="btn btn-ghost" href={`/officer/case/${c.id}`}>Open</Link></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+
+      <SectionHead title="Review queue" count={queue.length} sub="Sorted by risk, then lowest confidence. Only an officer can approve or stop these." />
+      {queue.length === 0 && <div className="card text-center muted" style={{ padding: 28 }}>🎉 Nothing waiting. Cases the AI is not sure about will appear here.</div>}
+      {queue.map((c) => (
+        <div key={c.id} className="qcard" style={{ borderInlineStartColor: c.priority >= 10 ? "var(--danger)" : "var(--accent)" }}>
+          <div className="avatar">{initials(c.pensioner.name)}</div>
+          <div className="qcard-main">
+            <div className="font-semibold">{c.pensioner.name} <span className="muted text-sm">· {c.pensioner.pensionNo}{c.pensioner.area ? ` · ${c.pensioner.area}` : ""}</span></div>
+            <div className="mt-1 flex flex-wrap gap-1">{c.riskFlags.length ? c.riskFlags.map((f) => <span key={f} className="badge badge-danger">{f.replaceAll("_", " ")}</span>) : <span className="badge badge-warn">low confidence</span>}</div>
+            <div className="qcard-meta mt-2">
+              <span className="inline-flex items-center gap-2">Confidence <span className="meter" aria-hidden><span style={{ width: `${Math.max(3, (c.confidence ?? 0) * 100)}%` }} /></span> {c.confidence === null ? "–" : `${(c.confidence * 100).toFixed(1)}%`}</span>
+              <span>Assigned: {c.assignedOfficer?.name ?? "nobody yet"}</span>
+            </div>
+          </div>
+          <Link className="btn" href={`/officer/case/${c.id}`}>Review →</Link>
+        </div>
+      ))}
+
+      {notEnrolled.length > 0 && (
+        <>
+          <SectionHead title="📷 Faces to enrol" count={notEnrolled.length} sub="They (or their helper) cannot do the face check until you enrol them once." />
+          <div className="card">
+            <div className="mini-grid">
+              {notEnrolled.slice(0, 8).map((p) => <EnrolLink key={p.id} p={p} />)}
+            </div>
+            {notEnrolled.length > 8 && (
+              <details className="more mt-2">
+                <summary>Show {notEnrolled.length - 8} more</summary>
+                <div className="mini-grid mt-2">{notEnrolled.slice(8).map((p) => <EnrolLink key={p.id} p={p} />)}</div>
+              </details>
+            )}
+          </div>
+        </>
+      )}
+
+      <SectionHead title={`All cases in ${year}`} count={thisYear.length} />
+      <CaseTable rows={thisYear} />
+      {earlier.length > 0 && (
+        <details className="more mt-3">
+          <summary>Earlier years ({earlier.length} closed cases)</summary>
+          <div className="mt-2"><CaseTable rows={earlier} /></div>
+        </details>
+      )}
     </div>
   );
 }
