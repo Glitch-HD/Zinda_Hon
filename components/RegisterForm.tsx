@@ -3,6 +3,7 @@ import Icon from "@/components/ui/Icon";
 import { useEffect, useRef, useState } from "react";
 import { speakUrdu, stopSpeaking, getVoiceChoice } from "@/lib/client/voice";
 import { voiceOn, getLang } from "@/lib/client/prefs";
+import { CNIC_KEYS, PHONE_KEYS, formatCnic, formatPhone, checkCnic, checkPhone } from "@/lib/client/idcheck";
 import { startListening, spokenDigits, LISTEN_ERROR, type Listening } from "@/lib/client/listen";
 
 // Create account for new people. It only sends a REQUEST: a pension officer checks it against the
@@ -100,7 +101,12 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
   const stopGuide = useRef(false);
   const formRef = useRef(f);
   formRef.current = f;
-  const put = (k: Key, v: string | boolean) => setF((x) => ({ ...x, [k]: v }));
+  const put = (k: Key, v: string | boolean) => setF((x) => ({
+    ...x,
+    [k]: typeof v === "string" && (CNIC_KEYS as readonly string[]).includes(k) ? formatCnic(v) : typeof v === "string" && (PHONE_KEYS as readonly string[]).includes(k) ? formatPhone(v) : v,
+  }));
+  const checkFor = (k: Key, v: string) =>
+    (CNIC_KEYS as readonly string[]).includes(k) ? checkCnic(v, k === "husbandCnic") : (PHONE_KEYS as readonly string[]).includes(k) ? checkPhone(v) : null;
   const karachi = /karachi/i.test(offices.find((o) => o.id === f.tenantId)?.name ?? "Karachi");
 
   useEffect(() => {
@@ -175,6 +181,15 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Length checks first, so a wrong number is caught here and not after sending.
+    const keys: Key[] = ["cnic", "phone", ...(f.role === "PENSIONER" && f.pensionType === "family" ? (["husbandCnic"] as Key[]) : []), ...(f.assisted ? (["helperPhone"] as Key[]) : [])];
+    const bad = keys.map((k) => ({ k, c: checkFor(k, f[k] as string) })).find((x) => x.c && !x.c.ok);
+    if (bad?.c) {
+      const label = bad.k.toLowerCase().includes("cnic") ? "CNIC" : "Mobile number";
+      setError(`${label}: ${bad.c.en}`);
+      void speakUrdu(bad.c.ur, `${label}: ${bad.c.en}`);
+      return;
+    }
     setBusy(true); setError(null);
     try {
       const body: Record<string, unknown> = { tenantId: f.tenantId, role: f.role, name: f.name, cnic: f.cnic, phone: f.phone };
@@ -208,6 +223,7 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
   const renderField = (field: Field) => {
     const v = f[field.key] as string;
     const isLive = listeningKey === field.key;
+    const check = checkFor(field.key, v);
     return (
       <label key={field.key} className={`block space-y-1 ${isLive ? "reg-live" : ""}`}>
         <span className="text-sm font-semibold" data-say={field.askUr} data-say-en={field.askEn}>
@@ -220,8 +236,10 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
             inputMode={field.kind === "digits" ? "numeric" : undefined}
             autoComplete={field.kind === "secret" ? "new-password" : "off"}
             minLength={field.kind === "secret" && v ? 8 : undefined}
-            maxLength={field.key === "pin" ? 4 : undefined}
+            maxLength={field.key === "pin" ? 4 : (CNIC_KEYS as readonly string[]).includes(field.key) ? 15 : (PHONE_KEYS as readonly string[]).includes(field.key) ? 11 : undefined}
             onChange={(e) => put(field.key, e.target.value)}
+            aria-invalid={check ? !check.ok && v.length > 0 : undefined}
+            aria-describedby={check ? `chk-${field.key}` : undefined}
           />
           {field.voice !== false && (
             <button type="button" className={`reg-mic ${isLive ? "live" : ""}`} onClick={() => void micFor(field)} aria-label={isLive ? "Stop listening" : `Say ${field.en}`} data-no-voice>
@@ -229,6 +247,11 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
             </button>
           )}
         </span>
+        {check && (
+          <span id={`chk-${field.key}`} className={`field-check ${check.ok ? "ok" : v ? "bad" : ""}`} aria-live="polite">
+            <Icon name={check.ok ? "check" : "alert"} size={15} /> <span className="en">{check.en}</span> <span className="ur">{check.ur}</span>
+          </span>
+        )}
       </label>
     );
   };

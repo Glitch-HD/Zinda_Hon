@@ -1,6 +1,8 @@
 "use client";
 import Icon from "@/components/ui/Icon";
 import SayButton from "@/components/ui/SayButton";
+import Faq from "@/components/Faq";
+import { formatPhone, checkPhone } from "@/lib/client/idcheck";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
@@ -63,6 +65,15 @@ const HOW_MORE_UR = [
   "پنشن بک کے اندر والا کیو آر کوڈ کیمرے کے سامنے رکھیں۔ اس پر آفس کی مہر ہے، اس لیے بدلی ہوئی کتاب پکڑی جاتی ہے۔",
   "کہنے پر آنکھ جھپکیں اور سر گھمائیں۔ فون سے صرف چہرے کے نمبر جاتے ہیں، تصویر کبھی نہیں۔",
   "سب ٹھیک ہو تو فوراً منظوری۔ ورنہ پنشن افسر دیکھتا ہے۔ کمپیوٹر کبھی پنشن نہیں روکتا۔",
+];
+
+const SIGNUP_FAQ = [
+  { q: "Why do you need my CNIC number?", qUr: "شناختی کارڈ نمبر کیوں چاہیے؟", a: "To match you with the NADRA and pension records, so no one else can open an account in your name. A CNIC has 13 digits, written 00000-0000000-0. In this demo only mock CNICs starting with 00000 are accepted.", aUr: "تاکہ آپ کو نادرا اور پنشن ریکارڈ سے ملایا جا سکے اور کوئی اور آپ کے نام پر اکاؤنٹ نہ کھول سکے۔ شناختی کارڈ میں 13 ہندسے ہوتے ہیں۔" },
+  { q: "Which phone number should I give?", qUr: "کون سا فون نمبر دوں؟", a: "Your own mobile number: 11 digits, starting with 03. You will log in with it and get messages on it. In this demo only mock numbers starting 0300000 are accepted.", aUr: "اپنا موبائل نمبر: 11 ہندسے، جو 03 سے شروع ہو۔ اسی سے لاگ اِن ہوگا اور اسی پر پیغام آئیں گے۔" },
+  { q: "I am a widow. What do I need?", qUr: "میں بیوہ ہوں۔ مجھے کیا چاہیے؟", a: "Your late husband's full name, his CNIC number if you know it, the date he passed away and the death certificate number if you have it. The office checks these against the death registry.", aUr: "مرحوم شوہر کا پورا نام، اگر یاد ہو تو ان کا شناختی کارڈ نمبر، وفات کی تاریخ اور اگر ہو تو ڈیتھ سرٹیفکیٹ نمبر۔ آفس یہ وفات کے ریکارڈ سے ملاتا ہے۔" },
+  { q: "I cannot fill the form myself.", qUr: "میں خود فارم نہیں بھر سکتی۔", a: "Press \"Fill the form by voice\" and answer by speaking, or let a family member fill it: tick \"Someone is helping me\" and add their name and phone. An officer then checks the form with extra care.", aUr: "آواز سے فارم بھریں والا بٹن دبائیں اور بول کر جواب دیں، یا گھر کا کوئی فرد بھر دے۔ اس صورت میں مدد کرنے والے کا نام اور فون لکھیں۔ افسر ایسا فارم زیادہ دھیان سے دیکھتا ہے۔" },
+  { q: "Do I need a password?", qUr: "کیا پاس ورڈ ضروری ہے؟", a: "Pensioners can choose a 4-digit PIN instead. Never tell your PIN to anyone; the pension office never asks for it.", aUr: "پنشنر پاس ورڈ کی جگہ چار ہندسوں کا پن رکھ سکتے ہیں۔ اپنا پن کبھی کسی کو نہ بتائیں، پنشن آفس کبھی نہیں مانگتا۔" },
+  { q: "What happens after I press Send?", qUr: "بھیجنے کے بعد کیا ہوگا؟", a: "A pension officer checks your details against the records. When it is approved your account opens and you can log in. If something does not match, the officer will tell you what to fix.", aUr: "پنشن افسر آپ کی معلومات ریکارڈ سے ملاتا ہے۔ منظوری کے بعد آپ کا اکاؤنٹ کھل جاتا ہے۔ اگر کچھ نہ ملے تو افسر بتائے گا کہ کیا درست کرنا ہے۔" },
 ];
 
 const WHO = [
@@ -271,7 +282,8 @@ export default function LoginPage() {
                     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
                       <label className="block space-y-1">
                         <span className="text-sm font-semibold" data-say="اپنا فون نمبر لکھیں" data-say-en="Type your phone number"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
-                        <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
+                        <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} maxLength={11} onChange={(e) => setPhone(formatPhone(e.target.value))} autoComplete="username" aria-describedby="chk-login-phone" />
+                        {phone && (() => { const c = checkPhone(phone); return c && <span id="chk-login-phone" className={`field-check ${c.ok ? "ok" : "bad"}`} aria-live="polite"><Icon name={c.ok ? "check" : "alert"} size={15} /> <span className="en">{c.en}</span> <span className="ur">{c.ur}</span></span>; })()}
                       </label>
                       <label className="block space-y-1">
                         <span className="text-sm font-semibold" data-say="اپنا پاس ورڈ لکھیں" data-say-en="Type your password"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
@@ -298,6 +310,11 @@ export default function LoginPage() {
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>✕ <span className="en">Close</span><span className="ur">بند کریں</span></button>
             </div>
             <RegisterForm onDone={() => open("choose")} />
+            <div className="signup-faq">
+              <h3><span className="en">Questions about signing up</span> <span className="ur">اکاؤنٹ بنانے کے بارے میں سوالات</span></h3>
+              <p className="muted text-sm"><span className="en">Press Listen to hear a question and its answer.</span> <span className="ur">سوال اور جواب سننے کے لیے سنیں دبائیں۔</span></p>
+              <Faq items={SIGNUP_FAQ} />
+            </div>
           </div>
         </section>
       )}
@@ -384,15 +401,7 @@ export default function LoginPage() {
       <section className="band band-tint" aria-label="Common questions">
         <p className="eyebrow">Common questions · عام سوالات</p>
         <h2>Questions people ask</h2>
-        <div className="faq">
-          {FAQ.map((f) => (
-            <details key={f.q}>
-              <summary><span><span className="en">{f.q}</span><span className="ur faq-ur">{f.qUr}</span></span></summary>
-              <p className="en">{f.a}</p><p className="ur faq-a-ur">{f.aUr}</p>
-              <div className="pb-5"><SayButton ur={`${f.qUr} ${f.aUr}`} en={`${f.q} ${f.a}`} /></div>
-            </details>
-          ))}
-        </div>
+        <Faq items={FAQ} />
       </section>
 
       {SHOW_TEST_LOGINS && view === "choose" && (

@@ -500,3 +500,20 @@ html, body { background: var(--bg); color: var(--ink); }
 .say-btn-big:hover, .say-btn-big.on { background: var(--brand-2); }
 .bubble-say { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .bubble-say .say-btn { margin-top: 0; flex: none; }
+
+/* Number checks under CNIC / phone fields */
+.field-check { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: .85rem; font-weight: 600; color: var(--muted); margin-top: 6px; }
+.field-check .ur { line-height: 1.7; font-weight: 500; }
+.field-check.ok { color: var(--forest, #1E4D2B); }
+.field-check.bad { color: var(--accent); }
+.input[aria-invalid="true"] { border-color: var(--accent); }
+
+/* FAQ: Listen sits on the question line, so it can be heard before opening */
+.faq summary { align-items: center; }
+.faq summary::after { flex: none; }
+.faq-q { flex: 1; min-width: 0; }
+.faq summary .say-btn { margin-top: 0; flex: none; }
+.signup-faq { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--line); }
+.signup-faq h3 { font-size: 1.3rem; margin-bottom: 4px; }
+.signup-faq .faq { margin-top: 20px; max-width: none; }
+@media (max-width: 640px) { .faq summary { flex-wrap: wrap; } }
