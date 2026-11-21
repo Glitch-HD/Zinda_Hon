@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import PensionerLogin from "@/components/PensionerLogin";
-import Option from "@/components/ui/Option";
+import HeroScene from "@/components/HeroScene";
 import VoiceCommand from "@/components/ui/VoiceCommand";
 import { speakUrdu } from "@/lib/client/voice";
 import { setPrefsRole } from "@/lib/client/prefs";
@@ -49,6 +49,12 @@ const HOW = [
   { icon: "✅", ur: "پنشن جاری رہے گی", en: "Your pension continues" },
 ];
 
+const HOW_MORE = [
+  "Hold the QR code inside your pension book up to the camera. It is signed by the office, so a changed book is caught.",
+  "Blink and turn your head when asked. Only 128 numbers about your face leave the phone, never the photo.",
+  "If everything matches, you are approved at once. If not, a pension officer looks. The computer never stops a pension.",
+];
+
 export default function LoginPage() {
   const [view, setView] = useState<View>("choose");
   const [phone, setPhone] = useState("");
@@ -77,7 +83,7 @@ export default function LoginPage() {
     if (v !== "pensioner") setPrefsRole("guest");
     setError(null);
     setView(v);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function openPensioner() {
@@ -86,136 +92,148 @@ export default function LoginPage() {
     void speakUrdu("اپنی پنشن بک کھولیں اور اس کا کیو آر کوڈ کیمرے کے سامنے رکھیں۔", "Open your pension book and hold its QR code in front of the camera.");
   }
 
+  const groups = [
+    { title: "Pensioners", items: TEST_LOGINS.filter((d) => d.role === "Pensioner") },
+    { title: "Pension office", items: TEST_LOGINS.filter((d) => /Officer|Admin|Auditor/.test(d.role)) },
+    { title: "Helpers and shops", items: TEST_LOGINS.filter((d) => /Helper|Shopkeeper/.test(d.role)) },
+  ];
+
   return (
-    <div className="grid gap-8 lg:gap-14 md:grid-cols-[1fr_1.05fr] md:items-start">
-      {/* Left on big screens, top on phones: an arch (mehrab) shaped welcome panel */}
-      <section className="hero-panel text-center space-y-4 md:sticky md:top-8">
-        <div className="sun" aria-hidden="true" />
-        <div className="relative flex justify-center"><div className="rounded-[22px] p-1.5" style={{ background: "rgba(255,255,255,.18)" }}><Logo size={70} /></div></div>
-        <div className="relative">
-          <h1 className="ur always text-5xl md:text-6xl font-bold" style={{ lineHeight: 1.9, fontFamily: "var(--font-ur, 'Noto Nastaliq Urdu')" }}>زندہ ہوں</h1>
-          <p className="text-xs font-extrabold tracking-[.35em] uppercase" style={{ color: "#f6c66f" }}>Zinda Hon</p>
+    <>
+      <section className="hero-full">
+        <HeroScene />
+        <div className="hero-shade" aria-hidden="true" />
+        <div className="hero-inner">
+          <nav className="hero-nav" aria-label="Main">
+            <span className="flex items-center gap-3">
+              <Logo size={38} />
+              <span className="leading-tight"><span className="brand-word text-lg block">Zinda Hon</span><span className="ur always text-sm" style={{ lineHeight: 1.5, color: "#f6c66f" }}>زندہ ہوں</span></span>
+            </span>
+            <span className="hero-links">
+              <a href="#how">How it works</a>
+              <button type="button" onClick={() => open("helper")}>Helpers</button>
+              <button type="button" onClick={() => open("shopkeeper")}>Shops</button>
+              <button type="button" onClick={() => open("staff")}>Staff login</button>
+            </span>
+          </nav>
+
+          <div className="hero-grid">
+            <div className="hero-copy">
+              <span className="hero-eyebrow">✦ Pension proof-of-life · Prototype</span>
+              <p className="ur hero-ur">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
+              <h1 className="hero-title">Prove you are alive,<br />from <em>your own</em> home.</h1>
+              <p className="en hero-sub">Once a year, widows and retired people keep their pension going with a pension book and a smile at the camera. No forms, no queues, no fingerprints.</p>
+              <div className="flex flex-wrap gap-3 mt-6">
+                <button className="btn btn-accent btn-hero hero-cta-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>👵🏽 <span className="en">I get a pension</span><span className="ur">میں پنشنر ہوں</span></button>
+                <button className="btn glass-btn btn-hero" data-no-voice onClick={() => speakUrdu(GREETING, GREETING_EN)}>🔊 <span className="en">Listen</span><span className="ur">سنیں</span></button>
+              </div>
+              <div className="hero-chips">
+                <span>📖 Pension book QR</span><span>🙂 Face + blink</span><span>📶 Works offline</span><span>🔊 Urdu voice</span>
+              </div>
+            </div>
+
+            <div className="hero-card" id="start">
+              {expired && (
+                <div className="hero-card-alert" role="status">
+                  <span className="ur block">حفاظت کے لیے آپ کو لاگ آؤٹ کر دیا گیا۔</span>
+                  <span className="en block text-sm">For your safety you were logged out after 10 minutes without activity.</span>
+                </div>
+              )}
+              <div className="hero-card-head">
+                <span className="hero-card-avatar"><Logo size={34} /></span>
+                <span className="flex-1 min-w-0">
+                  <b className="block">{view === "choose" ? <><span className="en">Who are you?</span> <span className="ur">آپ کون ہیں؟</span></> : view === "pensioner" ? <><span className="en">Pensioner login</span> <span className="ur">پنشنر لاگ اِن</span></> : <><span className="en">{FORM_TITLE[view].en}</span> <span className="ur">{FORM_TITLE[view].ur}</span></>}</b>
+                  <span className="text-xs muted"><span className="live-dot" /> Online · tap or speak</span>
+                </span>
+                {view !== "choose" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← <span className="en">Back</span><span className="ur">واپس</span></button>}
+              </div>
+
+              <div className="hero-card-body">
+                {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
+
+                {view === "choose" && (
+                  <>
+                    <div className="bubble"><span className="en">Welcome! Tap who you are, or press the mic and say it.</span> <span className="ur">خوش آمدید! بتائیں آپ کون ہیں، یا مائیک دبا کر بولیں۔</span></div>
+                    <button className="choice-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>
+                      <span className="choice-ic">👵🏽</span>
+                      <span className="flex-1 text-left"><span className="ur block text-xl" style={{ lineHeight: 1.8 }}>میں پنشنر ہوں</span><span className="en block font-bold">I get a pension</span><span className="block text-xs" style={{ opacity: .85 }}>No typing. Show your pension book, then your face.</span></span>
+                      <span aria-hidden>→</span>
+                    </button>
+                    <div className="choice-row">
+                      <button className="choice-pill" data-say="میں مددگار ہوں" data-say-en="I help families" onClick={() => open("helper")}>🤝 <span className="en">I help families</span><span className="ur">مددگار</span></button>
+                      <button className="choice-pill" data-say="میں دکاندار ہوں" data-say-en="I run a shop" onClick={() => open("shopkeeper")}>🏪 <span className="en">I run a shop</span><span className="ur">دکاندار</span></button>
+                      <button className="choice-pill" data-say="پنشن آفس عملہ" data-say-en="Pension office staff" onClick={() => open("staff")}>🏛️ <span className="en">Pension office</span><span className="ur">عملہ</span></button>
+                    </div>
+                    <div className="hero-card-mic">
+                      <VoiceCommand
+                        promptUr="بولیں: پنشن، مددگار، یا دکان۔"
+                        promptEn='Say "pension", "helper" or "shop".'
+                        commands={[
+                          { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", confirmEn: "Okay.", run: openPensioner },
+                          { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening helper login.", run: () => open("helper") },
+                          { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening shopkeeper login.", run: () => open("shopkeeper") },
+                        ]}
+                      />
+                    </div>
+                    {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
+                  </>
+                )}
+
+                {view !== "choose" && view !== "pensioner" && (
+                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
+                    <label className="block space-y-1">
+                      <span className="text-sm font-semibold"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
+                      <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
+                    </label>
+                    <label className="block space-y-1">
+                      <span className="text-sm font-semibold"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
+                      <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+                    </label>
+                    {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
+                    <button className="btn w-full" disabled={busy}>{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="ur text-xl md:text-2xl relative">سال میں ایک بار، گھر بیٹھے ثبوتِ حیات</p>
-        <p className="en muted md:text-lg relative" style={{ fontFamily: "Fraunces, Georgia, serif" }}>Yearly pension proof-of-life from home. No forms, no queues, no fingerprints.</p>
-        <button className="btn relative" style={{ background: "rgba(255,255,255,.95)", color: "#0b5446" }} onClick={() => speakUrdu(GREETING, GREETING_EN)} data-no-voice>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
-        <div className="hero-steps ornament relative" style={{ color: "#f6c66f" }}>✦</div>
-        <div className="hero-steps relative grid grid-cols-3 gap-2 sm:gap-3">
+      </section>
+
+      <section id="how" className="how">
+        <p className="eyebrow text-center">How it works · یہ کیسے کام کرتا ہے</p>
+        <h2 className="text-center text-3xl md:text-4xl mt-1">Three steps, about two minutes</h2>
+        <div className="how-grid">
           {HOW.map((h, i) => (
-            <div key={h.en} className="hero-step space-y-1">
-              <div className="eyebrow">{i + 1}</div>
-              <div className="text-3xl">{h.icon}</div>
-              <div className="ur text-sm font-semibold" style={{ whiteSpace: "normal", lineHeight: 1.9 }}>{h.ur}</div>
-              <div className="en text-xs">{h.en}</div>
+            <div key={h.en} className="how-step">
+              <span className="how-n">{i + 1}</span>
+              <div className="text-4xl">{h.icon}</div>
+              <div className="ur text-lg font-semibold" style={{ lineHeight: 1.9 }}>{h.ur}</div>
+              <div className="en font-semibold">{h.en}</div>
+              <p className="text-sm muted">{HOW_MORE[i]}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="space-y-6">
-        {expired && (
-          <div className="card card-soft text-center" role="status">
-            <span className="ur block">حفاظت کے لیے آپ کو لاگ آؤٹ کر دیا گیا۔ دوبارہ لاگ اِن کریں۔</span>
-            <span className="en block text-sm">For your safety you were logged out after 10 minutes without activity. Please log in again.</span>
-          </div>
-        )}
-        {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
-
-        {view === "choose" && (
-          <>
-            <Option
-              variant="hero"
-              icon="👵🏽"
-              ur="میں پنشنر ہوں"
-              en="I get a pension"
-              hintUr="کچھ لکھنا نہیں۔ پنشن بک اور چہرہ دکھائیں۔"
-              hintEn="No typing. Show your pension book, then your face."
-              info={{ en: "For widows and retired people who receive a pension. You log in by showing the QR in your pension book and looking at the camera. Nothing to read or type.", ur: "پنشن لینے والوں کے لیے۔ پنشن بک کا کیو آر دکھائیں اور کیمرے میں دیکھیں، بس۔ کچھ پڑھنا یا لکھنا نہیں۔" }}
-              say="میں پنشنر ہوں۔"
-              onClick={openPensioner}
-            />
-
-            <VoiceCommand
-              promptUr="بولیں: پنشن، مددگار، یا دکان۔"
-              promptEn='Say "pension", "helper" or "shop".'
-              commands={[
-                { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", confirmEn: "Okay.", run: openPensioner },
-                { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening helper login.", run: () => open("helper") },
-                { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening shopkeeper login.", run: () => open("shopkeeper") },
-              ]}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <Option
-                icon="🤝"
-                tone="indigo"
-                ur="میں مددگار ہوں"
-                en="I help families"
-                info={{ en: "For social workers and relatives who help several pensioners from one phone. Each family must give permission first.", ur: "سماجی کارکن یا رشتہ دار جو ایک فون سے کئی خاندانوں کی مدد کرتے ہیں۔ ہر خاندان کی اجازت ضروری ہے۔" }}
-                onClick={() => open("helper")}
-              />
-              <Option
-                icon="🏪"
-                tone="marigold"
-                ur="میں دکاندار ہوں"
-                en="I run a shop"
-                info={{ en: "For shopkeepers and mobile-wallet agents. Check if a 'pension' or 'relief payment' message is a scam before anyone pays.", ur: "دکاندار اور موبائل والیٹ ایجنٹ۔ پیسے دینے سے پہلے جانچیں کہ پنشن یا امداد کا پیغام دھوکہ تو نہیں۔" }}
-                onClick={() => open("shopkeeper")}
-              />
+      {SHOW_TEST_LOGINS && view === "choose" && (
+        <details className="card tl" data-no-voice>
+          <summary className="tl-sum"><span>🧪 Test logins <span className="muted font-normal text-sm">· one tap, for judges and testing</span></span><span className="tl-chev" aria-hidden>▾</span></summary>
+          <p className="muted text-xs mt-1">Pensioners here skip the pension book and face steps.</p>
+          {groups.map((g) => (
+            <div key={g.title} className="mt-4">
+              <p className="eyebrow mb-2">{g.title}</p>
+              <div className="tl-grid">
+                {g.items.map((d) => (
+                  <button key={d.phone} type="button" className="tl-btn" disabled={busy} onClick={() => login(d.phone, d.pw)}>
+                    <span className="tl-ic">{d.icon}</span>
+                    <span className="min-w-0"><span className="tl-name">{d.label}</span><span className="tl-role">{d.role}</span></span>
+                  </button>
+                ))}
+              </div>
             </div>
-
-            <Option
-              variant="compact"
-              icon="🏛️"
-              tone="slate"
-              ur="پنشن آفس عملہ"
-              en="Pension office staff"
-              info={{ en: "For pension officers, admins and auditors. Officers review difficult cases; admins change rules; auditors read the full log.", ur: "پنشن افسر، ایڈمن اور آڈیٹر کے لیے۔" }}
-              onClick={() => open("staff")}
-            />
-          </>
-        )}
-
-        {view !== "choose" && view !== "pensioner" && (
-          <form className="card space-y-5" style={{ padding: 22 }} onSubmit={(e) => { e.preventDefault(); login(); }}>
-            <div className="flex items-center justify-between">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← <span className="en">Back</span><span className="ur">واپس</span></button>
-              <span className="text-4xl">{FORM_TITLE[view].icon}</span>
-            </div>
-            <div>
-              <h2 className="en text-2xl font-bold">{FORM_TITLE[view].en}</h2>
-              <p className="ur text-xl">{FORM_TITLE[view].ur}</p>
-            </div>
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
-              <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
-            </label>
-            <label className="block space-y-1">
-              <span className="text-sm font-semibold"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
-              <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-            </label>
-            {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-            <button className="btn w-full" disabled={busy}>{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
-          </form>
-        )}
-
-        {SHOW_TEST_LOGINS && view === "choose" && (
-          <details className="card card-soft" data-no-voice>
-            <summary className="cursor-pointer font-semibold">🧪 Test logins (one tap)</summary>
-            <p className="muted text-sm mt-2">For testing only. Pensioners here skip the pension book and face steps.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-              {TEST_LOGINS.map((d) => (
-                <button key={d.phone} type="button" className="btn btn-ghost btn-sm justify-start" disabled={busy} onClick={() => login(d.phone, d.pw)}>
-                  <span className="text-lg">{d.icon}</span>
-                  <span className="text-left text-sm leading-tight"><b>{d.label}</b><br /><span className="muted text-xs">{d.role}</span></span>
-                </button>
-              ))}
-            </div>
-          </details>
-        )}
-
-        {error && view === "choose" && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-      </section>
-    </div>
+          ))}
+        </details>
+      )}
+    </>
   );
 }
