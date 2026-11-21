@@ -98,6 +98,7 @@ model Pensioner {
   bankAccountNo          String?
   area                   String?
   enrolledFaceDescriptor Float[] // 128 numbers from face-api, never the photo itself
+  faceSource             String? // "nadra" (fetched with her consent) or "office" (fallback enrolment)
   status                 String    @default("active") // active, suspended, stopped
   createdAt              DateTime  @default(now())
 
@@ -317,6 +318,9 @@ model MockNadraRecord {
   dateOfBirth  DateTime?
   address      String?
   maritalStatus String?
+  // Simulated CNIC photo, kept only as the 128-number face print (never the photo itself).
+  faceDescriptor Float[] @default([])
+  photoTakenAt  DateTime?
 }
 
 model MockBankAccount {

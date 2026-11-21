@@ -35,7 +35,7 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   if (reenrol && (reason ?? "").trim().length < 10) {
     throw new HttpError(400, "This person already has a face enrolled. To replace it, write a reason of at least 10 characters (for example: old photo, eye surgery). This year's case will then go to an officer.");
   }
-  await prisma.pensioner.update({ where: { id }, data: { enrolledFaceDescriptor: descriptor } });
+  await prisma.pensioner.update({ where: { id }, data: { enrolledFaceDescriptor: descriptor, faceSource: "office" } });
   if (reenrol) {
     const year = new Date().getFullYear();
     const open = await prisma.case.findFirst({ where: { pensionerId: id, year, status: { notIn: ["VERIFIED", "STOPPED"] } } });

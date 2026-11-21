@@ -120,6 +120,29 @@ const stricter = structuredClone(looser); stricter.face.strictDistance = 0.4;
 const strictRes = await kamran.call("/api/admin/rules", { method: "POST", body: JSON.stringify({ config: stricter, note: "smoke: back to stricter" }) });
 ok(strictRes.ok && (await strictRes.json()).version > 0, "a stricter change applies at once");
 
+// No office visit: with her consent, her face print comes from her CNIC photo at (simulated) NADRA.
+{
+  const rasool = await login("03317065529", "Rasool1949");
+  const admin = await login("03452876104", "Kamran$Admin9");
+  const rCase = (await (await rasool.call("/pensioner")).text()).match(/\/case\/([a-z0-9]+)/)?.[1];
+  const rPid = rCase && (await (await rasool.call(`/api/cases/${rCase}`)).json()).pensioner?.id;
+  ok(Boolean(rPid), "Ghulam Rasool has an open case to prove");
+  const fetchNadra = (who, body) => who.call(`/api/pensioners/${rPid}/nadra-face`, { method: "POST", body: JSON.stringify(body) });
+  ok((await fetchNadra(rasool, { consent: true })).status === 404, "no NADRA photo yet: told to use the office or a home visit");
+  ok((await officer.call("/api/mock-nadra/face", { method: "POST", body: JSON.stringify({ action: "load", cnic: "00000-1000012-5", descriptor: vec(42) }) })).status === 403, "only an admin can load a demo face into mock NADRA");
+  ok((await admin.call("/api/mock-nadra/face", { method: "POST", body: JSON.stringify({ action: "load", cnic: "00000-1000012-5", descriptor: vec(42) }) })).ok, "admin loads a demo face into mock NADRA");
+  ok((await fetchNadra(rasool, {})).status === 400, "the NADRA photo is not fetched without a clear yes");
+  ok((await fetchNadra(widow, { consent: true })).status === 403, "another pensioner cannot fetch his NADRA photo");
+  ok((await fetchNadra(rasool, { consent: true })).ok, "with his consent his face print comes from NADRA, no office visit");
+  const rView = await (await rasool.call(`/api/cases/${rCase}`)).json();
+  ok(rView.pensioner?.enrolled === true, "he can now start proof of life from home");
+  const nadraConsent = (await (await rasool.call("/api/consents")).json()).consents.find((c) => c.granteeType === "nadra");
+  ok(Boolean(nadraConsent), "the NADRA permission shows in his consent list");
+  await rasool.call(`/api/consents/${nadraConsent.id}`, { method: "POST", body: JSON.stringify({ action: "withdraw" }) });
+  ok((await (await rasool.call(`/api/cases/${rCase}`)).json()).pensioner?.enrolled === false, "taking back the NADRA permission deletes the face print at once");
+  ok((await admin.call("/api/mock-nadra/face", { method: "POST", body: JSON.stringify({ action: "wipe" }) })).ok, "admin can wipe all demo faces after judging");
+}
+
 // Create account: only mock CNICs and phones, a pending sign-up cannot log in, an officer approves it.
 const reg = (b) => fetch(`${BASE}/api/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) });
 const offices = (await (await fetch(`${BASE}/api/auth/register`)).json()).offices;

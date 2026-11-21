@@ -22,7 +22,12 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   if (consent.granteeType === "department" && body.action === "withdraw") {
     throw new HttpError(400, "The pension office needs your bank account to pay you. To stop sharing with them, you would have to stop the pension; please talk to an officer.");
   }
+  if (consent.granteeType === "nadra" && body.action !== "withdraw") throw new HttpError(400, "To use your NADRA photo again, start proof of life and agree once more.");
   const before = { fields: consent.fields, withdrawnAt: consent.withdrawnAt };
+  // Taking back the NADRA permission deletes the face print copied from her CNIC photo, at once.
+  if (consent.granteeType === "nadra" && body.action === "withdraw" && consent.pensioner.faceSource === "nadra") {
+    await prisma.pensioner.update({ where: { id: consent.pensionerId }, data: { enrolledFaceDescriptor: [], faceSource: null } });
+  }
   const updated = await prisma.consent.update({
     where: { id },
     data: body.action === "withdraw" ? { withdrawnAt: new Date() } : body.action === "restore" ? { withdrawnAt: null } : { fields: body.fields },

@@ -35,7 +35,7 @@ export default async function Admin() {
   ]);
   return (
     <div className="space-y-4">
-      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "Accuracy of the face and scam checks on test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }, { href: "/scam-map", label: "🗺️ Scam map", info: { en: "Where scam messages are being reported, by area.", ur: "دھوکے کے پیغام کہاں سے آ رہے ہیں۔" } }, { href: "/docs", label: "🔌 API docs", info: { en: "Public REST API documentation (OpenAPI) for banks and departments.", ur: "بینکوں اور محکموں کے لیے اے پی آئی۔" } }]} />
+      <Header user={user} links={[{ href: "/evaluation", label: "📊 Evaluation", info: { en: "Accuracy of the face and scam checks on test data, with error margins.", ur: "اے آئی کی درستگی کے نتائج۔" } }, { href: "/scam-map", label: "🗺️ Scam map", info: { en: "Where scam messages are being reported, by area.", ur: "دھوکے کے پیغام کہاں سے آ رہے ہیں۔" } }, { href: "/admin/mock-nadra", label: "🪪 Mock NADRA", info: { en: "Simulated NADRA: load the demo CNIC photo so a pensioner can prove she is alive without an office visit.", ur: "نادرا (نقلی): شناختی کارڈ کی تصویر۔" } }, { href: "/docs", label: "🔌 API docs", info: { en: "Public REST API documentation (OpenAPI) for banks and departments.", ur: "بینکوں اور محکموں کے لیے اے پی آئی۔" } }]} />
       <PageTitle title={<>{greeting()}, {user.name.split(" ")[0]}</>} sub={`${tenant?.name ?? ""} · rules version ${active.version} active`} />
       <div className="stats">
         <Stat n={`v${active.version}`} label="Active rules" icon="📐" />

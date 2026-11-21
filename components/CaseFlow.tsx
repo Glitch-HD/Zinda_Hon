@@ -7,6 +7,7 @@ import { enqueue, flush, newActionId, pendingCount } from "@/lib/client/queue";
 import { speakUrdu } from "@/lib/client/voice";
 import { voiceOn } from "@/lib/client/prefs";
 import Info from "./ui/Info";
+import NadraFace from "./NadraFace";
 
 // The one end-to-end task: a yearly proof-of-life, designed for someone who cannot read.
 // Every screen has one big action, an icon, and an Urdu voice prompt. Progress is saved after every step.
@@ -27,9 +28,10 @@ const SAY_EN: Record<keyof typeof SAY, string> = {
   submit: "Thank you. Now press the send button.",
 };
 
-export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatus, initialTicket }: { caseId: string; pensionerName: string; enrolled: boolean; initialStatus: string; initialTicket?: Ticket | null }) {
+export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled: enrolledAtStart, initialStatus, initialTicket }: { caseId: string; pensionerId: string; pensionerName: string; enrolled: boolean; initialStatus: string; initialTicket?: Ticket | null }) {
   const storageKey = `zh_case_step_${caseId}`;
   const [step, setStep] = useState<Step>("intro");
+  const [enrolled, setEnrolled] = useState(enrolledAtStart);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -165,7 +167,7 @@ export default function CaseFlow({ caseId, pensionerName, enrolled, initialStatu
           <p className="ur text-2xl">{pensionerName}، اپنی پنشن جاری رکھنے کے لیے ثبوتِ حیات دیں</p>
           <p className="en muted">Prove you are alive so your pension continues. 3 short steps.</p>
           <button className="btn btn-ghost w-full" data-no-voice onClick={() => speakUrdu(SAY.intro, SAY_EN.intro)}>🔊 <span className="ur">سنیں</span><span className="en">Listen</span></button>
-          {!enrolled && <p style={{ color: "var(--warn)" }}><span className="en">Your face is not enrolled yet. Please visit the pension office once (mock), or ask an officer to enrol you.</span><span className="ur">آپ کا چہرہ ابھی رجسٹر نہیں۔ ایک بار پنشن آفس جائیں۔</span></p>}
+          {!enrolled && <NadraFace pensionerId={pensionerId} onDone={() => setEnrolled(true)} />}
           <button className="btn btn-big" data-no-voice disabled={!enrolled} onClick={() => go("face")}><span className="text-3xl">▶️</span><span className="flex flex-col items-start leading-tight"><span className="ur text-2xl">شروع کریں</span><span className="en text-sm font-semibold opacity-90">Start</span></span></button>
         </div>
       )}

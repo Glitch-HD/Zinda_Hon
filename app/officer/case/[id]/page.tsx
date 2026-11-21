@@ -47,6 +47,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
           <table className="data">
             <tbody>
               <tr><th>Pension record name</th><td>{c.pensioner.name}</td></tr>
+              <tr><th>Face on file from</th><td>{c.pensioner.enrolledFaceDescriptor.length !== 128 ? "⚠️ No face yet" : c.pensioner.faceSource === "nadra" ? "🪪 Her CNIC photo at NADRA (simulated), with her consent" : "📷 Enrolled by an officer (office or home visit)"}</td></tr>
               <tr><th>Mock NADRA name</th><td>{identity.nadra?.name ?? "No record found"} {identity.nadra && <span className="muted">(matched by {identity.matchedBy.replaceAll("_", " ")})</span>}</td></tr>
               <tr><th>Name similarity</th><td>{(identity.nameSimilarity * 100).toFixed(0)}%</td></tr>
               <tr><th>CNIC agrees</th><td>{identity.cnicMatch === null ? <Flag t="warn">Unknown (CNIC missing)</Flag> : identity.cnicMatch ? <Flag t="ok">Yes</Flag> : <Flag t="bad">No, differs</Flag>}</td></tr>

@@ -39,14 +39,15 @@ export default function ConsentManager() {
             <div><b>{c.granteeName}</b> <span className="badge">{c.granteeType}</span></div>
             {c.withdrawnAt ? <span className="badge badge-danger">Withdrawn {c.withdrawnAt.slice(0, 10)}</span> : <span className="badge badge-ok">Active</span>}
           </div>
-          <div className="flex flex-wrap gap-2">
+          {c.granteeType !== "nadra" && <div className="flex flex-wrap gap-2">
             {Object.keys(FIELD_LABEL).map((f) => (
               <label key={f} className="badge" style={{ cursor: c.withdrawnAt ? "default" : "pointer", opacity: c.withdrawnAt ? 0.5 : 1 }}>
                 <input type="checkbox" disabled={Boolean(c.withdrawnAt)} checked={c.fields.includes(f)} onChange={(e) => act(c.id, { action: "update_fields", fields: e.target.checked ? [...c.fields, f] : c.fields.filter((x) => x !== f) })} /> {FIELD_LABEL[f]}
               </label>
             ))}
-          </div>
-          {c.granteeType === "department" && !c.withdrawnAt
+          </div>}
+          {c.granteeType === "nadra" && <p className="text-sm muted">🪪 <span className="en">Your face print was copied from your CNIC photo at NADRA (simulated) so you did not have to visit the office. Withdrawing deletes it at once; next year you can agree again or enrol at the office.</span><span className="ur">آپ کے شناختی کارڈ کی تصویر سے چہرے کی پہچان لی گئی تاکہ آفس نہ جانا پڑے۔ اجازت واپس لینے پر یہ فوراً مٹ جائے گی۔</span></p>}
+          {c.granteeType === "nadra" && c.withdrawnAt ? null : c.granteeType === "department" && !c.withdrawnAt
             ? <p className="text-sm muted">🏛️ <span className="en">The pension office needs your bank account to pay you, so this one cannot be withdrawn here. Talk to an officer to stop the pension.</span><span className="ur">پنشن آفس کو پنشن بھیجنے کے لیے بینک اکاؤنٹ چاہیے، اس لیے یہ اجازت یہاں واپس نہیں ہو سکتی۔</span></p>
             : c.withdrawnAt
             ? <button className="btn btn-ghost" onClick={() => act(c.id, { action: "restore" })}>↩️ Give permission again</button>

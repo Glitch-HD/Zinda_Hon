@@ -11,7 +11,7 @@ export default async function EnrollPage({ searchParams }: { searchParams: Promi
     <div className="max-w-3xl mx-auto">
       <Header user={user} links={[{ href: "/officer", label: "← Queue" }]} />
       <h2 className="text-2xl font-bold">📷 Enrol a pensioner&apos;s face</h2>
-      <p className="muted mb-1">In real life this is done once, at the pension office, when the pensioner first registers. After that she proves she is alive from home.</p>
+      <p className="muted mb-1">Fallback only. Most pensioners never come here: with her consent, her face print is taken from her CNIC photo at NADRA (simulated). Use this screen when NADRA has no usable photo, at the office or on a home visit with a helper.</p>
       <p className="muted text-sm mb-4">Prototype rule: use only AI-generated faces or team members who agreed. Only 128 numbers describing the face are stored, never the photo.</p>
       <EnrollFace
         initial={p}

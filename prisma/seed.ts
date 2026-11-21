@@ -63,7 +63,7 @@ async function ensureExtraPeople() {
         fatherOrHusbandName: p.spouse, dateOfBirth: new Date(p.dob), pensionType: p.type, monthlyAmount: p.amount, bankAccountNo: p.bank, area: p.area,
       },
     });
-    await prisma.mockNadraRecord.create({ data: { cnic: p.cnic, name: p.nadra.name, fatherOrHusbandName: p.nadra.spouse, dateOfBirth: new Date(p.dob), maritalStatus: p.type === "family" ? "widowed" : "married", address: `${p.area}, Karachi (mock)` } });
+    await prisma.mockNadraRecord.create({ data: { cnic: p.cnic, name: p.nadra.name, fatherOrHusbandName: p.nadra.spouse, dateOfBirth: new Date(p.dob), maritalStatus: p.type === "family" ? "widowed" : "married", address: `${p.area}, Karachi (mock)`, photoTakenAt: new Date("2019-06-15") } });
     if (!(await prisma.mockBankAccount.findUnique({ where: { accountNo: p.bank } }))) {
       await prisma.mockBankAccount.create({ data: { accountNo: p.bank, holderName: p.name.toUpperCase(), cnic: p.cnic, lastActivity: new Date("2026-11-05"), withdrawalsLast90Days: 3 } });
     }
@@ -322,7 +322,7 @@ async function main() {
     });
     if (p.nadra) {
       await prisma.mockNadraRecord.create({
-        data: { cnic: p.nadra.cnic, name: p.nadra.name, fatherOrHusbandName: p.nadra.spouse, dateOfBirth: p.nadra.dob ? new Date(p.nadra.dob) : null, maritalStatus: p.nadra.marital, address: `${p.area}, Karachi (mock)` },
+        data: { cnic: p.nadra.cnic, name: p.nadra.name, fatherOrHusbandName: p.nadra.spouse, dateOfBirth: p.nadra.dob ? new Date(p.nadra.dob) : null, maritalStatus: p.nadra.marital, address: `${p.area}, Karachi (mock)`, photoTakenAt: new Date(p.pensionNo.endsWith("7") ? "2013-02-10" : "2020-09-01") },
       });
     }
     if (p.bank) {

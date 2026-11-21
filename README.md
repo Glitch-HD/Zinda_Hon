@@ -24,6 +24,20 @@ P(wrong) × 360,000 < 2,000   →   confidence ≥ 99.44%
 
 Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name by voice) or **sends the case to a pension officer** with every check attached. **The system never stops a pension on its own**; only an officer can, and must write a reason. Both costs are admin-editable rule values (no code change), and every decision records the rule version it used.
 
+## No office visit: face from the CNIC photo
+
+A pensioner too old to travel never has to visit the office. Before her first proof of life she is asked,
+in Urdu with voice, "May we take your face print from your CNIC photo at NADRA?". Only after a clear yes,
+the (simulated) NADRA photo's face print is copied to her record, the permission appears in **My data**,
+and her live scan with the liveness check is matched against it. Withdrawing deletes it at once. If NADRA
+has no usable photo (or the match is weak because the CNIC photo is old), an officer enrols her face at
+the office or on a home visit with a helper; that screen is now the fallback. A NADRA face that matches
+another pensioner is refused (one face, one pension).
+
+Demo: log in as Kamran (admin) → 🪪 Mock NADRA → pick Ghulam Rasool → a team volunteer looks at the camera.
+Then log in as Ghulam Rasool → Start → "Yes, get my CNIC photo" → do the proof of life with the same face.
+Press "Delete all demo faces" after judging.
+
 ## What is real and what is simulated
 
 | Part | Real or simulated |
@@ -36,6 +50,7 @@ Otherwise it **asks for more proof** (retake selfie, rescan book, confirm name b
 | Officer's AI case assistant (an agent that calls tools) | **Real** AI tool calling (Groq gpt-oss-120b, or Claude); a fixed checklist runs when no key is set or the AI fails |
 | Urdu speech-to-text (Whisper on Groq) and text-to-speech (Azure neural voice) | **Real** services when keys are set; falls back to the phone's own voice |
 | NADRA, bank / Raast, death registry | **Simulated** mock services with deliberately messy data |
+| CNIC photo at NADRA (face print) | **Simulated**: loaded on Admin → 🪪 Mock NADRA from an AI-generated face or a team member who agreed; only 128 numbers, wiped after judging |
 | Pension program, amounts, rulebook | **Simulated** (our own invented rules) |
 | People, CNICs (all start with `00000`), phone numbers | **Simulated** |
 | SMS notifications | **Simulated** (in-app only) |
