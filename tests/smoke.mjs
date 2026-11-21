@@ -175,5 +175,20 @@ ok((await fetch(`${BASE}/api/client-error`, { method: "POST", headers: { "conten
 const health = await (await fetch(`${BASE}/api/health`)).json();
 ok(typeof health.errorsLastHour === "number", "health check reports recent errors");
 
+// Reset demo data (last, because it wipes everything): admin only, needs RESET typed, then a clean start.
+{
+  const kam = await login("03452876104", "Kamran$Admin9");
+  ok((await officer.call("/api/admin/reset-demo", { method: "POST", body: JSON.stringify({ confirm: "RESET" }) })).status === 403, "an officer cannot reset the demo data");
+  ok((await kam.call("/api/admin/reset-demo", { method: "POST", body: JSON.stringify({ confirm: "reset" }) })).status === 400, "reset needs RESET typed exactly");
+  const r = await kam.call("/api/admin/reset-demo", { method: "POST", body: JSON.stringify({ confirm: "RESET" }) });
+  ok(r.ok, `admin resets the demo data (${r.ok ? (await r.json()).seconds + " s" : r.status})`);
+  ok((await widow.call("/api/consents")).status === 401, "after a reset every old login has ended");
+  const w2 = await login("03026619470", "Zainab786");
+  ok(w2.res.ok, "demo accounts work again after the reset");
+  const c2 = (await (await w2.call("/pensioner")).text()).match(/\/case\/([a-z0-9]+)/)?.[1];
+  const v2 = c2 ? await (await w2.call(`/api/cases/${c2}`)).json() : null;
+  ok(v2?.pensioner?.enrolled === false && v2?.case?.status !== "VERIFIED", "after the reset no face is enrolled and this year's case starts fresh");
+}
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll smoke checks passed");
 process.exit(failures ? 1 : 0);

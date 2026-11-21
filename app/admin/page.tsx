@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import ResetDemo from "@/components/ResetDemo";
 import RuleEditor from "@/components/RuleEditor";
 import ApiKeyCreator from "@/components/ApiKeyCreator";
 import { pageUser } from "@/lib/page-auth";
@@ -44,7 +45,7 @@ export default async function Admin() {
         <Stat n={trusts.filter((t) => t.level !== "good").length} label="Helpers to watch" icon="🤝" tone={trusts.some((t) => t.level === "risky") ? "danger" : "warn"} />
       </div>
       <nav className="pillnav" aria-label="Sections">
-        <a href="#rules">Rules</a><a href="#approvals">Approvals</a><a href="#health">Health</a><a href="#history">History</a><a href="#helpers">Helpers</a><a href="#users">Users</a><a href="#keys">API keys</a>
+        <a href="#rules">Rules</a><a href="#approvals">Approvals</a><a href="#health">Health</a><a href="#history">History</a><a href="#helpers">Helpers</a><a href="#users">Users</a><a href="#reset">Reset demo</a><a href="#keys">API keys</a>
       </nav>
       <div className="card" id="rules">
         <h2 className="text-xl font-bold">Proof-of-life rules (active: version {active.version})</h2>
@@ -90,6 +91,7 @@ export default async function Admin() {
         <ul className="text-sm mb-2">{keys.map((k) => <li key={k.id}>{k.name} · {k.prefix}… · {k.scopes.join(", ")} · {k.revokedAt ? "revoked" : "active"} · last used {k.lastUsedAt?.toISOString().slice(0, 10) ?? "never"}</li>)}</ul>
         <ApiKeyCreator />
       </div>
+      <div className="mt-10"><ResetDemo /></div>
     </div>
   );
 }
