@@ -93,7 +93,8 @@ export default function LoginPage() {
     setError(null);
     setView(v);
     if (v === "helper" || v === "shopkeeper" || v === "staff") void speakUrdu("اپنا فون نمبر اور پاس ورڈ لکھیں، پھر لاگ اِن کا بٹن دبائیں۔", "Enter your phone number and password, then press Log in.");
-    document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (v === "register") setTimeout(() => document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    else document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function openPensioner() {
@@ -160,7 +161,12 @@ export default function LoginPage() {
 
               <div className="hero-card-body">
                 {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
-                {view === "register" && <RegisterForm onDone={() => open("choose")} />}
+                {view === "register" && (
+                  <div className="space-y-3">
+                    <div className="bubble"><span className="en">The sign-up form is open below. Scroll down, or press the button.</span> <span className="ur">فارم نیچے کھل گیا ہے۔</span></div>
+                    <button type="button" className="btn w-full" data-say="فارم پر جائیں" data-say-en="Go to the form" onClick={() => document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "start" })}>↓ <span className="en">Go to the form</span><span className="ur">فارم پر جائیں</span></button>
+                  </div>
+                )}
 
                 {view === "choose" && (
                   <>
@@ -210,6 +216,22 @@ export default function LoginPage() {
           </div>
         </div>
       </section>
+
+      {view === "register" && (
+        <section id="signup" className="signup-sec">
+          <div className="signup-wrap">
+            <div className="signup-head">
+              <div>
+                <p className="eyebrow">✨ <span className="en">New here</span> <span className="ur">نئے ہیں؟</span></p>
+                <h2><span className="en">Create your account</span> <span className="ur">اپنا اکاؤنٹ بنائیں</span></h2>
+                <p className="muted"><span className="en">Fill this once. A pension officer checks it against the records, then your account opens.</span> <span className="ur">ایک بار فارم بھریں۔ پنشن افسر ریکارڈ سے ملا کر اکاؤنٹ کھولے گا۔</span></p>
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>✕ <span className="en">Close</span><span className="ur">بند کریں</span></button>
+            </div>
+            <RegisterForm onDone={() => open("choose")} />
+          </div>
+        </section>
+      )}
 
       <section id="how" className="how">
         <p className="eyebrow text-center">How it works · یہ کیسے کام کرتا ہے</p>

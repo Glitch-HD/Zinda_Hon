@@ -211,43 +211,69 @@ export default function RegisterForm({ onDone }: { onDone: () => void }) {
     );
   };
 
+  const all = fieldsFor(f);
+  const pick = (keys: Key[]) => all.filter((x) => keys.includes(x.key));
+  const groups: { id: string; icon: string; en: string; ur: string; fields: Field[] }[] = [
+    { id: "you", icon: "🪪", en: f.assisted ? "About her" : "About you", ur: "ذاتی معلومات", fields: pick(["name", "cnic", "phone", "dateOfBirth", "area"]) },
+    { id: "husband", icon: "🕊️", en: "Late husband", ur: "مرحوم شوہر", fields: pick(["husbandName", "husbandCnic", "husbandDeathDate", "deathCertNo"]) },
+    { id: "shop", icon: "🏪", en: "Your shop", ur: "دکان", fields: pick(["shopName", "shopAddress"]) },
+    { id: "login", icon: f.role === "PENSIONER" ? "📖" : "🔐", en: f.role === "PENSIONER" ? "Pension book and log in" : "How you will log in", ur: "پنشن بک اور لاگ اِن", fields: pick(["pensionNo", "pin", "password"]) },
+  ].filter((g) => g.fields.length);
+
   return (
-    <form className="space-y-3 reg-form" onSubmit={submit}>
-      <button type="button" className={`reg-voice ${guided ? "live" : ""}`} onClick={() => void fillByVoice()} data-no-voice>
-        <span className="text-2xl">{guided ? "⏹️" : "🎙️"}</span>
-        <span className="flex-1 text-left">
-          <b className="block"><span className="ur">{guided ? "روکیں" : "آواز سے فارم بھریں"}</span> <span className="en">{guided ? "Stop" : "Fill the form by voice"}</span></b>
-          <span className="text-xs" style={{ opacity: .85 }}>{guided ? "Listening and asking one question at a time…" : "I ask each question out loud, you answer. No reading needed."}</span>
-        </span>
-      </button>
-      {hint && <p className="text-sm" style={{ color: "var(--warn)" }}>{hint}</p>}
-
-      <div className="choice-row">
-        {ROLES.map((r) => (
-          <button key={r.id} type="button" className={`choice-pill ${f.role === r.id ? "is-on" : ""}`} aria-pressed={f.role === r.id} data-say={r.ur} data-say-en={r.en} onClick={() => put("role", r.id)}>{r.icon} <span className="en">{r.en}</span><span className="ur">{r.ur}</span></button>
-        ))}
-      </div>
-      {f.role === "PENSIONER" && (
-        <div className="choice-row">
-          <button type="button" className={`choice-pill ${f.pensionType === "family" ? "is-on" : ""}`} aria-pressed={f.pensionType === "family"} data-say="بیوہ کی پنشن، شوہر کی وفات کے بعد" data-say-en="Widow's pension, after my husband passed away" onClick={() => put("pensionType", "family")}>🕊️ <span className="en">Widow&apos;s pension</span><span className="ur">بیوہ کی پنشن</span></button>
-          <button type="button" className={`choice-pill ${f.pensionType === "self" ? "is-on" : ""}`} aria-pressed={f.pensionType === "self"} data-say="میری اپنی پنشن، ریٹائرمنٹ کی" data-say-en="My own pension, from retirement" onClick={() => put("pensionType", "self")}>🧓 <span className="en">My own pension</span><span className="ur">اپنی پنشن</span></button>
+    <form className="reg-form" onSubmit={submit}>
+      <div className="reg-top">
+        <div className="reg-who">
+          <p className="reg-label" data-say="آپ کون ہیں؟" data-say-en="Who are you?"><span className="en">Who is signing up?</span> <span className="ur">آپ کون ہیں؟</span></p>
+          <div className="choice-row">
+            {ROLES.map((r) => (
+              <button key={r.id} type="button" className={`choice-pill ${f.role === r.id ? "is-on" : ""}`} aria-pressed={f.role === r.id} data-say={r.ur} data-say-en={r.en} onClick={() => put("role", r.id)}>{r.icon} <span className="en">{r.en}</span><span className="ur">{r.ur}</span></button>
+            ))}
+          </div>
+          {f.role === "PENSIONER" && (
+            <div className="choice-row">
+              <button type="button" className={`choice-pill ${f.pensionType === "family" ? "is-on" : ""}`} aria-pressed={f.pensionType === "family"} data-say="بیوہ کی پنشن، شوہر کی وفات کے بعد" data-say-en="Widow's pension, after my husband passed away" onClick={() => put("pensionType", "family")}>🕊️ <span className="en">Widow&apos;s pension</span><span className="ur">بیوہ کی پنشن</span></button>
+              <button type="button" className={`choice-pill ${f.pensionType === "self" ? "is-on" : ""}`} aria-pressed={f.pensionType === "self"} data-say="میری اپنی پنشن، ریٹائرمنٹ کی" data-say-en="My own pension, from retirement" onClick={() => put("pensionType", "self")}>🧓 <span className="en">My own pension</span><span className="ur">اپنی پنشن</span></button>
+            </div>
+          )}
+          <label className="block space-y-1 reg-office"><span className="text-sm font-semibold" data-say="اپنا پنشن آفس چنیں" data-say-en="Choose your pension office">Pension office <span className="ur muted">پنشن آفس</span></span>
+            <select className="input" value={f.tenantId} onChange={(e) => put("tenantId", e.target.value)} required>{offices.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+          </label>
         </div>
+        <div className="reg-side">
+          <button type="button" className={`reg-voice ${guided ? "live" : ""}`} onClick={() => void fillByVoice()} data-no-voice>
+            <span className="text-3xl">{guided ? "⏹️" : "🎙️"}</span>
+            <span className="flex-1 text-left">
+              <b className="block"><span className="ur">{guided ? "روکیں" : "آواز سے فارم بھریں"}</span> <span className="en">{guided ? "Stop" : "Fill the form by voice"}</span></b>
+              <span className="text-xs" style={{ opacity: .85 }}>{guided ? "Listening and asking one question at a time…" : "I ask each question out loud, you answer. No reading needed."}</span>
+            </span>
+          </button>
+          <label className="reg-check" data-say="کیا کوئی اور آپ کے لیے یہ فارم بھر رہا ہے؟" data-say-en="Is someone else filling this form for her?">
+            <input type="checkbox" checked={f.assisted} onChange={(e) => put("assisted", e.target.checked)} />
+            <span><b><span className="en">Someone is filling this for her</span> <span className="ur">کوئی اور بھر رہا ہے</span></b><br /><span className="text-xs muted">For a widow who cannot read or write. The officer sees who helped and checks with her directly.</span></span>
+          </label>
+          {hint && <p className="text-sm" style={{ color: "var(--warn)" }}>{hint}</p>}
+        </div>
+      </div>
+
+      {f.assisted && (
+        <fieldset className="reg-step reg-helper">
+          <legend><span className="reg-num">✋</span> <span className="en">Who is helping</span> <span className="ur">مددگار</span></legend>
+          <div className="reg-grid">{HELPER_FIELDS.map(renderField)}</div>
+        </fieldset>
       )}
-      <label className="block space-y-1"><span className="text-sm font-semibold" data-say="اپنا پنشن آفس چنیں" data-say-en="Choose your pension office">Pension office <span className="ur muted">پنشن آفس</span></span>
-        <select className="input" value={f.tenantId} onChange={(e) => put("tenantId", e.target.value)} required>{offices.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
-      </label>
+      {groups.map((g, i) => (
+        <fieldset key={g.id} className="reg-step">
+          <legend><span className="reg-num">{i + 1}</span> {g.icon} <span className="en">{g.en}</span> <span className="ur">{g.ur}</span></legend>
+          <div className="reg-grid">{g.fields.map(renderField)}</div>
+        </fieldset>
+      ))}
 
-      <div className="reg-grid">{fieldsFor(f).map(renderField)}</div>
-
-      <label className="reg-check" data-say="کیا کوئی اور آپ کے لیے یہ فارم بھر رہا ہے؟" data-say-en="Is someone else filling this form for her?">
-        <input type="checkbox" checked={f.assisted} onChange={(e) => put("assisted", e.target.checked)} />
-        <span><b><span className="en">Someone is filling this for her</span> <span className="ur">کوئی اور بھر رہا ہے</span></b><br /><span className="text-xs muted">For a widow who cannot read or write. The officer sees who helped and checks with her directly.</span></span>
-      </label>
-      {f.assisted && <div className="reg-grid reg-helper">{HELPER_FIELDS.map(renderField)}</div>}
-
-      <p className="text-xs muted">Demo only: use a <b>mock CNIC</b> (00000-…) and <b>mock phones</b> (0300000….). Real numbers are refused. No account opens until a pension officer approves it.</p>
+      <div className="reg-foot">
+        <p className="text-xs muted flex-1">Demo only: use a <b>mock CNIC</b> (00000-…) and <b>mock phones</b> (0300000….). Real numbers are refused. No account opens until a pension officer approves it.</p>
+        <button className="btn reg-send" disabled={busy || guided} data-say="چیک کے لیے بھیجیں۔ فارم پنشن آفس کو جائے گا" data-say-en="Send for checking. The form goes to the pension office.">{busy ? "…" : <><span className="en">Send for checking</span><span className="ur">چیک کے لیے بھیجیں</span> →</>}</button>
+      </div>
       {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-      <button className="btn w-full" disabled={busy || guided} data-say="چیک کے لیے بھیجیں۔ فارم پنشن آفس کو جائے گا" data-say-en="Send for checking. The form goes to the pension office.">{busy ? "…" : <><span className="en">Send for checking</span><span className="ur">چیک کے لیے بھیجیں</span></>}</button>
     </form>
   );
 }
