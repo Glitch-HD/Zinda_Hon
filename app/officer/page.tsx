@@ -2,6 +2,8 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
+import { cnicsWithNadraPhoto } from "@/lib/nadra-face";
+import { normalizeCnic } from "@/lib/names";
 import SignupReview, { type SignupRow } from "@/components/SignupReview";
 import { PageTitle, SectionHead, Stat, greeting, initials } from "@/components/ui/Dash";
 
@@ -62,12 +64,16 @@ export default async function OfficerQueue() {
     // acts for. (The list column can be empty or NULL, so filter below.)
     prisma.pensioner.findMany({
       where: { tenantId: user.tenantId, status: "active" },
-      select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true },
+      select: { id: true, name: true, pensionNo: true, cnicMock: true, enrolledFaceDescriptor: true },
       orderBy: { pensionNo: "asc" },
     }),
     prisma.notification.findMany({ where: { userId: user.id, read: false }, orderBy: { createdAt: "desc" }, take: 5 }),
   ]);
-  const notEnrolled = allActive.filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
+  // Only people with NO usable NADRA photo need an office or home visit; the rest give consent in the app.
+  const nadra = await cnicsWithNadraPhoto();
+  const noFace = allActive.filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
+  const notEnrolled = noFace.filter((p) => !nadra.has(normalizeCnic(p.cnicMock) ?? ""));
+  const viaNadra = noFace.length - notEnrolled.length;
   const year = new Date().getFullYear();
   const thisYear = others.filter((c) => c.year === year);
   const earlier = others.filter((c) => c.year !== year);
@@ -87,7 +93,7 @@ export default async function OfficerQueue() {
         <Stat n={queue.length} label="Waiting for your review" icon="🧑‍💼" tone={queue.length ? "danger" : "ok"} />
         <Stat n={dueThisYear} label={`Still due in ${year}`} icon="⏳" tone="warn" />
         <Stat n={verifiedThisYear} label={`Verified in ${year}`} icon="✅" tone="ok" />
-        <Stat n={notEnrolled.length} label="Faces to enrol" icon="📷" tone={notEnrolled.length ? "warn" : "ok"} />
+        <Stat n={notEnrolled.length} label="Need a face visit" icon="📷" tone={notEnrolled.length ? "warn" : "ok"} />
       </div>
 
       {notes.length > 0 && (
@@ -120,7 +126,7 @@ export default async function OfficerQueue() {
 
       {notEnrolled.length > 0 && (
         <>
-          <SectionHead title="Faces to enrol" count={notEnrolled.length} sub="They (or their helper) cannot do the face check until you enrol them once." />
+          <SectionHead title="Need an office or home face enrolment" count={notEnrolled.length} sub={`NADRA (simulated) has no usable CNIC photo for these people, so an officer must enrol their face once.${viaNadra ? ` ${viaNadra} other pensioner(s) without a face yet will use their NADRA photo with consent: no visit needed.` : ""}`} />
           <div className="card">
             <div className="mini-grid">
               {notEnrolled.slice(0, 8).map((p) => <EnrolLink key={p.id} p={p} />)}

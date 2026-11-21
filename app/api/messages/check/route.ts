@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { getSessionUser, HttpError } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
@@ -11,13 +11,19 @@ import { heuristicSigns, routeMessage } from "@/lib/scam";
 const Body = z.object({ text: z.string().min(3).max(2000), sender: z.string().max(50).optional(), area: z.string().max(80).optional() });
 
 export const POST = handle(async (req: Request) => {
-  const user = await requireUser(["PENSIONER", "HELPER", "SHOPKEEPER", "OFFICER"]);
-  await rateLimit(`scam:${user.id}`, 30, 60);
+  // Anyone may check a message, logged in or not. Visitors without a login get tighter limits per
+  // network, and their checks do not feed the Scam Map (so nobody can flood the map anonymously).
+  const user = await getSessionUser();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  if (user) await rateLimit(`scam:${user.id}`, 30, 60);
+  else { await rateLimit(`scam:anon:${ip}`, 10, 600); await rateLimit(`scam:anon:day:${ip}`, 40, 86400); }
+  const tenantId = user?.tenantId ?? (await prisma.tenant.findFirst({ orderBy: { createdAt: "asc" }, select: { id: true } }))?.id;
+  if (!tenantId) throw new HttpError(503, "Service not ready");
   const body = Body.parse(await req.json());
   const started = Date.now();
 
   // Cross-check with our own (mock) records: does this person really have a pending payment?
-  const pensioner = user.role === "PENSIONER" ? await prisma.pensioner.findUnique({ where: { userId: user.id } }) : null;
+  const pensioner = user?.role === "PENSIONER" ? await prisma.pensioner.findUnique({ where: { userId: user.id } }) : null;
   const pendingPayment = pensioner ? false : null; // mock: payments are automatic, never "pending release"
 
   const h = heuristicSigns(body.text);
@@ -41,12 +47,12 @@ export const POST = handle(async (req: Request) => {
 
   const saved = await prisma.checkedMessage.create({
     data: {
-      tenantId: user.tenantId, submittedById: user.id, text: body.text, sender: body.sender, area: body.area ?? (await prisma.user.findUnique({ where: { id: user.id }, select: { area: true } }))?.area ?? null,
+      tenantId, submittedById: user?.id ?? null, text: body.text, sender: body.sender, area: body.area ?? (user ? (await prisma.user.findUnique({ where: { id: user.id }, select: { area: true } }))?.area : null) ?? null,
       label, confidence, route, modelName: ai ? ai.model : null,
       reasons: { source, signs: h.signs, signScore: h.score, ai: ai?.data ?? null, ms: Date.now() - started, usage: ai?.usage ?? null },
     },
   });
-  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? ai.model : "scam-signs", action: `message_${label}`, targetType: "checked_message", targetId: saved.id, details: { confidence, route, source, submittedBy: user.id } });
+  await audit({ tenantId, actorType: "AI", actorId: ai ? ai.model : "scam-signs", action: `message_${label}`, targetType: "checked_message", targetId: saved.id, details: { confidence, route, source, submittedBy: user?.id ?? "public (no login)" } });
 
   return NextResponse.json({
     id: saved.id, label, confidence, route,

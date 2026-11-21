@@ -2,11 +2,14 @@ import Header from "@/components/Header";
 import EnrollFace from "@/components/EnrollFace";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
+import { cnicsWithNadraPhoto } from "@/lib/nadra-face";
+import { normalizeCnic } from "@/lib/names";
 
 export default async function EnrollPage({ searchParams }: { searchParams: Promise<{ p?: string }> }) {
   const user = await pageUser(["OFFICER"]);
   const { p } = await searchParams;
-  const pensioners = await prisma.pensioner.findMany({ where: { tenantId: user.tenantId }, orderBy: { pensionNo: "asc" }, select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true } });
+  const pensioners = await prisma.pensioner.findMany({ where: { tenantId: user.tenantId }, orderBy: { pensionNo: "asc" }, select: { id: true, name: true, pensionNo: true, cnicMock: true, enrolledFaceDescriptor: true } });
+  const nadra = await cnicsWithNadraPhoto();
   return (
     <div className="max-w-3xl mx-auto">
       <Header user={user} links={[{ href: "/officer", label: "← Queue" }]} />
@@ -15,7 +18,7 @@ export default async function EnrollPage({ searchParams }: { searchParams: Promi
       <p className="muted text-sm mb-4">Prototype rule: use only AI-generated faces or team members who agreed. Only 128 numbers describing the face are stored, never the photo.</p>
       <EnrollFace
         initial={p}
-        pensioners={pensioners.map((x) => ({ id: x.id, label: `${x.pensionNo} · ${x.name}`, enrolled: x.enrolledFaceDescriptor.length === 128 }))}
+        pensioners={pensioners.map((x) => ({ id: x.id, label: `${x.pensionNo} · ${x.name}`, enrolled: x.enrolledFaceDescriptor.length === 128, nadraPhoto: nadra.has(normalizeCnic(x.cnicMock) ?? "") }))}
       />
     </div>
   );

@@ -207,6 +207,15 @@ if (helpedReg) ok((await officer.call(`/api/registrations/${helpedReg.id}`, { me
   }
 }
 
+// Public pages: anyone can check a message or ask about the rules without logging in.
+{
+  const pub = await fetch(`${BASE}/check-message`, { redirect: "manual" });
+  ok(pub.status === 200, `the scam check page opens without a login (got ${pub.status})`);
+  ok((await fetch(`${BASE}/ask`, { redirect: "manual" })).status === 200, "the pension rules page opens without a login");
+  const anon = await fetch(`${BASE}/api/messages/check`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": "10.7.7.7" }, body: JSON.stringify({ text: "Send your PIN code and Rs 500 fee to release your relief payment today" }) });
+  ok(anon.ok && ["scam", "unsure"].includes((await anon.json()).label), "a visitor without a login can check a message");
+}
+
 // Error monitoring: a phone's crash report is stored and the health check counts errors.
 ok((await fetch(`${BASE}/api/client-error`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "smoke test crash", page: "/smoke" }) })).ok, "a phone can report a crash");
 const health = await (await fetch(`${BASE}/api/health`)).json();

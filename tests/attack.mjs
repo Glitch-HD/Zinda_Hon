@@ -219,6 +219,14 @@ check((await widow.post(`/api/cases/${zainab.id}/evidence`, { type: "liveness", 
   }
   check((await widow.post("/api/corrections", { field: "cnicMock", newValue: "42101-1234567-1" })).status === 400, "Change a CNIC to a real-looking number");
 }
+// --- Anonymous visitors flood the public scam checker (it calls a paid-per-use AI if a key is set).
+{
+  let stoppedAt = null;
+  for (let i = 0; i < 14; i++) { const r = await fetch(`${B}/api/messages/check`, { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": "10.66.66.66" }, body: JSON.stringify({ text: `flood test number ${i} send pin` }) }); if (r.status === 429) { stoppedAt = i; break; } }
+  check(stoppedAt !== null && stoppedAt <= 10, "Flood the public scam checker without logging in", `blocked after ${stoppedAt}`);
+  const onMap = (await q(`select count(*)::int as n from "CheckedMessage" where text like 'flood test number%' and "submittedById" is not null`))[0]?.n;
+  check(onMap === 0, "Poison the Scam Map with anonymous fake reports");
+}
 const hdr = await fetch(`${B}/login`);
 check(hdr.headers.get("x-frame-options") === "DENY" && Boolean(hdr.headers.get("x-content-type-options")) && /frame-ancestors 'none'/.test(hdr.headers.get("content-security-policy") ?? ""), "Load the site inside another site's frame (clickjacking)");
 

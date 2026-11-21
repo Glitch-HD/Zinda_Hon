@@ -20,3 +20,9 @@ export function photoAgeYears(takenAt: Date | null | undefined) {
   if (!takenAt) return null;
   return Math.floor((Date.now() - takenAt.getTime()) / (365.25 * 86400000));
 }
+
+/** CNICs (normalised) that have a usable CNIC photo at (simulated) NADRA, looked up once for a list. */
+export async function cnicsWithNadraPhoto() {
+  const all = await prisma.mockNadraRecord.findMany({ where: { cnic: { not: null } }, select: { cnic: true, faceDescriptor: true } });
+  return new Set(all.filter((r) => r.faceDescriptor.length === 128).map((r) => normalizeCnic(r.cnic)).filter(Boolean) as string[]);
+}

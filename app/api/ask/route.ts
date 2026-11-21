@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { handle } from "@/lib/api";
 import { rateLimit } from "@/lib/ratelimit";
 import { answerFromRulebook } from "@/lib/claude";
@@ -11,12 +11,15 @@ import { audit } from "@/lib/audit";
 const Body = z.object({ question: z.string().min(3).max(500) });
 
 export const POST = handle(async (req: Request) => {
-  const user = await requireUser();
-  await rateLimit(`ask:${user.id}`, 20, 60);
+  // Public: the rules are public information. Visitors without a login get tighter limits per network.
+  const user = await getSessionUser();
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+  if (user) await rateLimit(`ask:${user.id}`, 20, 60);
+  else { await rateLimit(`ask:anon:${ip}`, 10, 600); await rateLimit(`ask:anon:day:${ip}`, 40, 86400); }
   const { question } = Body.parse(await req.json());
   const sections = searchRulebook(question, 4);
   const ai = await answerFromRulebook(question, sections);
-  await audit({ tenantId: user.tenantId, actorType: "AI", actorId: ai ? ai.model : "none", action: "rulebook_answer", details: { sections: sections.map((s) => s.id), answerable: ai?.data.answerable ?? false } });
+  await audit({ tenantId: user?.tenantId ?? null, actorType: "AI", actorId: ai ? ai.model : "none", action: "rulebook_answer", details: { sections: sections.map((s) => s.id), answerable: ai?.data.answerable ?? false } });
   if (!ai) {
     // The AI is down or not configured: show the closest official rules instead of an AI answer.
     const matched = searchRulebook(question, 2);
