@@ -108,7 +108,7 @@ export default async function OfficerQueue() {
       {signups.length > 0 && (
         <>
           <SectionHead title="✨ New sign-ups to check" count={signups.length} sub="People who made an account. Check the records below, then approve or reject. No account works until you do." />
-          <SignupReview rows={signups.map((r) => ({ id: r.id, role: r.role, name: r.name, cnic: r.cnic, phone: r.phone, area: r.area, pensionNo: r.pensionNo, createdAt: r.createdAt.toISOString(), checks: r.checks as SignupRow["checks"] }))} />
+          <SignupReview rows={signups.map((r) => ({ id: r.id, role: r.role, name: r.name, cnic: r.cnic, phone: r.phone, area: r.area, pensionNo: r.pensionNo, createdAt: r.createdAt.toISOString(), checks: r.checks as SignupRow["checks"], details: r.details as SignupRow["details"], assistedBy: r.assistedBy as SignupRow["assistedBy"] }))} />
         </>
       )}
 

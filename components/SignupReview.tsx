@@ -6,7 +6,9 @@ import { useState } from "react";
 
 export type SignupRow = {
   id: string; role: string; name: string; cnic: string; phone: string; area: string | null; pensionNo: string | null; createdAt: string;
-  checks: { nadraFound?: boolean; nadraName?: string | null; nameSimilarity?: number | null; dobMatches?: boolean | null; deathRecordFound?: boolean; pensionRecordName?: string; pensionNameSimilarity?: number; pensionCnicMatches?: boolean | null };
+  details?: { pensionType?: string | null; husbandName?: string | null; husbandCnic?: string | null; husbandDeathDate?: string | null; deathCertNo?: string | null; shopName?: string; shopAddress?: string | null } | null;
+  assistedBy?: { name: string; phone: string; relation: string } | null;
+  checks: { spokenInUrdu?: boolean; pensionTypeMismatch?: boolean; pensionType?: string; husbandOnNadra?: string | null; husbandNadraSimilarity?: number | null; husbandOnPensionRecord?: string | null; husbandPensionSimilarity?: number | null; husbandDeathFound?: boolean; husbandDeathName?: string | null; husbandDeathDate?: string | null; husbandDeathDateMatches?: boolean | null; husbandDeathRegisteredAt?: string | null; nadraFound?: boolean; nadraName?: string | null; nameSimilarity?: number | null; dobMatches?: boolean | null; deathRecordFound?: boolean; pensionRecordName?: string; pensionNameSimilarity?: number; pensionCnicMatches?: boolean | null };
 };
 
 const ROLE: Record<string, string> = { PENSIONER: "👵🏽 Pensioner", HELPER: "🤝 Helper", SHOPKEEPER: "🏪 Shopkeeper" };
@@ -38,10 +40,21 @@ function Row({ r }: { r: SignupRow }) {
         <b>{r.name}</b><span className="badge">{ROLE[r.role] ?? r.role}</span>
         <span className="muted text-sm">CNIC {r.cnic.replace(/^(\d{5})(\d{7})(\d)$/, "$1-$2-$3")} · {r.phone}{r.area ? ` · ${r.area}` : ""}{r.pensionNo ? ` · ${r.pensionNo}` : ""}</span>
       </div>
+      {r.details?.shopName && <p className="text-sm">🏪 <b>{r.details.shopName}</b>{r.details.shopAddress ? `, ${r.details.shopAddress}` : ""}</p>}
+      {r.details?.pensionType === "family" && (
+        <p className="text-sm">🕊️ Widow&apos;s pension. Late husband: <b>{r.details.husbandName}</b>{r.details.husbandCnic ? `, CNIC ${r.details.husbandCnic.replace(/^(\d{5})(\d{7})(\d)$/, "$1-$2-$3")}` : ""}{r.details.husbandDeathDate ? `, died ${r.details.husbandDeathDate}` : ""}{r.details.deathCertNo ? `, death certificate ${r.details.deathCertNo}` : ", no death certificate number given"}</p>
+      )}
+      {r.assistedBy && <p className="text-sm" style={{ color: "var(--warn)" }}>🧑‍🤝‍🧑 Filled in for her by <b>{r.assistedBy.name}</b> ({r.assistedBy.relation}, {r.assistedBy.phone}). Confirm with her directly before approving.</p>}
       <ul className="text-sm space-y-1" style={{ listStyle: "none", padding: 0 }}>
         <Check ok={c.nadraFound} text={c.nadraFound ? `NADRA (mock) has this CNIC: "${c.nadraName}", name match ${pct(c.nameSimilarity)}` : "No NADRA (mock) record for this CNIC"} />
         {c.nadraFound && <Check ok={c.dobMatches} text={c.dobMatches === null || c.dobMatches === undefined ? "Date of birth not given" : c.dobMatches ? "Date of birth matches" : "Date of birth does not match"} />}
-        <Check ok={!c.deathRecordFound} text={c.deathRecordFound ? "Death registry HAS a record for this CNIC: cannot approve" : "No death record"} />
+        <Check ok={!c.deathRecordFound} text={c.deathRecordFound ? "Death registry HAS a record for this CNIC: cannot approve" : "No death record for her own CNIC"} />
+        {c.spokenInUrdu && <Check ok={null} text="Name was given in Urdu script: compare it with the records yourself" />}
+        {c.pensionTypeMismatch && <Check ok={false} text={`She chose a different pension type than the record (${c.pensionType})`} />}
+        {r.details?.pensionType === "family" && <>
+          <Check ok={c.husbandNadraSimilarity == null ? null : c.husbandNadraSimilarity >= 0.8} text={`NADRA lists husband as "${c.husbandOnNadra ?? "nobody"}"${c.husbandNadraSimilarity != null ? `, match ${pct(c.husbandNadraSimilarity)}` : ""}`} />
+          <Check ok={c.husbandDeathFound ? c.husbandDeathDateMatches !== false : false} text={c.husbandDeathFound ? `Death registry: ${c.husbandDeathName} died ${c.husbandDeathDate} (${c.husbandDeathRegisteredAt})${c.husbandDeathDateMatches === false ? ", but she gave a different date" : ""}` : "Death registry has NO record of her husband's death: see the original certificate"} />
+        </>}
         {r.role === "PENSIONER" && <Check ok={c.pensionCnicMatches ?? null} text={`Pension record "${c.pensionRecordName}", name match ${pct(c.pensionNameSimilarity)}, CNIC ${c.pensionCnicMatches ? "matches" : c.pensionCnicMatches === false ? "does NOT match" : "not on file"}`} />}
       </ul>
       <textarea className="input" rows={2} placeholder="Your note: how you checked this person (needed if anything above is not ✅, or to reject)" value={note} onChange={(e) => setNote(e.target.value)} />

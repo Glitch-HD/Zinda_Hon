@@ -115,10 +115,15 @@ ok(strictRes.ok && (await strictRes.json()).version > 0, "a stricter change appl
 const reg = (b) => fetch(`${BASE}/api/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) });
 const offices = (await (await fetch(`${BASE}/api/auth/register`)).json()).offices;
 const khi = offices.find((o) => /Karachi/.test(o.name));
-const fatima = { tenantId: khi.id, role: "PENSIONER", name: "Fatima Begum", cnic: "00000-1000002-4", phone: "03000000099", dateOfBirth: "1948-07-01", pensionNo: "PEN-K-1002", password: "Fatima1948" };
+const fatima = { tenantId: khi.id, role: "PENSIONER", pensionType: "family", name: "Fatima Begum", cnic: "00000-1000002-4", phone: "03000000099", dateOfBirth: "1948-07-01", pensionNo: "PEN-K-1002", password: "Fatima1948",
+  husbandName: "Abdul Rasheed", husbandCnic: "00000-2000002-6", husbandDeathDate: "2018-05-12", deathCertNo: "UC-LYR-2018-0412" };
 ok((await reg({ ...fatima, cnic: "42101-1234567-1" })).status === 400, "a real-looking CNIC is refused");
 ok((await reg({ ...fatima, phone: "03211234567" })).status === 400, "a real-looking phone number is refused");
-ok((await reg(fatima)).ok, "a new pensioner can send a sign-up");
+ok((await reg({ tenantId: khi.id, role: "SHOPKEEPER", name: "Asif Kiryana", cnic: "00000-3000001-1", phone: "03000000098", password: "AsifShop99" })).status === 400, "a shopkeeper must give the shop's name");
+ok((await reg(fatima)).ok, "a widow can send a sign-up with her late husband's details");
+// A widow who cannot read, filled in by her son, with only a PIN (no password).
+const assisted = await reg({ tenantId: khi.id, role: "PENSIONER", pensionType: "family", name: "Khadija Bibi", cnic: "00000-1000009-2", phone: "03000000097", pensionNo: "PEN-K-1009", pin: "2580", husbandName: "Ghulam Nabi", assistedBy: { name: "Asad Nabi", phone: "03000000096", relation: "Son" } });
+ok(assisted.ok, "someone can fill the form for a widow who cannot read, with only a PIN");
 const early = await fetch(`${BASE}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: fatima.phone, password: fatima.password }) });
 ok(early.status === 403, "a sign-up cannot log in before an officer checks it");
 const pendingReg = (await (await officer.call("/api/registrations")).json()).registrations?.find((x) => x.phone === fatima.phone);
@@ -127,7 +132,11 @@ if (pendingReg) {
   ok((await widow.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve" }) })).status === 403, "a pensioner cannot approve sign-ups");
   ok((await officer.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "" }) })).ok, "the officer approves the sign-up");
   ok((await login(fatima.phone, fatima.password)).res.ok, "after approval the new pensioner can log in");
+  ok(pendingReg.checks.husbandDeathFound === true && pendingReg.checks.husbandNadraSimilarity >= 0.8, "her husband's death and name are checked against the records");
 }
+const helpedReg = (await (await officer.call("/api/registrations")).json()).registrations?.find((x) => x.phone === "03000000097");
+ok(helpedReg?.assistedBy?.relation === "Son", "the officer sees who filled the form");
+if (helpedReg) ok((await officer.call(`/api/registrations/${helpedReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "" }) })).status === 400, "a form filled by someone else needs the officer's written check");
 
 // Error monitoring: a phone's crash report is stored and the health check counts errors.
 ok((await fetch(`${BASE}/api/client-error`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "smoke test crash", page: "/smoke" }) })).ok, "a phone can report a crash");

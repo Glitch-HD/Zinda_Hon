@@ -92,6 +92,7 @@ export default function LoginPage() {
     if (v !== "pensioner") setPrefsRole("guest");
     setError(null);
     setView(v);
+    if (v === "helper" || v === "shopkeeper" || v === "staff") void speakUrdu("اپنا فون نمبر اور پاس ورڈ لکھیں، پھر لاگ اِن کا بٹن دبائیں۔", "Enter your phone number and password, then press Log in.");
     document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -193,15 +194,15 @@ export default function LoginPage() {
                 {view !== "choose" && view !== "pensioner" && view !== "register" && (
                   <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
                     <label className="block space-y-1">
-                      <span className="text-sm font-semibold"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
+                      <span className="text-sm font-semibold" data-say="اپنا فون نمبر لکھیں" data-say-en="Type your phone number"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
                       <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
                     </label>
                     <label className="block space-y-1">
-                      <span className="text-sm font-semibold"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
+                      <span className="text-sm font-semibold" data-say="اپنا پاس ورڈ لکھیں" data-say-en="Type your password"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
                       <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
                     </label>
                     {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-                    <button className="btn w-full" disabled={busy}>{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
+                    <button className="btn w-full" disabled={busy} data-say="لاگ اِن کریں" data-say-en="Log in">{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
                   </form>
                 )}
               </div>

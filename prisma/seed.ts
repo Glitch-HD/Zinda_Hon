@@ -224,12 +224,29 @@ async function ensureReportedScams() {
   console.log(`Added ${reports.length} demo scam reports for the area warning.`);
 }
 
+// Death records for the late husbands of the widows, so a widow's sign-up can be checked against them
+// (a family pension is only due after the husband's death). All mock.
+const HUSBAND_DEATHS = [
+  { cnic: "00000-2000001-5", name: "Mohammad Rafeeq", date: "2017-02-11", uc: "Union Council Lyari (mock)" },
+  { cnic: "00000-2000002-6", name: "Abdul Rashid", date: "2018-05-12", uc: "Union Council Lyari (mock)" },
+  { cnic: "00000-2000004-8", name: "Ghulam Husain", date: "2016-09-03", uc: "Union Council Lyari (mock)" },
+  { cnic: "00000-2000007-1", name: "Siddiq Ahmad", date: "2020-12-01", uc: "Union Council Korangi (mock)" },
+  { cnic: "00000-2000009-3", name: "Ghulam Nabi", date: "2019-07-22", uc: "Union Council Lyari (mock)" },
+];
+async function ensureHusbandDeaths() {
+  for (const d of HUSBAND_DEATHS) {
+    if (await prisma.mockDeathRecord.findFirst({ where: { cnic: d.cnic } })) continue;
+    await prisma.mockDeathRecord.create({ data: { cnic: d.cnic, name: d.name, dateOfDeath: new Date(d.date), registeredAt: d.uc } });
+  }
+}
+
 async function main() {
   const existing = await prisma.tenant.count();
   if (existing > 0) {
     console.log("Seed skipped: database already has data.");
     await ensureExtraPeople();
     await ensureAccounts();
+    await ensureHusbandDeaths();
     await ensurePensionerPins();
     await ensureHistory();
     await ensureReportedScams();
@@ -335,6 +352,7 @@ async function main() {
 
   await ensureExtraPeople();
   await ensureAccounts();
+  await ensureHusbandDeaths();
   await ensurePensionerPins();
   await ensureHistory();
   await ensureReportedScams();
