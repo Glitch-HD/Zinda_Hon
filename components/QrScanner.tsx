@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 // Reads the signed QR on the pension book with the back camera, or from a photo.
 // Blurry or unreadable photos are reported as "unreadable" (ask to retake), never as forged.
-export default function QrScanner({ onResult }: { onResult: (text: string | null) => void }) {
+export default function QrScanner({ onResult }: { onResult: (text: string | null, photo?: Blob | null) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scanning, setScanning] = useState(false);
@@ -29,6 +29,12 @@ export default function QrScanner({ onResult }: { onResult: (text: string | null
     return jsQR(img.data, img.width, img.height)?.data ?? null;
   }
 
+  /** The frame that was read, kept so the printed name next to the QR can be read too (OCR). */
+  async function frame(): Promise<Blob | null> {
+    const c = canvasRef.current;
+    return c ? new Promise((r) => c.toBlob((b) => r(b), "image/jpeg", 0.9)) : null;
+  }
+
   async function startCamera() {
     setMsg(null);
     stopRef.current = false;
@@ -42,7 +48,7 @@ export default function QrScanner({ onResult }: { onResult: (text: string | null
       while (!stopRef.current) {
         if (v.readyState >= 2) {
           const text = await decodeFrom(v, v.videoWidth, v.videoHeight);
-          if (text) { stopStream(); setScanning(false); onResult(text); return; }
+          if (text) { stopStream(); setScanning(false); onResult(text, await frame()); return; }
         }
         if (Date.now() - started > 20000) {
           stopStream(); setScanning(false);
@@ -61,7 +67,7 @@ export default function QrScanner({ onResult }: { onResult: (text: string | null
     const bmp = await createImageBitmap(file);
     const text = await decodeFrom(bmp, bmp.width, bmp.height);
     if (!text) setMsg("The QR in this photo is not readable (maybe blurry). / تصویر دھندلی ہے، دوبارہ لیں۔");
-    onResult(text);
+    onResult(text, text ? file : null);
   }
 
   return (

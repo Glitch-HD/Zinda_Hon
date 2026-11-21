@@ -7,6 +7,20 @@ import { recordError } from "./monitor";
 export function handle<T extends unknown[]>(fn: (...args: T) => Promise<Response>) {
   return async (...args: T): Promise<Response> => {
     try {
+      const r = args[0] as Request | undefined;
+      // Cross-site request forgery: a browser sends the page's Origin on every POST. If another website
+      // tries to make her logged-in browser approve, stop or change something, the origins differ.
+      // (The bank API uses API keys, not cookies, so it is not affected.)
+      if (r instanceof Request && !["GET", "HEAD", "OPTIONS"].includes(r.method)) {
+        const origin = r.headers.get("origin");
+        if (origin && origin !== "null") {
+          let sameSite = false;
+          try { sameSite = new URL(origin).host === (r.headers.get("x-forwarded-host") ?? r.headers.get("host")); } catch { /* bad origin */ }
+          if (!sameSite && !new URL(r.url).pathname.startsWith("/api/v1/")) return NextResponse.json({ error: "Request from another website refused" }, { status: 403 });
+        } else if (origin === "null") {
+          return NextResponse.json({ error: "Request from another website refused" }, { status: 403 });
+        }
+      }
       return await fn(...args);
     } catch (err) {
       if (err instanceof HttpError) return NextResponse.json({ error: err.message }, { status: err.status });

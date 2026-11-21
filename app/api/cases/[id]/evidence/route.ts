@@ -12,6 +12,15 @@ import { createHash } from "node:crypto";
 import { followedSequence, verifyTicket } from "@/lib/liveness";
 
 /** A fingerprint of the face numbers (not reversible to a face). A real selfie never repeats exactly. */
+/** Best match of the QR's name against any run of the same number of words in the OCR text (0..1). */
+function printedNameScore(ocrText: string, name: string) {
+  const words = ocrText.replace(/[^A-Za-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 1);
+  const n = name.split(/\s+/).filter(Boolean).length || 1;
+  let best = 0;
+  for (let i = 0; i + n <= words.length; i++) best = Math.max(best, nameSimilarity(words.slice(i, i + n).join(" "), name));
+  return best;
+}
+
 const faceFingerprint = (d: number[]) => createHash("sha256").update(d.map((x) => x.toFixed(3)).join(",")).digest("hex").slice(0, 24);
 
 // Receives one piece of proof from the phone. Each submission carries a clientActionId made on the phone,
@@ -24,7 +33,7 @@ const Body = z.discriminatedUnion("type", [
     challenges: z.array(z.object({ action: z.enum(["blink", "turn_left", "turn_right", "smile"]), done: z.boolean(), ms: z.number().nonnegative() })).max(6),
     ticket: z.string().max(600).optional(),
   }),
-  z.object({ type: z.literal("document"), clientActionId: z.string().min(8).max(64), qrText: z.string().max(500).nullable(), ocrName: z.string().max(200).optional() }),
+  z.object({ type: z.literal("document"), clientActionId: z.string().min(8).max(64), qrText: z.string().max(500).nullable(), ocrName: z.string().max(200).optional(), ocrText: z.string().max(1000).optional(), ocrConfidence: z.number().min(0).max(100).optional() }),
 ]);
 
 export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
@@ -89,8 +98,10 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
         f.monthlyAmount === c.pensioner.monthlyAmount &&
         nameSimilarity(f.name, c.pensioner.name) >= 0.92 &&
         (normalizeCnic(f.cnic) === normalizeCnic(c.pensioner.cnicMock) || !c.pensioner.cnicMock);
-      const ocrAgrees = body.ocrName ? nameSimilarity(body.ocrName, f.name) >= 0.8 : null;
-      details = { qrValid: true, fieldsMatch, ocrAgrees, qrFields: f };
+      // OCR of the printed page: does the name printed on the book match the name inside the QR?
+      const ocrScore = body.ocrText ? printedNameScore(body.ocrText, f.name) : body.ocrName ? nameSimilarity(body.ocrName, f.name) : null;
+      const ocrAgrees = ocrScore === null ? null : ocrScore >= 0.8;
+      details = { qrValid: true, fieldsMatch, ocrAgrees, ocrScore: ocrScore === null ? null : Math.round(ocrScore * 100) / 100, ocrConfidence: body.ocrConfidence ?? null, ocrSample: body.ocrText?.slice(0, 160) ?? null, qrFields: f };
     }
     passed = details.qrValid === true && details.fieldsMatch === true;
   }

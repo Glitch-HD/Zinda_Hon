@@ -9,7 +9,11 @@ const FIELD_LABEL: Record<string, string> = { name: "Name · نام", cnic: "CNI
 export default function ConsentManager() {
   const [data, setData] = useState<{ consents: Consent[]; accessLog: Log[] } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const load = () => fetch("/api/consents").then((r) => r.json()).then(setData);
+  const [reqs, setReqs] = useState<{ id: string; field: string; newValue: string; status: string; createdAt: string }[]>([]);
+  const load = () => Promise.all([
+    fetch("/api/consents").then((r) => r.json()).then(setData),
+    fetch("/api/corrections").then((r) => (r.ok ? r.json() : { requests: [] })).then((d) => setReqs(d.requests ?? [])).catch(() => {}),
+  ]);
   useEffect(() => { void load(); }, []);
 
   async function act(id: string, body: object) {
@@ -23,7 +27,9 @@ export default function ConsentManager() {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const res = await fetch("/api/corrections", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ field: f.get("field"), newValue: f.get("newValue") }) });
-    setMsg(res.ok ? "Sent to the pension office. / درخواست بھیج دی گئی۔" : "Could not send.");
+    const d = await res.json().catch(() => ({}));
+    setMsg(res.ok ? "Sent to the pension office. / درخواست بھیج دی گئی۔" : typeof d.error === "string" ? d.error : "Could not send.");
+    if (res.ok) await load();
   }
 
   if (!data) return <p>Loading…</p>;
@@ -62,6 +68,13 @@ export default function ConsentManager() {
         </select>
         <input name="newValue" className="input" placeholder="Correct value" required />
         <button className="btn">Send to pension office</button>
+        {reqs.length > 0 && (
+          <ul className="text-sm mt-2 space-y-1">
+            {reqs.map((r) => (
+              <li key={r.id}>{r.createdAt.slice(0, 10)} · {r.field === "bankAccountNo" ? "Bank account" : r.field === "cnicMock" ? "CNIC" : r.field === "dateOfBirth" ? "Date of birth" : r.field === "name" ? "Name" : "Husband / father's name"} → {r.newValue} · <span className={`badge ${r.status === "accepted" ? "badge-ok" : r.status === "rejected" ? "badge-danger" : "badge-warn"}`}>{r.status === "awaiting_second" ? "being checked by a second officer" : r.status}</span></li>
+            ))}
+          </ul>
+        )}
       </form>
       <div className="card">
         <h3 className="font-semibold">Recent access to my data</h3>

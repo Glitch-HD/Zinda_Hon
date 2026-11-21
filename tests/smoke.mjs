@@ -177,6 +177,36 @@ const helpedReg = (await (await officer.call("/api/registrations")).json()).regi
 ok(helpedReg?.assistedBy?.relation === "Son", "the officer sees who filled the form");
 if (helpedReg) ok((await officer.call(`/api/registrations/${helpedReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "" }) })).status === 400, "a form filled by someone else needs the officer's written check");
 
+// Officer desk: open cases, link helpers, accept corrections (bank/CNIC need two officers).
+{
+  const post = (who, path, body) => who.call(path, { method: "POST", body: JSON.stringify(body) });
+  ok((await post(widow, "/api/cases", { all: true })).status === 403, "a pensioner cannot open cases");
+  ok((await post(officer, "/api/cases", { all: true })).ok, "an officer opens this year's cases for everyone who has none");
+  ok((await post(officer, "/api/cases", { pensionerId: pid })).status === 409, "a second case for the same year is refused");
+  const rubinaId = (await (await helper.call("/api/auth/me")).json()).id;
+  ok((await post(helper, "/api/helper-links", { action: "link", pensionerId: pid, helperId: rubinaId, fields: ["name"], note: "I am linking myself in." })).status === 403, "a helper cannot link themselves to a family");
+  ok((await post(officer, "/api/helper-links", { action: "link", pensionerId: pid, helperId: rubinaId, fields: ["name", "face"], note: "ok" })).status === 400, "linking a helper needs a note on how she agreed");
+  ok((await post(officer, "/api/helper-links", { action: "link", pensionerId: pid, helperId: rubinaId, fields: ["name", "face"], note: "She agreed in person at the office today." })).ok, "an officer links a helper with what she agreed to share");
+  const after = (await (await widow.call("/api/consents")).json()).consents.find((c) => c.granteeId === rubinaId && !c.withdrawnAt);
+  ok(after && after.fields.includes("case_status") && !after.fields.includes("bank_account"), "the new permission shows on her My data page, never with bank details");
+  ok((await post(widow, "/api/corrections", { field: "dateOfBirth", newValue: "1850-01-01" })).status === 400, "an impossible date of birth is refused at once");
+  ok((await widow.call("/api/corrections", { method: "POST", headers: { origin: "https://evil.example" }, body: JSON.stringify({ field: "bankAccountNo", newValue: "EVIL0000001" }) })).status === 403, "a request sent from another website is refused (CSRF)");
+  ok((await post(widow, "/api/corrections", { field: "bankAccountNo", newValue: "MOCKBANK001234" })).ok, "she asks to change her bank account");
+  ok((await post(widow, "/api/corrections", { field: "bankAccountNo", newValue: "MOCKBANK009999" })).status === 409, "a second request for the same field waits for the first");
+  ok((await officer.call("/officer/families")).ok, "the families desk opens for an officer");
+  const req = (await (await officer.call("/api/corrections")).json()).requests.find((x) => x.newValue === "MOCKBANK001234");
+  ok(req, "the officer sees her request");
+  if (req) {
+    ok((await post(officer, `/api/corrections/${req.id}`, { action: "accept", note: "short" })).status === 400, "accepting needs a note on how it was checked");
+    const first = await post(officer, `/api/corrections/${req.id}`, { action: "accept", note: "Saw her new bank letter at the office." });
+    ok(first.status === 202, "a bank account change is only proposed by the first officer");
+    ok((await post(officer, `/api/corrections/${req.id}`, { action: "accept", note: "Saw her new bank letter at the office." })).status === 403, "the same officer cannot confirm their own proposal");
+    ok((await post(officer3, `/api/corrections/${req.id}`, { action: "accept", note: "Called her on the file number; she confirmed." })).ok, "a second officer confirms and the change is applied");
+    const mine = (await (await widow.call("/api/corrections")).json()).requests.find((x) => x.id === req.id);
+    ok(mine?.status === "accepted", "she can see her request was accepted");
+  }
+}
+
 // Error monitoring: a phone's crash report is stored and the health check counts errors.
 ok((await fetch(`${BASE}/api/client-error`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: "smoke test crash", page: "/smoke" }) })).ok, "a phone can report a crash");
 const health = await (await fetch(`${BASE}/api/health`)).json();

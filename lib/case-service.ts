@@ -96,7 +96,9 @@ export async function gatherInputs(caseId: string): Promise<{ inputs: DecisionIn
   const c = await prisma.case.findUniqueOrThrow({ where: { id: caseId } });
   const identity = await lookupIdentity(c.pensionerId);
   const [face, live, doc] = await Promise.all([latestEvidence(caseId, "face_match"), latestEvidence(caseId, "liveness"), latestEvidence(caseId, "document")]);
-  const docDetails = (doc.latest?.details ?? {}) as { qrValid?: boolean | null; fieldsMatch?: boolean | null };
+  const docDetails = (doc.latest?.details ?? {}) as { qrValid?: boolean | null; fieldsMatch?: boolean | null; ocrAgrees?: boolean | null; ocrConfidence?: number | null };
+  // The QR is valid but the clearly-read printed name is someone else's: a real QR stuck on another book.
+  const ocrFlag = docDetails.qrValid === true && docDetails.ocrAgrees === false && (docDetails.ocrConfidence ?? 0) >= 70 ? ["printed_name_differs_from_qr"] : [];
 
   const inputs: DecisionInputs = {
     face: face.latest && face.latest.score !== null ? { distance: face.latest.score, attempts: face.attempts } : null,
@@ -110,7 +112,7 @@ export async function gatherInputs(caseId: string): Promise<{ inputs: DecisionIn
     },
     deathRecordFound: Boolean(identity.death),
     ageYears: identity.ageYears,
-    anomalies: [...identity.anomalies.filter((a) => a !== "possible_duplicate_pension"), ...(await fraudSignals(c, face.latest?.score ?? null, face.latest?.details ?? null))], // duplicates are already counted in identity
+    anomalies: [...identity.anomalies.filter((a) => a !== "possible_duplicate_pension"), ...ocrFlag, ...(await fraudSignals(c, face.latest?.score ?? null, face.latest?.details ?? null))], // duplicates are already counted in identity
   };
   return { inputs, identity };
 }

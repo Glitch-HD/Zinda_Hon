@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import FaceCapture, { type FaceResult, type Ticket } from "./FaceCapture";
 import { isSlowNetwork } from "@/lib/client/prefetch";
 import QrScanner from "./QrScanner";
+import { readPrintedText } from "@/lib/client/ocr";
 import { enqueue, flush, newActionId, pendingCount } from "@/lib/client/queue";
 import { speakUrdu } from "@/lib/client/voice";
 import { voiceOn } from "@/lib/client/prefs";
@@ -98,9 +99,11 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
     go("document");
   }
 
-  async function onQr(text: string | null) {
+  async function onQr(text: string | null, photo?: Blob | null) {
     setBusy(true);
-    await enqueue(`/api/cases/${caseId}/evidence`, { type: "document", clientActionId: newActionId(), qrText: text });
+    // Also read the printed name on the book (OCR), unless the signal is weak: it is extra evidence only.
+    const ocr = text && photo && !isSlowNetwork() ? await readPrintedText(photo).catch(() => null) : null;
+    await enqueue(`/api/cases/${caseId}/evidence`, { type: "document", clientActionId: newActionId(), qrText: text, ...(ocr ? { ocrText: ocr.text, ocrConfidence: ocr.confidence } : {}) });
     setBusy(false);
     setQueued(pendingCount());
     go("submit");

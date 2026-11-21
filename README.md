@@ -46,6 +46,8 @@ Press "Delete all demo faces" after judging.
 | Decision engine, rule versions, Digital Twin replay | **Real** |
 | Face match (face-api, 128-number descriptors) and liveness (MediaPipe blink / head turn) | **Real**, runs in the browser. Not bank-grade anti-spoofing. |
 | Pension book QR signature check (HMAC) | **Real** |
+| Reading the printed name on the pension book (OCR, Tesseract.js in the browser, files served from our own site) | **Real**, extra evidence only: a clearly read name that differs from the QR sends the case to an officer |
+| Officer desk: open cases, link helpers with recorded permission, accept data corrections (bank/CNIC need two officers) | **Real** (`/officer/families`) |
 | Scam classifier, rulebook answers, explanations (Groq gpt-oss-120b, or Claude when its key is set, plus warning signs) | **Real** AI calls |
 | Officer's AI case assistant (an agent that calls tools) | **Real** AI tool calling (Groq gpt-oss-120b, or Claude); a fixed checklist runs when no key is set or the AI fails |
 | Urdu speech-to-text (Whisper on Groq) and text-to-speech (Azure neural voice) | **Real** services when keys are set; falls back to the phone's own voice |

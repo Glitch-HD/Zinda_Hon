@@ -200,8 +200,27 @@ check(tamper === "refused", "Delete an audit log row directly in the database");
 // --- Bad input
 check((await widow.post(`/api/cases/${zainab.id}/evidence`, { type: "face_match", clientActionId: rid(), descriptor: [1, 2, 3] })).status === 400, "Send a broken face (3 numbers instead of 128)");
 check((await widow.post(`/api/cases/${zainab.id}/evidence`, { type: "liveness", clientActionId: "x'; DROP TABLE \"Case\";--", passed: true, challenges: [] })).status !== 500, "SQL injection text in an ID field");
+// --- New officer desk (cases, helper links, corrections): cross-site, cross-office and wrong-role attempts.
+{
+  const zc = await caseOf("PEN-K-1001");
+  const evil = { origin: "https://evil.example" };
+  check((await sana.call(`/api/cases/${zc.id}/officer`, { method: "POST", headers: evil, body: JSON.stringify({ action: "stop", note: "Forged from another website" }) })).status === 403, "Make a logged-in officer stop a pension from another website (CSRF)");
+  check((await widow.call("/api/consents", { method: "GET" })).ok && (await widow.call(`/api/cases/${zc.id}/appeal`, { method: "POST", headers: { origin: "null" } })).status === 403, "Send a request from a sandboxed page with origin null");
+  const rubId = (await (await rubina.call("/api/auth/me")).json()).id;
+  check((await naveed.post("/api/helper-links", { action: "link", pensionerId: zc.pensionerId, helperId: rubId, fields: ["name"], note: "Linking across offices to see her data." })).status === 404, "Officer of another office links a helper to a Karachi widow");
+  check((await rubina.post("/api/helper-links", { action: "link", pensionerId: zc.pensionerId, helperId: rubId, fields: ["name", "face", "cnic"], note: "Giving myself more access please." })).status === 403, "Helper widens their own permission");
+  check((await rubina.post("/api/cases", { all: true })).status === 403, "Helper opens cases");
+  await widow.post("/api/corrections", { field: "fatherOrHusbandName", newValue: "Abdul Ghafoor" });
+  const corr = (await q(`select id from "DataCorrectionRequest" where status='pending' order by "createdAt" desc limit 1`))[0];
+  if (corr) {
+    check((await naveed.post(`/api/corrections/${corr.id}`, { action: "accept", note: "Accepting from another office." })).status === 404, "Officer of another office changes a Karachi widow's data");
+    check((await auditor.post(`/api/corrections/${corr.id}`, { action: "accept", note: "Auditor trying to change data." })).status === 403, "Auditor (read-only) changes a widow's data");
+    check((await widow.post(`/api/corrections/${corr.id}`, { action: "accept", note: "Accepting my own request now." })).status === 403, "Pensioner approves her own data change");
+  }
+  check((await widow.post("/api/corrections", { field: "cnicMock", newValue: "42101-1234567-1" })).status === 400, "Change a CNIC to a real-looking number");
+}
 const hdr = await fetch(`${B}/login`);
-check(hdr.headers.get("x-frame-options") === "DENY" && Boolean(hdr.headers.get("x-content-type-options")), "Load the site inside another site's frame (clickjacking)");
+check(hdr.headers.get("x-frame-options") === "DENY" && Boolean(hdr.headers.get("x-content-type-options")) && /frame-ancestors 'none'/.test(hdr.headers.get("content-security-policy") ?? ""), "Load the site inside another site's frame (clickjacking)");
 
 console.log(out.join("\n"));
 console.log(`\n${n} attacks, ${holes} hole(s)`);
