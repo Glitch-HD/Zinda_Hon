@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+// Government-portal look. To go back to the previous design, delete this import (and the two gov components below).
+import "./gov-theme.css";
 import RegisterSW from "@/components/RegisterSW";
 import ErrorReporter from "@/components/ErrorReporter";
 import VoicePendingPill from "@/components/VoicePendingPill";
 import TopBar from "@/components/TopBar";
 import VoiceGuide from "@/components/VoiceGuide";
 import { PREFS_BOOT_SCRIPT } from "@/lib/prefs-boot";
+import GovMasthead from "@/components/gov/GovMasthead";
+import GovFooter from "@/components/gov/GovFooter";
 
 export const metadata: Metadata = {
   title: "Zinda Hon (prototype)",
@@ -13,7 +17,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#4b6b34" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0a5c36" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,13 +31,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Noto+Nastaliq+Urdu:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Open+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700&display=swap"
         />
       </head>
       <body className="min-h-screen">
         <TopBar />
-        <div className="bunting" aria-hidden="true" />
+        <GovMasthead />
         <main className="mx-auto max-w-6xl px-4 py-5 md:px-8 md:py-8">{children}</main>
+        <GovFooter />
         <VoiceGuide />
         <RegisterSW />
         <ErrorReporter />

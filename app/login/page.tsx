@@ -102,6 +102,12 @@ export default function LoginPage() {
     else document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  // Footer and menu link "/login#signup" opens the sign-up form directly.
+  useEffect(() => {
+    if (window.location.hash === "#signup") open("register");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function openPensioner() {
     setPrefsRole("PENSIONER");
     open("pensioner");
@@ -243,6 +249,26 @@ export default function LoginPage() {
           </div>
         </section>
       )}
+
+      <section className="gov-figures" aria-label="At a glance">
+        <div><b>3</b><span className="en">steps a year</span><span className="ur">قدم، سال میں ایک بار</span></div>
+        <div><b>~2 min</b><span className="en">from your own home</span><span className="ur">گھر بیٹھے</span></div>
+        <div><b>0</b><span className="en">office visits needed</span><span className="ur">آفس جانے کی ضرورت نہیں</span></div>
+        <div><b>اردو</b><span className="en">voice on every page</span><span className="ur">ہر صفحے پر آواز</span></div>
+      </section>
+
+      <section id="services" className="gov-services">
+        <p className="eyebrow">Online services · آن لائن خدمات</p>
+        <h2>What would you like to do?</h2>
+        <div className="gov-svc-grid">
+          <button type="button" className="gov-svc" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}><span className="gov-svc-ic">👵🏽</span><b className="en">Prove I am alive</b><span className="ur">ثبوتِ حیات دیں</span><small>Face check and pension book, from home</small></button>
+          <button type="button" className="gov-svc" onClick={() => open("register")}><span className="gov-svc-ic">📝</span><b className="en">Create an account</b><span className="ur">اکاؤنٹ بنائیں</span><small>For widows, helpers and shops</small></button>
+          <button type="button" className="gov-svc" onClick={() => open("helper")}><span className="gov-svc-ic">🤝</span><b className="en">Helper log in</b><span className="ur">مددگار</span><small>Act for families who gave permission</small></button>
+          <button type="button" className="gov-svc" onClick={() => open("shopkeeper")}><span className="gov-svc-ic">🏪</span><b className="en">Shop counter</b><span className="ur">دکان</span><small>Assisted proof of life at a local shop</small></button>
+          <a className="gov-svc" href="/check-message"><span className="gov-svc-ic">🛡️</span><b className="en">Is this message a scam?</b><span className="ur">پیغام جانچیں</span><small>Check an SMS or WhatsApp before you reply</small></a>
+          <button type="button" className="gov-svc" onClick={() => open("staff")}><span className="gov-svc-ic">🏛️</span><b className="en">Staff log in</b><span className="ur">عملہ</span><small>Officers, administrators and auditors</small></button>
+        </div>
+      </section>
 
       <section id="how" className="how">
         <p className="eyebrow text-center">How it works · یہ کیسے کام کرتا ہے</p>
