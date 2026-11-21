@@ -59,7 +59,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
       setWho(data);
       const next: Step = data.hasFace ? "face" : "pin";
       setStep(next);
-      void speakUrdu(next === "face" ? SAY.face(data.nameUr ?? "") : `السلام علیکم ${data.nameUr ?? ""}۔ ${SAY.pin}`, next === "face" ? SAY_EN.face(data.name ?? "") : `Hello ${data.name ?? ""}. ${SAY_EN.pin}`);
+      void speakUrdu(next === "face" ? SAY.face(data.nameUr ?? "") : `السلام علیکم ${data.nameUr ?? ""}۔ آپ کا چہرہ ابھی رجسٹر نہیں ہوا۔ ${SAY.pin}`, next === "face" ? SAY_EN.face(data.name ?? "") : `Hello ${data.name ?? ""}. Your face is not registered yet. ${SAY_EN.pin}`);
     } catch {
       setError({ en: "No internet. Please try again.", ur: "انٹرنیٹ نہیں ہے۔ دوبارہ کوشش کریں۔" });
     } finally {
@@ -196,6 +196,12 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
             <p className="ur text-2xl font-semibold">اپنا پن دبائیں یا بولیں</p>
             <p className="en muted">{who.name}: tap or say your 4-digit PIN.</p>
           </div>
+          {!who.hasFace && (
+            <div className="card-soft text-sm" role="note" style={{ border: "1px solid var(--accent)", borderRadius: 14, padding: "10px 12px" }}>
+              <p className="ur" style={{ whiteSpace: "normal" }}>آپ کا چہرہ ابھی رجسٹر نہیں ہوا، اس لیے اس بار پن استعمال کریں۔ پنشن آفس ایک بار آپ کا چہرہ رجسٹر کرے گا، پھر کیمرے سے لاگ اِن ہو گا۔</p>
+              <p className="en">📷 Your face is not registered yet, so use your PIN this time. A pension officer registers your face once (Officer → Enrol faces); after that you log in with the camera.</p>
+            </div>
+          )}
           <div className="flex justify-center gap-4" aria-label={`${pin.length} of 4 digits entered`}>
             {[0, 1, 2, 3].map((i) => <span key={i} className={`pindot ${i < pin.length ? "on" : ""}`} />)}
           </div>
