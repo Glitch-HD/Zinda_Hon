@@ -160,78 +160,95 @@ export default function LoginPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/hero-couple.jpg" alt="" width={1176} height={700} fetchPriority="high" />
               </figure>
-            <div className="hero-card" id="start">
-              {expired && (
-                <div className="hero-card-alert" role="status">
-                  <span className="ur block">حفاظت کے لیے آپ کو لاگ آؤٹ کر دیا گیا۔</span>
-                  <span className="en block text-sm">For your safety you were logged out after 10 minutes without activity.</span>
-                </div>
-              )}
-              <div className="hero-card-head">
-                <span className="hero-card-avatar"><Logo size={34} /></span>
-                <span className="flex-1 min-w-0">
-                  <b className="block">{view === "choose" ? <><span className="en">Who are you?</span> <span className="ur">آپ کون ہیں؟</span></> : view === "pensioner" ? <><span className="en">Pensioner login</span> <span className="ur">پنشنر لاگ اِن</span></> : view === "register" ? <><span className="en">Create account</span> <span className="ur">نیا اکاؤنٹ</span></> : <><span className="en">{FORM_TITLE[view].en}</span> <span className="ur">{FORM_TITLE[view].ur}</span></>}</b>
-                  <span className="text-xs muted"><span className="live-dot" /> Online · tap or speak</span>
-                </span>
-                {view !== "choose" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← <span className="en">Back</span><span className="ur">واپس</span></button>}
-              </div>
-
-              <div className="hero-card-body">
-                {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
-                {view === "register" && (
-                  <div className="space-y-3">
-                    <div className="bubble"><span className="en">The sign-up form is open below. Scroll down, or press the button.</span> <span className="ur">فارم نیچے کھل گیا ہے۔</span></div>
-                    <button type="button" className="btn w-full" data-say="فارم پر جائیں" data-say-en="Go to the form" onClick={() => document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "start" })}>↓ <span className="en">Go to the form</span><span className="ur">فارم پر جائیں</span></button>
-                  </div>
-                )}
-
-                {view === "choose" && (
-                  <>
-                    <div className="bubble"><span className="en">Welcome! Tap who you are, or press the mic and say it.</span> <span className="ur">خوش آمدید! بتائیں آپ کون ہیں، یا مائیک دبا کر بولیں۔</span></div>
-                    <button className="choice-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>
-                      <span className="choice-ic"><Icon name="user" size={28} /></span>
-                      <span className="flex-1 text-left"><span className="ur block text-xl" style={{ lineHeight: 1.8 }}>میں پنشنر ہوں</span><span className="en block font-bold">I get a pension</span><span className="block text-xs" style={{ opacity: .85 }}>No typing. Show your pension book, then your face.</span></span>
-                      <span aria-hidden>→</span>
-                    </button>
-                    <div className="choice-row">
-                      <button className="choice-pill" data-say="میں مددگار ہوں" data-say-en="I help families" onClick={() => open("helper")}><span className="en">I help families</span><span className="ur">مددگار</span></button>
-                      <button className="choice-pill" data-say="میں دکاندار ہوں" data-say-en="I run a shop" onClick={() => open("shopkeeper")}><span className="en">I run a shop</span><span className="ur">دکاندار</span></button>
-                      <button className="choice-pill" data-say="پنشن آفس عملہ" data-say-en="Pension office staff" onClick={() => open("staff")}><span className="en">Pension office</span><span className="ur">عملہ</span></button>
-                    </div>
-                    <button type="button" className="reg-link" data-say="نیا اکاؤنٹ بنائیں" data-say-en="Create a new account" onClick={() => open("register")}><span className="en">New here? <b>Create an account</b></span><span className="ur">نئے ہیں؟ اکاؤنٹ بنائیں</span></button>
-                    <div className="hero-card-mic">
-                      <VoiceCommand
-                        promptUr="بولیں: پنشن، مددگار، یا دکان۔"
-                        promptEn='Say "pension", "helper" or "shop".'
-                        commands={[
-                          { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", confirmEn: "Okay.", run: openPensioner },
-                          { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening helper login.", run: () => open("helper") },
-                          { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening shopkeeper login.", run: () => open("shopkeeper") },
-                        ]}
-                      />
-                    </div>
-                    {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-                  </>
-                )}
-
-                {view !== "choose" && view !== "pensioner" && view !== "register" && (
-                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
-                    <label className="block space-y-1">
-                      <span className="text-sm font-semibold" data-say="اپنا فون نمبر لکھیں" data-say-en="Type your phone number"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
-                      <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
-                    </label>
-                    <label className="block space-y-1">
-                      <span className="text-sm font-semibold" data-say="اپنا پاس ورڈ لکھیں" data-say-en="Type your password"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
-                      <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-                    </label>
-                    {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
-                    <button className="btn w-full" disabled={busy} data-say="لاگ اِن کریں" data-say-en="Log in">{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
-                  </form>
-                )}
-              </div>
-            </div>
+            
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="band signin-band" aria-label="Log in">
+        <div className="signin-wrap">
+          <div className="signin-copy">
+            <p className="eyebrow">Start here · یہاں سے شروع کریں</p>
+            <h2>Who are you?</h2>
+            <p className="ur signin-ur">آپ کون ہیں؟ اپنا بٹن دبائیں یا مائیک دبا کر بولیں۔</p>
+            <p className="muted">Pensioners log in with their pension book and face, no typing needed. Helpers, shops and pension office staff log in with their phone number and password.</p>
+            <ul className="signin-points">
+              <li>No forms for pensioners: show the book, look at the camera</li>
+              <li>Urdu voice reads every button out loud</li>
+              <li>New here? Create an account in a few minutes</li>
+            </ul>
+          </div>
+          <div className="hero-card" id="start">
+                {expired && (
+                  <div className="hero-card-alert" role="status">
+                    <span className="ur block">حفاظت کے لیے آپ کو لاگ آؤٹ کر دیا گیا۔</span>
+                    <span className="en block text-sm">For your safety you were logged out after 10 minutes without activity.</span>
+                  </div>
+                )}
+                <div className="hero-card-head">
+                  <span className="hero-card-avatar"><Logo size={34} /></span>
+                  <span className="flex-1 min-w-0">
+                    <b className="block">{view === "choose" ? <><span className="en">Who are you?</span> <span className="ur">آپ کون ہیں؟</span></> : view === "pensioner" ? <><span className="en">Pensioner login</span> <span className="ur">پنشنر لاگ اِن</span></> : view === "register" ? <><span className="en">Create account</span> <span className="ur">نیا اکاؤنٹ</span></> : <><span className="en">{FORM_TITLE[view].en}</span> <span className="ur">{FORM_TITLE[view].ur}</span></>}</b>
+                    <span className="text-xs muted"><span className="live-dot" /> Online · tap or speak</span>
+                  </span>
+                  {view !== "choose" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => open("choose")}>← <span className="en">Back</span><span className="ur">واپس</span></button>}
+                </div>
+  
+                <div className="hero-card-body">
+                  {view === "pensioner" && <PensionerLogin onBack={() => open("choose")} />}
+                  {view === "register" && (
+                    <div className="space-y-3">
+                      <div className="bubble"><span className="en">The sign-up form is open below. Scroll down, or press the button.</span> <span className="ur">فارم نیچے کھل گیا ہے۔</span></div>
+                      <button type="button" className="btn w-full" data-say="فارم پر جائیں" data-say-en="Go to the form" onClick={() => document.getElementById("signup")?.scrollIntoView({ behavior: "smooth", block: "start" })}>↓ <span className="en">Go to the form</span><span className="ur">فارم پر جائیں</span></button>
+                    </div>
+                  )}
+  
+                  {view === "choose" && (
+                    <>
+                      <div className="bubble"><span className="en">Welcome! Tap who you are, or press the mic and say it.</span> <span className="ur">خوش آمدید! بتائیں آپ کون ہیں، یا مائیک دبا کر بولیں۔</span></div>
+                      <button className="choice-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>
+                        <span className="choice-ic"><Icon name="user" size={28} /></span>
+                        <span className="flex-1 text-left"><span className="ur block text-xl" style={{ lineHeight: 1.8 }}>میں پنشنر ہوں</span><span className="en block font-bold">I get a pension</span><span className="block text-xs" style={{ opacity: .85 }}>No typing. Show your pension book, then your face.</span></span>
+                        <span aria-hidden>→</span>
+                      </button>
+                      <div className="choice-row">
+                        <button className="choice-pill" data-say="میں مددگار ہوں" data-say-en="I help families" onClick={() => open("helper")}><span className="en">I help families</span><span className="ur">مددگار</span></button>
+                        <button className="choice-pill" data-say="میں دکاندار ہوں" data-say-en="I run a shop" onClick={() => open("shopkeeper")}><span className="en">I run a shop</span><span className="ur">دکاندار</span></button>
+                        <button className="choice-pill" data-say="پنشن آفس عملہ" data-say-en="Pension office staff" onClick={() => open("staff")}><span className="en">Pension office</span><span className="ur">عملہ</span></button>
+                      </div>
+                      <button type="button" className="reg-link" data-say="نیا اکاؤنٹ بنائیں" data-say-en="Create a new account" onClick={() => open("register")}><span className="en">New here? <b>Create an account</b></span><span className="ur">نئے ہیں؟ اکاؤنٹ بنائیں</span></button>
+                      <div className="hero-card-mic">
+                        <VoiceCommand
+                          promptUr="بولیں: پنشن، مددگار، یا دکان۔"
+                          promptEn='Say "pension", "helper" or "shop".'
+                          commands={[
+                            { id: "pension", words: ["پنشن", "پینشن", "پنشنر", "بیوہ", "pension", "widow"], confirmUr: "ٹھیک ہے۔", confirmEn: "Okay.", run: openPensioner },
+                            { id: "helper", words: ["مددگار", "مدد", "helper", "madadgar"], confirmUr: "مددگار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening helper login.", run: () => open("helper") },
+                            { id: "shop", words: ["دکان", "دکاندار", "shop", "dukan", "dukaan"], confirmUr: "دکاندار لاگ اِن کھل رہا ہے۔", confirmEn: "Opening shopkeeper login.", run: () => open("shopkeeper") },
+                          ]}
+                        />
+                      </div>
+                      {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
+                    </>
+                  )}
+  
+                  {view !== "choose" && view !== "pensioner" && view !== "register" && (
+                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); login(); }}>
+                      <label className="block space-y-1">
+                        <span className="text-sm font-semibold" data-say="اپنا فون نمبر لکھیں" data-say-en="Type your phone number"><span className="en">Phone number</span> <span className="ur muted">فون نمبر</span></span>
+                        <input className="input" inputMode="tel" placeholder="03XXXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="username" />
+                      </label>
+                      <label className="block space-y-1">
+                        <span className="text-sm font-semibold" data-say="اپنا پاس ورڈ لکھیں" data-say-en="Type your password"><span className="en">Password</span> <span className="ur muted">پاس ورڈ</span></span>
+                        <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+                      </label>
+                      {error && <p role="alert" style={{ color: "var(--danger)" }}>{error}</p>}
+                      <button className="btn w-full" disabled={busy} data-say="لاگ اِن کریں" data-say-en="Log in">{busy ? "…" : <><span className="en">Log in</span><span className="ur">لاگ اِن</span></>}</button>
+                    </form>
+                  )}
+                </div>
+              </div>
         </div>
       </section>
 
@@ -271,6 +288,17 @@ export default function LoginPage() {
         </div>
       </section>
 
+      <section className="band" aria-label="Who it is for">
+        <p className="eyebrow">Who it is for · کس کے لیے</p>
+        <h2>One service, four kinds of people</h2>
+        <div className="who-grid">
+          <div className="who-card"><Icon name="user" size={30} /><h3>Pensioners and widows</h3><p className="ur">پنشنر اور بیوائیں</p><p>Prove you are alive once a year from home, by voice in Urdu, without reading or typing.</p></div>
+          <div className="who-card"><Icon name="users" size={30} /><h3>Helpers and family</h3><p className="ur">مددگار اور گھر والے</p><p>One phone, many families. Act only for those who gave permission; everything is recorded.</p></div>
+          <div className="who-card"><Icon name="store" size={30} /><h3>Local shops</h3><p className="ur">محلے کی دکان</p><p>A trusted shop counter can help an elderly person do the check, with the shop on record.</p></div>
+          <div className="who-card"><Icon name="building" size={30} /><h3>Pension office</h3><p className="ur">پنشن آفس</p><p>Officers see only the hard cases, sorted by risk, with every check and its reason laid out.</p></div>
+        </div>
+      </section>
+
       <section className="band band-green" aria-label="Why it is safe">
         <p className="eyebrow">Safe and fair · محفوظ اور منصفانہ</p>
         <h2>A computer never stops a pension</h2>
@@ -294,6 +322,19 @@ export default function LoginPage() {
               <p className="text-sm muted">{HOW_MORE[i]}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="band band-tint" aria-label="Common questions">
+        <p className="eyebrow">Common questions · عام سوالات</p>
+        <h2>Questions people ask</h2>
+        <div className="faq">
+          <details><summary>What if I cannot read or write?</summary><p>Turn on Voice at the top. Every button speaks in Urdu, and you can answer by speaking. A helper or a local shop can also do it with you.</p></details>
+          <details><summary>Do I have to go to the pension office?</summary><p>No. With your permission, your face is matched to your CNIC photo (simulated NADRA in this prototype). Only if that photo is missing does an officer enrol you, at the office or on a home visit.</p></details>
+          <details><summary>Can the computer stop my pension?</summary><p>Never. If something looks wrong, a pension officer checks your case. Only an officer can stop a pension, and must write the reason, which you can see.</p></details>
+          <details><summary>Who can see my information?</summary><p>Only the pension office, and helpers you allow. Open &quot;My data&quot; to see who has access and take permission back at any time.</p></details>
+          <details><summary>What if there is no internet?</summary><p>Each step is saved on the phone and sent automatically when the signal returns.</p></details>
+          <details><summary>Someone called asking for my PIN. Is it real?</summary><p>No. The pension office never asks for a PIN, OTP or fee. Use &quot;Check a message&quot; to test any SMS or WhatsApp you receive.</p></details>
         </div>
       </section>
 

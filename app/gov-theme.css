@@ -329,3 +329,98 @@ main .text-3xl:empty, main .text-4xl:empty, main .text-5xl:empty, main .text-6xl
   .card { padding: 20px; }
   .hero-full { min-height: 0; }
 }
+
+/* =====================================================================
+   v3: blue and white. Deep navy blocks with white text, white page, bright
+   blue lines. Always light (also when the phone is in dark mode), for contrast.
+   ===================================================================== */
+:root, :root:not([data-theme="light"]) {
+  color-scheme: light;
+  --bg: #ffffff; --bg-2: #eef3fa; --card: #ffffff; --card-2: #f4f7fc; --tint: #f1f5fb;
+  --ink: #111a2b; --muted: #4f5d73; --line: #d9e2ef;
+  --brand: #0b3a75; --brand-2: #1456b8; --brand-soft: #e6eefb; --brand-ink: #ffffff;
+  --accent: #1f7ae0; --accent-soft: #e3effd;
+  --warn: #9a5b00; --danger: #b42318; --ok: #157f3d;
+  --gov-dark: #062a57; --gov-gold: #3d9bff; --hero-gold: #9fd0ff;
+  --indigo: #0b3a75; --indigo-soft: #e6eefb; --teal: #0f6b8f; --teal-soft: #e0f1f8;
+  --marigold: #8a5a00; --marigold-soft: #fbf0d9; --rose: #a8324f; --rose-soft: #f8e3e8;
+  --shadow: 0 1px 2px rgba(10, 30, 70, .06), 0 4px 14px rgba(10, 30, 70, .06);
+  --shadow-lg: 0 4px 10px rgba(10, 30, 70, .08), 0 18px 40px rgba(10, 30, 70, .12);
+  --ring: 0 0 0 3px rgba(31, 122, 224, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+    --bg: #ffffff; --bg-2: #eef3fa; --card: #ffffff; --card-2: #f4f7fc; --tint: #f1f5fb;
+    --ink: #111a2b; --muted: #4f5d73; --line: #d9e2ef;
+    --brand: #0b3a75; --brand-2: #1456b8; --brand-soft: #e6eefb; --brand-ink: #ffffff;
+    --accent: #1f7ae0; --accent-soft: #e3effd; --warn: #9a5b00; --danger: #b42318; --ok: #157f3d;
+    --gov-dark: #062a57; --gov-gold: #3d9bff; --hero-gold: #9fd0ff;
+    --indigo: #0b3a75; --indigo-soft: #e6eefb; --teal: #0f6b8f; --teal-soft: #e0f1f8;
+    --marigold: #8a5a00; --marigold-soft: #fbf0d9; --rose: #a8324f; --rose-soft: #f8e3e8;
+  }
+  :root:not([data-theme="light"]) .gov-name, :root:not([data-theme="light"]) .page-title h1 { color: var(--gov-dark); }
+  :root:not([data-theme="light"]) .gov-menu { background: var(--brand); }
+  :root:not([data-theme="light"]) .gov-svc b { color: var(--gov-dark); }
+  :root:not([data-theme="light"]) .btn-accent { color: var(--brand); }
+}
+html, body { background: #ffffff; color: var(--ink); }
+.topbar-note { color: #cfe6ff; }
+.topbar .seg button.on, .topbar .voice-toggle.on { background: #ffffff; color: var(--brand); }
+.btn-accent, .btn-accent:hover { background: #ffffff; color: var(--brand); border: 2px solid #ffffff; }
+.hero-eyebrow { background: #ffffff; color: var(--brand); }
+.how-n { background: var(--brand); color: #fff; }
+.gov-help-ic { background: var(--brand); }
+.status-ic { background: var(--brand-soft); color: var(--brand); }
+.tile-hero, .hero-panel { background: linear-gradient(135deg, var(--gov-dark), var(--brand-2)); }
+.choice-main { background: var(--brand); }
+.choice-main:hover { background: var(--brand-2); }
+.mic-btn { background: var(--brand); box-shadow: 0 8px 20px rgba(11, 58, 117, .3); }
+
+/* Banner: a full first screen, photo and words only */
+.hero-full { min-height: calc(100vh - 170px); display: flex; align-items: center; background: var(--gov-dark); }
+.hero-inner { width: 100%; padding-top: 40px; padding-bottom: 120px; }
+.hero-shade { background: linear-gradient(90deg, rgba(6,42,87,.97) 0%, rgba(6,42,87,.88) 50%, rgba(6,42,87,.7) 100%); }
+.hero-grid { align-items: center; }
+.hero-visual { justify-items: end; }
+.hero-photo { max-width: 560px; border-color: #ffffff; }
+@media (min-width: 960px) { .hero-copy { padding-top: 0; } }
+
+/* "Who are you?" in its own section under the banner */
+.signin-band { padding-block: 128px; }
+.signin-wrap { display: grid; gap: 64px; align-items: center; grid-template-columns: 1fr minmax(0, 460px); }
+.signin-copy h2 { font-size: clamp(2rem, 4vw, 2.8rem); color: var(--gov-dark); margin: 6px 0 4px; }
+.signin-ur { font-size: 1.4rem; color: var(--brand); }
+.signin-copy .muted { font-size: 1.05rem; margin-top: 12px; max-width: 34rem; }
+.signin-points { margin-top: 28px; display: grid; gap: 14px; }
+.signin-points li { position: relative; padding-left: 30px; font-weight: 600; }
+.signin-points li::before { content: ""; position: absolute; left: 0; top: .45em; width: 14px; height: 14px; border-radius: 3px; background: var(--brand); }
+.signin-band .hero-card { justify-self: stretch; max-width: none; margin: 0; border-top: 5px solid var(--brand); box-shadow: var(--shadow-lg); border: 1px solid var(--line); border-top-width: 5px; border-top-color: var(--brand); }
+@media (max-width: 959px) { .signin-wrap { grid-template-columns: 1fr; gap: 40px; } }
+
+/* Every section gets a lot more room */
+.band { padding-block: 128px; }
+.gov-figures > div { padding: 56px 12px; }
+.gov-services.band, .how.band { padding-block: 128px; }
+.band h2 { margin-bottom: 48px; }
+.band-green { background: var(--brand); }
+.band-green .eyebrow, .trust-grid .ico, .trust-grid .ur { color: var(--hero-gold); }
+.band-tint { background: var(--tint); }
+.who-grid { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.who-card { padding: 32px 28px; border: 1px solid var(--line); border-left: 5px solid var(--brand); border-radius: 6px; background: #fff; box-shadow: var(--shadow); }
+.who-card .ico { color: var(--brand); margin-bottom: 14px; }
+.who-card h3 { font-size: 1.15rem; color: var(--gov-dark); }
+.who-card .ur { color: var(--brand); line-height: 1.9; margin-bottom: 6px; }
+.who-card p:not(.ur) { color: var(--muted); }
+.faq { display: grid; gap: 16px; max-width: 52rem; }
+.faq details { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 0 24px; box-shadow: var(--shadow); }
+.faq summary { cursor: pointer; list-style: none; padding: 22px 0; font-weight: 700; font-size: 1.05rem; color: var(--gov-dark); display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-size: 1.4rem; line-height: 1; color: var(--brand); }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { padding: 0 0 22px; color: var(--muted); }
+.tl { margin-top: 96px; margin-bottom: 32px; }
+@media (max-width: 640px) {
+  .band, .signin-band, .gov-services.band, .how.band { padding-block: 80px; }
+  .hero-full { min-height: calc(100vh - 120px); }
+}
