@@ -30,7 +30,7 @@ const HARD_RISKS = ["death_record_found", "bank_activity_after_death", "cnic_mis
 
 // The human side of "I am not sure": only an officer can stop a pension, and must write a reason.
 const Body = z.object({
-  action: z.enum(["approve", "stop", "ask_more_proof", "assign_to_me"]),
+  action: z.enum(["approve", "stop", "ask_more_proof", "assign_to_me", "reopen"]),
   note: z.string().max(2000).default(""),
 });
 
@@ -44,6 +44,17 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
   let risky: string[] = [];
   if (action === "assign_to_me") {
     await prisma.case.update({ where: { id }, data: { assignedOfficerId: user.id } });
+  } else if (action === "reopen") {
+    // A closed case (approved or stopped) goes back to the review queue, e.g. new facts or an appeal.
+    // It is never re-decided here: approving or stopping again follows all the usual rules.
+    if (!["VERIFIED", "STOPPED"].includes(c.status)) throw new HttpError(409, "Only a closed case can be reopened");
+    if (note.trim().length < 15) throw new HttpError(400, "Write why you are reopening this case (at least 15 characters)");
+    const was = c.status;
+    await prisma.case.update({ where: { id }, data: { status: "WITH_OFFICER", closedAt: null, assignedOfficerId: user.id, priority: Math.max(c.priority, 5), officerNotes: note, riskFlags: c.riskFlags.filter((f) => f !== "approval_needs_second_officer") } });
+    const p = await prisma.pensioner.findUnique({ where: { id: c.pensionerId }, select: { userId: true } });
+    if (p?.userId) await prisma.notification.create({ data: { userId: p.userId, title: "Your case is being checked again", body: was === "STOPPED" ? "A pension officer has reopened your case to check it again." : "A pension officer has reopened this year's case to check something again. Your pension is not stopped." } });
+    await audit({ tenantId: user.tenantId, actorType: "USER", actorId: user.id, actorRole: user.role, action: "officer_reopen", targetType: "case", targetId: id, details: { note, previousStatus: was } });
+    return NextResponse.json({ ok: true });
   } else {
     if (["VERIFIED", "STOPPED"].includes(c.status)) throw new HttpError(409, "This case is already closed");
     if (action === "stop" && note.trim().length < 10) throw new HttpError(400, "Write a reason of at least 10 characters before stopping a pension");

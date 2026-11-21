@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export default function OfficerActions({ caseId, closed, aiSaysInvestigate = false, secondOfficerNeeded = false }: { caseId: string; closed: boolean; aiSaysInvestigate?: boolean; secondOfficerNeeded?: boolean }) {
+export default function OfficerActions({ caseId, closed, closedAs, closedAt, aiSaysInvestigate = false, secondOfficerNeeded = false }: { caseId: string; closed: boolean; closedAs?: string; closedAt?: string | null; aiSaysInvestigate?: boolean; secondOfficerNeeded?: boolean }) {
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -26,7 +26,17 @@ export default function OfficerActions({ caseId, closed, aiSaysInvestigate = fal
     window.location.reload();
   }
 
-  if (closed) return <p className="mt-4 muted">This case is closed.</p>;
+  if (closed) return (
+    <div className="mt-4 space-y-2">
+      <p className="font-semibold" style={{ color: closedAs === "STOPPED" ? "var(--danger)" : "var(--ok)" }}>
+        {closedAs === "STOPPED" ? "⛔ Closed: pension stopped" : "✅ Closed: approved, pension continues"}{closedAt ? ` on ${new Date(closedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : ""}.
+      </p>
+      <p className="text-sm muted">New facts, an appeal, or a mistake? Reopen it: the case goes back to the review queue and is decided again under the usual rules. Your reason is recorded and the pensioner is told.</p>
+      <textarea aria-label="Reason for reopening" className="input" style={{ minHeight: 64, paddingTop: 8 }} placeholder="Why are you reopening this case? (at least 15 characters)" value={note} onChange={(e) => setNote(e.target.value)} />
+      <button className="btn btn-ghost" disabled={busy} onClick={() => act("reopen")}>↩️ Reopen case</button>
+      {msg && <p role="alert" style={{ color: "var(--danger)" }}>{msg}</p>}
+    </div>
+  );
   return (
     <div className="mt-4 space-y-2">
       <textarea id="officer-notes" aria-label="Officer notes" className="input" style={{ minHeight: 80, paddingTop: 8 }} placeholder="Your notes (required to stop a pension)" value={note} onChange={(e) => setNote(e.target.value)} />

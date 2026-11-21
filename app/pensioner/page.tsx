@@ -10,12 +10,13 @@ import { prisma } from "@/lib/db";
 
 export default async function PensionerHome() {
   const user = await pageUser(["PENSIONER"]);
-  const p = await prisma.pensioner.findUnique({ where: { userId: user.id }, include: { cases: { orderBy: { year: "desc" }, take: 1 } } });
+  const p = await prisma.pensioner.findUnique({ where: { userId: user.id }, include: { cases: { orderBy: { year: "desc" }, take: 1, include: { decisions: { orderBy: { createdAt: "desc" }, take: 1, select: { reasonEn: true, reasonUr: true } } } } } });
   const c = p?.cases[0];
   const warning = await areaScamWarning(user.tenantId, p?.area);
   const canStart = c && c.status !== "VERIFIED" && c.status !== "WITH_OFFICER" && c.status !== "STOPPED";
-  const statusUr = c?.status === "VERIFIED" ? "اس سال کا ثبوتِ حیات مکمل ہے" : c?.status === "WITH_OFFICER" ? "پنشن افسر آپ کا کیس دیکھ رہا ہے" : "اس سال کا ثبوتِ حیات باقی ہے";
-  const statusEn = c?.status === "VERIFIED" ? "This year's proof-of-life is done." : c?.status === "WITH_OFFICER" ? "A pension officer is looking at your case." : "This year's proof-of-life is still due.";
+  const statusUr = c?.status === "VERIFIED" ? "اس سال کا ثبوتِ حیات مکمل ہے۔ کیس بند ہو گیا" : c?.status === "STOPPED" ? "آپ کی پنشن روک دی گئی ہے۔ کیس بند ہے" : c?.status === "WITH_OFFICER" ? "پنشن افسر آپ کا کیس دیکھ رہا ہے" : c?.status === "NEEDS_PROOF" ? "پنشن افسر کو آپ سے مزید ثبوت چاہیے" : "اس سال کا ثبوتِ حیات باقی ہے";
+  const statusEn = c?.status === "VERIFIED" ? "This year's proof-of-life is done. Case closed." : c?.status === "STOPPED" ? "Your pension has been stopped. Case closed." : c?.status === "WITH_OFFICER" ? "A pension officer is looking at your case." : c?.status === "NEEDS_PROOF" ? "A pension officer needs more proof from you." : "This year's proof-of-life is still due.";
+  const last = c?.decisions[0];
   return (
     <div className="max-w-4xl mx-auto">
       <Header user={user} />
@@ -25,9 +26,17 @@ export default async function PensionerHome() {
       ) : (
         <div className="space-y-6">
           <div className="card status-arch text-center space-y-2 md:pb-8" data-say={statusUr}>
-            <div className="text-7xl">{c.status === "VERIFIED" ? "✅" : c.status === "WITH_OFFICER" ? "🧑‍💼" : "⏳"}</div>
+            <div className="text-7xl">{c.status === "VERIFIED" ? "✅" : c.status === "STOPPED" ? "⛔" : c.status === "WITH_OFFICER" ? "🧑‍💼" : c.status === "NEEDS_PROOF" ? "📷" : "⏳"}</div>
             <p className="ur text-2xl md:text-3xl">{statusUr}</p>
             <p className="en muted">{c.year}: {statusEn}</p>
+            {(c.status === "VERIFIED" || c.status === "STOPPED") && c.closedAt && <p className="text-sm muted">Closed on {c.closedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>}
+            {c.status === "STOPPED" && (
+              <div className="text-left mt-3 p-3 rounded-xl" style={{ background: "color-mix(in srgb, var(--danger) 8%, transparent)" }}>
+                {last && <><p className="ur" style={{ whiteSpace: "normal" }}>{last.reasonUr}</p><p className="en text-sm">{last.reasonEn}</p></>}
+                <p className="ur mt-2" style={{ whiteSpace: "normal" }}>اگر یہ غلط ہے تو پنشن آفس جائیں یا اپنے مددگار سے کہیں۔ افسر کیس دوبارہ کھول سکتا ہے۔</p>
+                <p className="en text-sm">If this is wrong, visit the pension office or ask your helper. An officer can reopen the case.</p>
+              </div>
+            )}
           </div>
 
           {canStart && (

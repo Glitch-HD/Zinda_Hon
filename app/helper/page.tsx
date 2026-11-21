@@ -40,17 +40,17 @@ export default async function HelperHome() {
           return (
             <div key={p.id} className="card flex flex-col gap-3" style={{ padding: 18 }}>
               <div className="flex items-start gap-3">
-                <div className="text-4xl">{c?.status === "VERIFIED" ? "✅" : c?.status === "WITH_OFFICER" ? "🧑‍💼" : "⏳"}</div>
+                <div className="text-4xl">{c?.status === "VERIFIED" ? "✅" : c?.status === "STOPPED" ? "⛔" : c?.status === "WITH_OFFICER" ? "🧑‍💼" : c?.status === "NEEDS_PROOF" ? "📷" : "⏳"}</div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-lg">{p.name}</div>
                   {p.nameUr && <div className="ur text-lg" style={{ lineHeight: 1.8 }}>{p.nameUr}</div>}
-                  <div className="text-sm muted">{p.pensionNo} · {c ? c.status.replaceAll("_", " ").toLowerCase() : "no case"}</div>
+                  <div className="text-sm muted">{p.pensionNo} · {c ? (c.status === "VERIFIED" ? "approved, case closed" : c.status === "STOPPED" ? "pension stopped, case closed" : c.status.replaceAll("_", " ").toLowerCase()) : "no case"}</div>
                   <div className="text-xs muted mt-1">{consent ? `Permission: ${consent.fields.join(", ")}` : "⛔ Permission withdrawn"}</div>
                 </div>
               </div>
-              {canAct && c && c.status !== "VERIFIED"
+              {canAct && c && c.status !== "VERIFIED" && c.status !== "STOPPED"
                 ? <Link className="btn w-full" href={`/case/${c.id}`} data-say={`${p.nameUr ?? p.name} کے لیے کام کریں`}><span className="en">Act for {p.name.split(" ")[0]}</span><span className="ur">ان کے لیے کام کریں</span></Link>
-                : <span className="badge self-start">{canAct ? "done" : "no permission"}</span>}
+                : <span className={`badge self-start ${c?.status === "STOPPED" ? "badge-danger" : ""}`}>{!canAct ? "no permission" : c?.status === "STOPPED" ? "stopped: ask the office to reopen" : "done for this year"}</span>}
             </div>
           );
         })}

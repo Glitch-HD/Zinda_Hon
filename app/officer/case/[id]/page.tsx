@@ -76,7 +76,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
             </table>
           )}
           {latest && <p className="text-sm mt-2">Confidence {(latest.confidence * 100).toFixed(3)}% vs required {((trace.requiredConfidence ?? 0) * 100).toFixed(3)}% · Rule version {latest.ruleVersion.version}</p>}
-          <OfficerActions caseId={c.id} closed={c.status === "VERIFIED" || c.status === "STOPPED"} aiSaysInvestigate={(saved as { recommendation?: string } | null)?.recommendation === "investigate_stop"} secondOfficerNeeded={c.riskFlags.includes("approval_needs_second_officer")} />
+          <OfficerActions caseId={c.id} closed={c.status === "VERIFIED" || c.status === "STOPPED"} closedAs={c.status} closedAt={c.closedAt?.toISOString() ?? null} aiSaysInvestigate={(saved as { recommendation?: string } | null)?.recommendation === "investigate_stop"} secondOfficerNeeded={c.riskFlags.includes("approval_needs_second_officer")} />
         </div>
       </div>
       <AgentPanel caseId={c.id} initial={initialAgent} />

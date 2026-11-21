@@ -68,6 +68,15 @@ if (ap.status === 202) {
   ok((await officer3.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Second check: saw her at the office with the original book today." }) })).ok, "a different officer confirms the approval");
 } else ok(ap.ok, "a second officer approves with a written check");
 
+// A closed case can be reopened by an officer with a written reason; an open case cannot.
+ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Trying again on a closed case." }) })).status === 409, "a closed case cannot be decided again");
+ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "appeal" }) })).status === 400, "reopening needs a written reason");
+ok((await widow.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "I want my case opened again please." }) })).status === 403, "a pensioner cannot reopen a case herself");
+ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "Family brought new papers to the office; checking again." }) })).ok, "an officer reopens a closed case with a reason");
+const reopened = await (await widow.call(`/api/cases/${caseId}`)).json();
+ok((reopened.case?.status ?? reopened.status) === "WITH_OFFICER", `a reopened case goes back to the officer queue (got ${reopened.case?.status ?? reopened.status})`);
+ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "Family brought new papers to the office; checking again." }) })).status === 409, "an open case cannot be reopened");
+
 // Consent withdrawal really cuts off the helper.
 const consents = (await (await widow.call("/api/consents")).json()).consents;
 const helperConsent = consents.find((c) => c.granteeType === "helper");
