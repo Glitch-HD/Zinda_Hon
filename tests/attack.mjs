@@ -159,6 +159,19 @@ let jar = (await fetch(`${B}/api/auth/pensioner/start`, { method: "POST", header
 let blockedAt = null;
 for (let i = 0; i < 8; i++) { const r2 = await fetch(`${B}/api/auth/pensioner/pin`, { method: "POST", headers: { "content-type": "application/json", cookie: jar }, body: JSON.stringify({ pin: String(1000 + i) }) }); if (r2.status === 429) { blockedAt = i; break; } }
 check(blockedAt !== null && blockedAt <= 5, "Guess a pensioner's 4-digit PIN", `blocked after ${blockedAt} tries`);
+// --- Son holds up his mother's photo: the face matches, and his script just claims "she blinked".
+const zBook = await (await fetch(`${B}/api/auth/pensioner/demo-book?no=PEN-K-1001`)).json();
+const zFace = (await q(`select "enrolledFaceDescriptor" as d from "Pensioner" where "pensionNo"='PEN-K-1001'`))[0]?.d;
+const zJar = (await fetch(`${B}/api/auth/pensioner/start`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ qrText: zBook.qrText }) })).headers.get("set-cookie")?.split(";")[0];
+if (zFace?.length === 128) {
+  const photo = zFace.map((x) => x + 0.01);
+  const noTicket = await fetch(`${B}/api/auth/pensioner/face`, { method: "POST", headers: { "content-type": "application/json", cookie: zJar }, body: JSON.stringify({ descriptor: photo, livenessPassed: true, challenges: [{ action: "blink", done: true, ms: 900 }, { action: "turn_left", done: true, ms: 900 }] }) });
+  check(noTicket.status === 401, "Log in as a widow with her photo and a fake 'liveness passed'", `got ${noTicket.status}`);
+  const tk = await (await fetch(`${B}/api/auth/pensioner/challenge`, { method: "POST", headers: { cookie: zJar } })).json();
+  const wrong = [...tk.sequence].reverse().map((action) => ({ action, done: true, ms: 900 }));
+  const wrongOrder = await fetch(`${B}/api/auth/pensioner/face`, { method: "POST", headers: { "content-type": "application/json", cookie: zJar }, body: JSON.stringify({ descriptor: photo, livenessPassed: true, ticket: tk.token, challenges: wrong }) });
+  check(wrongOrder.status === 401, "Log in with a liveness ticket but not the movements the server asked for", `got ${wrongOrder.status}`);
+}
 const forgedQr = book.qrText.replace(/PEN-K-1012/, "PEN-K-1005");
 check((await fetch(`${B}/api/auth/pensioner/start`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ qrText: forgedQr }) })).status === 400, "Edit a pension book QR to log in as someone else");
 check((await fetch(`${B}/api/auth/pensioner/demo-book?no=PEN-K-1005`)).status === 400, "Ask the demo route for a non-sample pension book");

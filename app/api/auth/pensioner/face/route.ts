@@ -7,14 +7,31 @@ import { ROLE_HOME, setSessionCookie } from "@/lib/auth";
 import { getActiveRule } from "@/lib/rules";
 import { faceDistance } from "@/lib/case-service";
 import { endPensionerLogin, readPensionerLogin } from "@/lib/pensioner-login";
+import { prisma } from "@/lib/db";
+import { followedSequence, verifyTicket } from "@/lib/liveness";
 
 // Step 2 (main path): face + liveness against the face enrolled at the pension office.
 // This only logs her in. The yearly proof-of-life decision checks the face again with its own, stricter rule.
-const Body = z.object({ descriptor: z.array(z.number().finite()).length(128), livenessPassed: z.boolean() });
+// The phone's own "liveness passed" is NOT trusted on its own: it must carry the server-signed, one-time
+// ticket for this login, and the movements must be done in the order the server chose.
+const Body = z.object({
+  descriptor: z.array(z.number().finite()).length(128),
+  livenessPassed: z.boolean(),
+  ticket: z.string().max(600).optional(),
+  challenges: z.array(z.object({ action: z.string().max(20), done: z.boolean(), ms: z.number().nonnegative() })).max(6).default([]),
+});
 
 export const POST = handle(async (req: Request) => {
-  const { descriptor, livenessPassed } = Body.parse(await req.json());
+  const { descriptor, livenessPassed: claimed, ticket, challenges } = Body.parse(await req.json());
   const { user, pensioner } = await readPensionerLogin();
+  const t = verifyTicket(ticket, `login:${pensioner.id}`);
+  let ticketState: string = t.ok ? "ok" : t.reason;
+  if (t.ok) {
+    const used = await prisma.auditLog.findFirst({ where: { targetId: pensioner.id, action: { in: ["login_face", "login_face_failed"] }, details: { path: ["nonce"], equals: t.nonce } }, select: { id: true } });
+    if (used) ticketState = "reused";
+    else if (!followedSequence(t.sequence, challenges)) ticketState = "wrong_order";
+  }
+  const livenessPassed = claimed && ticketState === "ok" && challenges.length >= 2 && challenges.every((c) => c.done && c.ms >= 150);
   await rateLimit(`plogin:face:${pensioner.id}`, 5, 600);
   await rateLimit(`plogin:face:day:${pensioner.id}`, 20, 86400);
   if (pensioner.enrolledFaceDescriptor.length !== 128) {
@@ -26,7 +43,7 @@ export const POST = handle(async (req: Request) => {
   await audit({
     tenantId: pensioner.tenantId, actorType: "USER", actorId: user.id, actorRole: "PENSIONER",
     action: ok ? "login_face" : "login_face_failed", targetType: "pensioner", targetId: pensioner.id,
-    details: { distance: distance === null ? null : Number(distance.toFixed(3)), livenessPassed, threshold: rule.config.face.looseDistance, ruleVersion: rule.version },
+    details: { distance: distance === null ? null : Number(distance.toFixed(3)), livenessPassed, clientSaidPassed: claimed, ticket: ticketState, nonce: t.ok ? t.nonce : null, threshold: rule.config.face.looseDistance, ruleVersion: rule.version },
   });
   if (!ok) {
     return NextResponse.json({

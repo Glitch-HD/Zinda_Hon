@@ -1,3 +1,4 @@
+import AppealButton from "@/components/AppealButton";
 import Icon from "@/components/ui/Icon";
 import Header from "@/components/Header";
 import Option from "@/components/ui/Option";
@@ -35,7 +36,8 @@ export default async function PensionerHome() {
               <div className="text-left mt-3 p-3 rounded-xl" style={{ background: "color-mix(in srgb, var(--danger) 8%, transparent)" }}>
                 {last && <><p className="ur" style={{ whiteSpace: "normal" }}>{last.reasonUr}</p><p className="en text-sm">{last.reasonEn}</p></>}
                 <p className="ur mt-2" style={{ whiteSpace: "normal" }}>اگر یہ غلط ہے تو پنشن آفس جائیں یا اپنے مددگار سے کہیں۔ افسر کیس دوبارہ کھول سکتا ہے۔</p>
-                <p className="en text-sm">If this is wrong, visit the pension office or ask your helper. An officer can reopen the case.</p>
+                <p className="en text-sm">If this is wrong, press the button below, visit the pension office, or ask your helper. A different officer will check it again.</p>
+                <AppealButton caseId={c.id} already={c.riskFlags.includes("appeal_requested")} />
               </div>
             )}
           </div>

@@ -2,7 +2,7 @@
 import Icon from "@/components/ui/Icon";
 import { useRef, useState } from "react";
 import QrScanner from "./QrScanner";
-import FaceCapture, { type FaceResult } from "./FaceCapture";
+import FaceCapture, { type FaceResult, type Ticket } from "./FaceCapture";
 import { speakUrdu } from "@/lib/client/voice";
 import { startListening, spokenDigits, LISTEN_ERROR, type Listening } from "@/lib/client/listen";
 import Info from "./ui/Info";
@@ -77,11 +77,19 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
     else setError({ en: data.error ?? "Sample book not available." });
   }
 
+  // The server chooses the order of movements for this login, so a script cannot just say "she blinked".
+  async function getTicket(): Promise<Ticket | null> {
+    try {
+      const res = await fetch("/api/auth/pensioner/challenge", { method: "POST" });
+      return res.ok ? ((await res.json()) as Ticket) : null;
+    } catch { return null; }
+  }
+
   async function onFace(r: FaceResult) {
     setBusy(true);
     setError(null);
     try {
-      const { res, data } = await post("/api/auth/pensioner/face", { descriptor: r.descriptor, livenessPassed: r.liveness.passed });
+      const { res, data } = await post("/api/auth/pensioner/face", { descriptor: r.descriptor, livenessPassed: r.liveness.passed, ticket: r.ticket ?? undefined, challenges: r.liveness.challenges });
       if (res.ok) { void speakUrdu(SAY.welcome, SAY_EN.welcome); window.location.href = data.home; return; }
       if (data.usePin) { setStep("pin"); void speakUrdu(SAY.pin, SAY_EN.pin); }
       fail(data, "Face check did not pass.");
@@ -182,7 +190,7 @@ export default function PensionerLogin({ onBack }: { onBack: () => void }) {
           <div className="flex justify-end">
             <Info en="We compare your face with the photo taken once at the pension office. You will be asked to blink or turn your head, so a printed photo cannot be used. The photo never leaves your phone." ur="ہم آپ کا چہرہ پنشن آفس میں لی گئی تصویر سے ملاتے ہیں۔ آنکھ جھپکانے یا سر موڑنے کو کہا جائے گا۔ تصویر آپ کے فون سے باہر نہیں جاتی۔" />
           </div>
-          <FaceCapture key={faceKey} onDone={onFace} />
+          <FaceCapture key={faceKey} onDone={onFace} getTicket={getTicket} />
           {busy && <p className="text-center"><span className="en">Checking your face…</span> <span className="ur">چہرہ جانچا جا رہا ہے</span></p>}
           <div className={`grid gap-2 ${error ? "grid-cols-2" : "grid-cols-1"}`}>
             {error && <button className="btn btn-ghost" data-say="دوبارہ کوشش کریں" onClick={() => { setError(null); setFaceKey((k) => k + 1); }}><span className="en">Try again</span><span className="ur">دوبارہ</span></button>}

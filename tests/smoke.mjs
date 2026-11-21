@@ -76,6 +76,12 @@ ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: J
 const reopened = await (await widow.call(`/api/cases/${caseId}`)).json();
 ok((reopened.case?.status ?? reopened.status) === "WITH_OFFICER", `a reopened case goes back to the officer queue (got ${reopened.case?.status ?? reopened.status})`);
 ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "Family brought new papers to the office; checking again." }) })).status === 409, "an open case cannot be reopened");
+// Appeal: she can ask for a re-check from the app; the officer who stopped it may not reopen it.
+ok((await widow.call(`/api/cases/${caseId}/appeal`, { method: "POST" })).status === 409, "an open case cannot be appealed");
+ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "stop", note: "Testing the appeal path in smoke." }) })).ok, "an officer stops the pension");
+ok((await widow.call(`/api/cases/${caseId}/appeal`, { method: "POST" })).ok, "the widow appeals from the app");
+ok((await officer.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "Reopening my own stop decision." }) })).status === 403, "the officer who stopped it cannot handle the appeal");
+ok((await officer3.call(`/api/cases/${caseId}/officer`, { method: "POST", body: JSON.stringify({ action: "reopen", note: "Appeal received; checking it again independently." }) })).ok, "a different officer reopens it on appeal");
 
 // Consent withdrawal really cuts off the helper.
 const consents = (await (await widow.call("/api/consents")).json()).consents;
@@ -162,7 +168,8 @@ const pendingReg = (await (await officer.call("/api/registrations")).json()).reg
 ok(pendingReg, "the officer sees the new sign-up");
 if (pendingReg) {
   ok((await widow.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve" }) })).status === 403, "a pensioner cannot approve sign-ups");
-  ok((await officer.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "" }) })).ok, "the officer approves the sign-up");
+  ok((await officer.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "" }) })).status === 400, "a pensioner sign-up always needs the officer's written check (a son could know her CNIC)");
+  ok((await officer.call(`/api/registrations/${pendingReg.id}`, { method: "POST", body: JSON.stringify({ action: "approve", note: "Called her on the number in her pension file; she confirmed." }) })).ok, "the officer approves the sign-up");
   ok((await login(fatima.phone, fatima.password)).res.ok, "after approval the new pensioner can log in");
   ok(pendingReg.checks.husbandDeathFound === true && pendingReg.checks.husbandNadraSimilarity >= 0.8, "her husband's death and name are checked against the records");
 }

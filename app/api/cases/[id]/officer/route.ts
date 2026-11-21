@@ -20,13 +20,20 @@ async function approvalRisks(caseId: string, pensionerId: string, riskFlags: str
   if (identity.anomalies.includes("bank_activity_after_death")) risks.push("bank_activity_after_death");
   if (identity.duplicates.length) risks.push("duplicate_person_records");
   if (identity.cnicMatch === false) risks.push("cnic_mismatch");
-  if (!face || !live) risks.push("no_proof_of_life_this_year");
+  if (!face || !live) {
+    risks.push("no_proof_of_life_this_year");
+    // A home visit can replace the selfie once. Two years in a row with no live check at all is how a
+    // "she is bedridden" story hides a death, so then a second officer must agree.
+    const c = await prisma.case.findUnique({ where: { id: caseId }, select: { year: true } });
+    const prev = c ? await prisma.case.findFirst({ where: { pensionerId, year: c.year - 1 }, select: { id: true } }) : null;
+    if (prev && !(await prisma.evidence.count({ where: { caseId: prev.id, type: "face_match" } }))) risks.push("no_live_proof_2_years");
+  }
   for (const f of riskFlags) if (!risks.includes(f)) risks.push(f);
   return risks;
 }
 
 /** Risks so serious that one officer alone may not approve: a second, different officer must agree. */
-const HARD_RISKS = ["death_record_found", "bank_activity_after_death", "cnic_mismatch", "duplicate_person_records", "face_numbers_reused", "face_not_from_liveness_check", "face_too_identical_possible_replay", "ai_assistant_said_investigate"];
+const HARD_RISKS = ["death_record_found", "bank_activity_after_death", "cnic_mismatch", "duplicate_person_records", "face_numbers_reused", "face_not_from_liveness_check", "face_too_identical_possible_replay", "ai_assistant_said_investigate", "no_live_proof_2_years"];
 
 // The human side of "I am not sure": only an officer can stop a pension, and must write a reason.
 const Body = z.object({
@@ -49,8 +56,13 @@ export const POST = handle(async (req: Request, ctx: { params: Promise<{ id: str
     // It is never re-decided here: approving or stopping again follows all the usual rules.
     if (!["VERIFIED", "STOPPED"].includes(c.status)) throw new HttpError(409, "Only a closed case can be reopened");
     if (note.trim().length < 15) throw new HttpError(400, "Write why you are reopening this case (at least 15 characters)");
+    // An appeal is a complaint about the officer who stopped it, so that officer may not handle it.
+    if (c.status === "STOPPED" && c.riskFlags.includes("appeal_requested")) {
+      const stop = await prisma.decision.findFirst({ where: { caseId: id, outcome: "OFFICER_STOPPED" }, orderBy: { createdAt: "desc" }, select: { decidedBy: true } });
+      if (stop?.decidedBy === user.id) throw new HttpError(403, "She appealed against your decision, so a different officer must reopen this case.");
+    }
     const was = c.status;
-    await prisma.case.update({ where: { id }, data: { status: "WITH_OFFICER", closedAt: null, assignedOfficerId: user.id, priority: Math.max(c.priority, 5), officerNotes: note, riskFlags: c.riskFlags.filter((f) => f !== "approval_needs_second_officer") } });
+    await prisma.case.update({ where: { id }, data: { status: "WITH_OFFICER", closedAt: null, assignedOfficerId: user.id, priority: Math.max(c.priority, 5), officerNotes: note, riskFlags: c.riskFlags.filter((f) => f !== "approval_needs_second_officer" && f !== "appeal_requested").concat(c.riskFlags.includes("appeal_requested") ? ["reopened_on_appeal"] : []) } });
     const p = await prisma.pensioner.findUnique({ where: { id: c.pensionerId }, select: { userId: true } });
     if (p?.userId) await prisma.notification.create({ data: { userId: p.userId, title: "Your case is being checked again", body: was === "STOPPED" ? "A pension officer has reopened your case to check it again." : "A pension officer has reopened this year's case to check something again. Your pension is not stopped." } });
     await audit({ tenantId: user.tenantId, actorType: "USER", actorId: user.id, actorRole: user.role, action: "officer_reopen", targetType: "case", targetId: id, details: { note, previousStatus: was } });
