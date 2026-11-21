@@ -19,7 +19,7 @@ function CaseTable({ rows }: { rows: Row[] }) {
               <td className="muted">{c.pensioner.pensionNo}</td>
               <td><span className={STATUS_BADGE[c.status]}>{c.status.replaceAll("_", " ").toLowerCase()}</span></td>
               <td>{c.year}</td>
-              <td style={{ textAlign: "right" }}><Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}`}>Open</Link></td>
+              <td style={{ textAlign: "right" }}>{c.status === "VERIFIED" || c.status === "STOPPED" ? <Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}#reopen`}>↩️ View / reopen</Link> : <Link className="btn btn-ghost btn-sm" href={`/officer/case/${c.id}`}>Open</Link>}</td>
             </tr>
           ))}
         </tbody>
@@ -71,6 +71,8 @@ export default async function OfficerQueue() {
   const year = new Date().getFullYear();
   const thisYear = others.filter((c) => c.year === year);
   const earlier = others.filter((c) => c.year !== year);
+  // Stopped first (most likely to need a second look), then the newest.
+  const closedCases = others.filter((c) => c.status === "VERIFIED" || c.status === "STOPPED").sort((a, b) => (a.status === "STOPPED" ? 0 : 1) - (b.status === "STOPPED" ? 0 : 1) || b.year - a.year);
   const dueThisYear = thisYear.filter((c) => c.status !== "VERIFIED" && c.status !== "STOPPED").length;
   const verifiedThisYear = thisYear.filter((c) => c.status === "VERIFIED").length;
 
@@ -130,6 +132,19 @@ export default async function OfficerQueue() {
               </details>
             )}
           </div>
+        </>
+      )}
+
+      {closedCases.length > 0 && (
+        <>
+          <SectionHead title="Closed cases (approved or stopped): open one to reopen it" count={closedCases.length} />
+          <CaseTable rows={closedCases.slice(0, 12)} />
+          {closedCases.length > 12 && (
+            <details className="more mt-3">
+              <summary>Show {closedCases.length - 12} more closed cases</summary>
+              <div className="mt-2"><CaseTable rows={closedCases.slice(12)} /></div>
+            </details>
+          )}
         </>
       )}
 

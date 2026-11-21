@@ -27,7 +27,7 @@ export default function OfficerActions({ caseId, closed, closedAs, closedAt, aiS
   }
 
   if (closed) return (
-    <div className="mt-4 space-y-2">
+    <div id="reopen" className="mt-4 space-y-2">
       <p className="font-semibold" style={{ color: closedAs === "STOPPED" ? "var(--danger)" : "var(--ok)" }}>
         {closedAs === "STOPPED" ? "⛔ Closed: pension stopped" : "✅ Closed: approved, pension continues"}{closedAt ? ` on ${new Date(closedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}` : ""}.
       </p>
