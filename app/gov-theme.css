@@ -495,3 +495,8 @@ html, body { background: var(--bg); color: var(--ink); }
 .faq-ur { display: block; font-weight: 600; color: var(--brand); line-height: 1.9; }
 .faq details > p { padding-bottom: 12px; }
 .gov-svc small.ur { line-height: 1.9; white-space: normal; }
+.signin-listen { margin-top: 36px; display: grid; gap: 10px; justify-items: start; }
+.say-btn-big { min-height: 60px; padding: 0 24px; font-size: 1.05rem; background: var(--brand); color: #fff; border-color: var(--brand); }
+.say-btn-big:hover, .say-btn-big.on { background: var(--brand-2); }
+.bubble-say { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bubble-say .say-btn { margin-top: 0; flex: none; }

@@ -16,9 +16,9 @@ import { setPrefsRole, voiceOn } from "@/lib/client/prefs";
 
 type View = "choose" | "pensioner" | "helper" | "shopkeeper" | "staff" | "register";
 
-const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا سبز بٹن دبائیں، یا مائیک دبا کر بولیں۔";
+const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا نیلا بٹن دبائیں، یا مائیک دبا کر بولیں۔";
 
-const GREETING_EN = "Welcome to Zinda Hon. If you receive a pension, press the big green button, or press the mic and speak.";
+const GREETING_EN = "Welcome to Zinda Hon. If you receive a pension, press the big blue button, or press the mic and speak.";
 
 const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner" | "register">, { en: string; ur: string; icon: string }> = {
   helper: { en: "Helper login", ur: "مددگار لاگ اِن", icon: "🤝" },
@@ -208,6 +208,10 @@ export default function LoginPage() {
               <li>Urdu voice reads every button out loud</li>
               <li>New here? Create an account in a few minutes</li>
             </ul>
+            <div className="signin-listen">
+              <SayButton big ur="آپ کون ہیں؟ اگر آپ پنشن لیتی ہیں تو دائیں طرف والا بڑا نیلا بٹن دبائیں: میں پنشنر ہوں۔ کچھ لکھنا نہیں، صرف پنشن بک دکھائیں اور کیمرے میں دیکھیں۔ مددگار، دکاندار اور پنشن آفس کا عملہ اپنے بٹن دبائیں۔ نئے ہیں تو اکاؤنٹ بنائیں دبائیں۔ آپ نیچے مائیک دبا کر بول بھی سکتی ہیں۔" en="Who are you? If you get a pension, press the big blue button on the right: I get a pension. No typing, just show your pension book and look at the camera. Helpers, shopkeepers and pension office staff press their own button. New here? Press Create an account. You can also press the mic and speak." />
+              <p className="muted text-sm"><span className="en">Turn on <b>Voice</b> at the top and every button you press will also speak.</span> <span className="ur">اوپر آواز کا بٹن چالو کریں تو ہر بٹن بولے گا۔</span></p>
+            </div>
           </div>
           <div className="hero-card" id="start">
                 {expired && (
@@ -236,7 +240,7 @@ export default function LoginPage() {
   
                   {view === "choose" && (
                     <>
-                      <div className="bubble"><span className="en">Welcome! Tap who you are, or press the mic and say it.</span> <span className="ur">خوش آمدید! بتائیں آپ کون ہیں، یا مائیک دبا کر بولیں۔</span></div>
+                      <div className="bubble bubble-say"><span><span className="en">Welcome! Tap who you are, or press the mic and say it.</span> <span className="ur">خوش آمدید! بتائیں آپ کون ہیں، یا مائیک دبا کر بولیں۔</span></span><SayButton ur={GREETING} en={GREETING_EN} /></div>
                       <button className="choice-main" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}>
                         <span className="choice-ic"><Icon name="user" size={28} /></span>
                         <span className="flex-1 text-left"><span className="ur block text-xl" style={{ lineHeight: 1.8 }}>میں پنشنر ہوں</span><span className="en block font-bold">I get a pension</span><span className="block text-xs" style={{ opacity: .85 }}>No typing. Show your pension book, then your face.</span></span>
