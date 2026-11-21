@@ -43,32 +43,36 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default async function OfficerQueue() {
   const user = await pageUser(["OFFICER"]);
-  // Review queue: highest risk first, then lowest confidence, then oldest.
-  const queue = await prisma.case.findMany({
-    where: { tenantId: user.tenantId, status: "WITH_OFFICER" },
-    include: { pensioner: { select: { name: true, pensionNo: true, area: true } }, assignedOfficer: { select: { name: true } } },
-    orderBy: [{ priority: "desc" }, { confidence: "asc" }, { updatedAt: "asc" }],
-  });
-  const others = await prisma.case.findMany({
-    where: { tenantId: user.tenantId, status: { not: "WITH_OFFICER" } },
-    include: { pensioner: { select: { name: true, pensionNo: true } } },
-    orderBy: [{ year: "desc" }, { updatedAt: "desc" }],
-    take: 120,
-  });
-  const signups = await prisma.registration.findMany({ where: { tenantId: user.tenantId, status: "pending" }, orderBy: { createdAt: "asc" }, take: 30 });
-  // Every active pensioner without a face yet: those with their own app account AND those a helper
-  // acts for. (The list column can be empty or NULL, so filter here.)
-  const notEnrolled = (await prisma.pensioner.findMany({
-    where: { tenantId: user.tenantId, status: "active" },
-    select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true },
-    orderBy: { pensionNo: "asc" },
-  })).filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
+  // All lookups at once (each database round trip costs time on the hosted database).
+  const [queue, others, signups, allActive, notes] = await Promise.all([
+    // Review queue: highest risk first, then lowest confidence, then oldest.
+    prisma.case.findMany({
+      where: { tenantId: user.tenantId, status: "WITH_OFFICER" },
+      include: { pensioner: { select: { name: true, pensionNo: true, area: true } }, assignedOfficer: { select: { name: true } } },
+      orderBy: [{ priority: "desc" }, { confidence: "asc" }, { updatedAt: "asc" }],
+    }),
+    prisma.case.findMany({
+      where: { tenantId: user.tenantId, status: { not: "WITH_OFFICER" } },
+      include: { pensioner: { select: { name: true, pensionNo: true } } },
+      orderBy: [{ year: "desc" }, { updatedAt: "desc" }],
+      take: 120,
+    }),
+    prisma.registration.findMany({ where: { tenantId: user.tenantId, status: "pending" }, orderBy: { createdAt: "asc" }, take: 30 }),
+    // Every active pensioner without a face yet: those with their own app account AND those a helper
+    // acts for. (The list column can be empty or NULL, so filter below.)
+    prisma.pensioner.findMany({
+      where: { tenantId: user.tenantId, status: "active" },
+      select: { id: true, name: true, pensionNo: true, enrolledFaceDescriptor: true },
+      orderBy: { pensionNo: "asc" },
+    }),
+    prisma.notification.findMany({ where: { userId: user.id, read: false }, orderBy: { createdAt: "desc" }, take: 5 }),
+  ]);
+  const notEnrolled = allActive.filter((p) => (p.enrolledFaceDescriptor?.length ?? 0) !== 128);
   const year = new Date().getFullYear();
   const thisYear = others.filter((c) => c.year === year);
   const earlier = others.filter((c) => c.year !== year);
   const dueThisYear = thisYear.filter((c) => c.status !== "VERIFIED" && c.status !== "STOPPED").length;
   const verifiedThisYear = thisYear.filter((c) => c.status === "VERIFIED").length;
-  const notes = await prisma.notification.findMany({ where: { userId: user.id, read: false }, orderBy: { createdAt: "desc" }, take: 5 });
 
   return (
     <div>

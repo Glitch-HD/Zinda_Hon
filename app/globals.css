@@ -543,3 +543,8 @@ body { overflow-x: clip; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn-accent, :root:not([data-theme="light"]) .how-n { color: #2b120b; } }
 @media (min-width: 960px) { .hero-grid { grid-template-columns: 1.08fr .92fr; } }
 .hero-title { font-size: clamp(2.4rem, 4.9vw, 4rem); }
+.page-loading { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 50vh; font-weight: 700; color: var(--muted); }
+.page-loading .ur { line-height: 1.8; }
+.page-loading-dot { width: 22px; height: 22px; border-radius: 999px; border: 3px solid var(--brand-soft); border-top-color: var(--brand); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .page-loading-dot { animation-duration: 2s; } }

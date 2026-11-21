@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import PensionerLogin from "@/components/PensionerLogin";
 import RegisterForm from "@/components/RegisterForm";
@@ -57,7 +58,9 @@ const HOW_MORE = [
 ];
 
 export default function LoginPage() {
+  const router = useRouter();
   const [view, setView] = useState<View>("choose");
+  const [opening, setOpening] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -74,17 +77,20 @@ export default function LoginPage() {
 
   async function login(p = phone, pw = password) {
     setBusy(true);
+    setOpening(p);
     setError(null);
     try {
       const res = await fetch("/api/auth/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone: p, password: pw }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Login failed");
-      window.location.href = data.home;
+      // In-app navigation: no full page reload, the app's code is already loaded.
+      router.push(data.home);
+      return;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Login failed. Check your connection.");
-    } finally {
-      setBusy(false);
     }
+    setBusy(false);
+    setOpening(null);
   }
 
   function open(v: View) {
@@ -265,7 +271,7 @@ export default function LoginPage() {
                 {g.items.map((d) => (
                   <button key={d.phone} type="button" className="tl-btn" disabled={busy} onClick={() => login(d.phone, d.pw)}>
                     <span className="tl-ic">{d.icon}</span>
-                    <span className="min-w-0"><span className="tl-name">{d.label}</span><span className="tl-role">{d.role}</span></span>
+                    <span className="min-w-0"><span className="tl-name">{d.label}</span><span className="tl-role">{opening === d.phone ? "Opening…" : d.role}</span></span>
                   </button>
                 ))}
               </div>

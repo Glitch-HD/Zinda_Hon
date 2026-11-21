@@ -13,12 +13,15 @@ import HelperTrustCard from "@/components/HelperTrustCard";
 
 export default async function Admin() {
   const user = await pageUser(["ADMIN"]);
-  const active = await getActiveRule(user.tenantId);
-  const versions = await prisma.ruleVersion.findMany({ where: { tenantId: user.tenantId }, orderBy: { version: "desc" }, include: { _count: { select: { decisions: true } } } });
-  const users = await prisma.user.findMany({ where: { tenantId: user.tenantId }, orderBy: { role: "asc" }, select: { id: true, name: true, role: true, phone: true, active: true } });
-  const keys = await prisma.apiKey.findMany({ where: { tenantId: user.tenantId }, orderBy: { createdAt: "desc" } });
-  const tenant = await prisma.tenant.findUnique({ where: { id: user.tenantId } });
-  const pending = await prisma.ruleChangeRequest.findMany({ where: { tenantId: user.tenantId, status: "pending" }, orderBy: { createdAt: "asc" } });
+  // All lookups at once (each database round trip costs time on the hosted database).
+  const [active, versions, users, keys, tenant, pending] = await Promise.all([
+    getActiveRule(user.tenantId),
+    prisma.ruleVersion.findMany({ where: { tenantId: user.tenantId }, orderBy: { version: "desc" }, include: { _count: { select: { decisions: true } } } }),
+    prisma.user.findMany({ where: { tenantId: user.tenantId }, orderBy: { role: "asc" }, select: { id: true, name: true, role: true, phone: true, active: true } }),
+    prisma.apiKey.findMany({ where: { tenantId: user.tenantId }, orderBy: { createdAt: "desc" } }),
+    prisma.tenant.findUnique({ where: { id: user.tenantId } }),
+    prisma.ruleChangeRequest.findMany({ where: { tenantId: user.tenantId, status: "pending" }, orderBy: { createdAt: "asc" } }),
+  ]);
   const nameOf = new Map(users.map((u) => [u.id, u.name]));
   const trusts = (await Promise.all(users.filter((u) => u.role === "HELPER").map((u) => helperTrust(u.id)))).filter((t) => t !== null).sort((a, b) => a.score - b.score);
   const day = new Date(Date.now() - 86400_000);
