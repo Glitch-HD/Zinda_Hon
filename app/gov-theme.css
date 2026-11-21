@@ -424,3 +424,74 @@ html, body { background: #ffffff; color: var(--ink); }
   .band, .signin-band, .gov-services.band, .how.band { padding-block: 80px; }
   .hero-full { min-height: calc(100vh - 120px); }
 }
+
+/* =====================================================================
+   v4: warm off-white page, charcoal text, navy primary, forest green for
+   "safe / approved", burnt amber for alerts and highlights.
+   ===================================================================== */
+:root, :root:not([data-theme="light"]) {
+  --bg: #FAF8F5; --bg-2: #F2EEE8; --card: #FFFFFF; --card-2: #F6F3EE; --tint: #F2EEE8;
+  --ink: #1A1A1A; --muted: #55524D; --line: #E4DED5;
+  --brand: #1B365D; --brand-2: #264B7F; --brand-soft: #E8EDF4; --brand-ink: #FFFFFF;
+  --forest: #1E4D2B; --forest-soft: #E5EFE7;
+  --accent: #B45309; --accent-soft: #FBEEDF;
+  --warn: #B45309; --danger: #B42318; --ok: #1E4D2B;
+  --gov-dark: #132845; --gov-gold: #B45309; --hero-gold: #F3B562;
+  --indigo: #1B365D; --indigo-soft: #E8EDF4; --teal: #1E4D2B; --teal-soft: #E5EFE7;
+  --marigold: #B45309; --marigold-soft: #FBEEDF;
+  --shadow: 0 1px 2px rgba(26, 26, 26, .05), 0 4px 14px rgba(26, 26, 26, .05);
+  --shadow-lg: 0 4px 10px rgba(26, 26, 26, .07), 0 18px 40px rgba(26, 26, 26, .10);
+  --ring: 0 0 0 3px rgba(180, 83, 9, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #FAF8F5; --bg-2: #F2EEE8; --card: #FFFFFF; --card-2: #F6F3EE; --tint: #F2EEE8;
+    --ink: #1A1A1A; --muted: #55524D; --line: #E4DED5;
+    --brand: #1B365D; --brand-2: #264B7F; --brand-soft: #E8EDF4; --brand-ink: #FFFFFF;
+    --accent: #B45309; --accent-soft: #FBEEDF; --warn: #B45309; --danger: #B42318; --ok: #1E4D2B;
+    --gov-dark: #132845; --gov-gold: #B45309; --hero-gold: #F3B562;
+    --indigo: #1B365D; --indigo-soft: #E8EDF4; --teal: #1E4D2B; --teal-soft: #E5EFE7;
+    --marigold: #B45309; --marigold-soft: #FBEEDF;
+  }
+}
+html, body { background: var(--bg); color: var(--ink); }
+.topbar { border-bottom-color: var(--accent); }
+.topbar-note { color: #F3D2A8; }
+.gov-mast { background: var(--card); }
+.gov-menu { border-bottom-color: var(--accent); }
+.gov-foot { border-top-color: var(--accent); }
+.band-tint { background: var(--tint); }
+.band-green { background: var(--forest); }
+.band-green .eyebrow, .trust-grid .ico, .trust-grid .ur { color: var(--hero-gold); }
+.eyebrow { color: var(--accent); }
+.band-green .eyebrow { color: var(--hero-gold); }
+.gov-services h2 { border-bottom-color: var(--accent); }
+.section-head h2 { border-left-color: var(--accent); }
+.how-n { background: var(--accent); color: #fff; }
+.hero-title em { color: var(--hero-gold); }
+.hero-ur { color: var(--hero-gold); }
+.gov-svc:hover { border-top-color: var(--accent); }
+.stat-warn { border-left-color: var(--accent); }
+.stat-ok { border-left-color: var(--forest); }
+.badge-ok { color: var(--forest); }
+.signin-points li::before { background: var(--accent); }
+.who-card { border-left-color: var(--brand); }
+
+/* Listen buttons on every card */
+.card-wrap { position: relative; display: flex; }
+.card-wrap > .gov-svc { flex: 1; padding-bottom: 64px; }
+.card-wrap > .say-btn { position: absolute; left: 26px; bottom: 20px; }
+.say-btn { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin-top: 14px; padding: 7px 14px; min-height: 40px; border-radius: 4px; border: 1.5px solid var(--brand); background: var(--card); color: var(--brand); font-weight: 700; font-size: .88rem; cursor: pointer; transition: background .15s, color .15s; }
+.say-btn:hover, .say-btn.on { background: var(--brand); color: #fff; }
+.say-btn .ur { line-height: 1.5; }
+.say-btn-light { background: transparent; border-color: rgba(255,255,255,.7); color: #fff; }
+.say-btn-light:hover, .say-btn-light.on { background: #fff; color: var(--forest); }
+.who-card, .trust-grid > div, .how-step { display: flex; flex-direction: column; }
+.who-card .say-btn, .trust-grid .say-btn { margin-top: auto; padding-top: 7px; }
+.who-card > .say-btn, .trust-grid > div > .say-btn { margin-top: 18px; }
+.how-step .say-btn { align-self: center; margin-top: 16px; }
+.who-ur, .who-text-ur, .how-more-ur, .faq-a-ur { line-height: 2; white-space: normal; }
+.who-text-ur { color: var(--muted); }
+.faq-ur { display: block; font-weight: 600; color: var(--brand); line-height: 1.9; }
+.faq details > p { padding-bottom: 12px; }
+.gov-svc small.ur { line-height: 1.9; white-space: normal; }

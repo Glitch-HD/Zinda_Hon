@@ -1,5 +1,6 @@
 "use client";
 import Icon from "@/components/ui/Icon";
+import SayButton from "@/components/ui/SayButton";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
@@ -57,6 +58,35 @@ const HOW_MORE = [
   "Blink and turn your head when asked. Only 128 numbers about your face leave the phone, never the photo.",
   "If everything matches, you are approved at once. If not, a pension officer looks. The computer never stops a pension.",
 ];
+
+const HOW_MORE_UR = [
+  "پنشن بک کے اندر والا کیو آر کوڈ کیمرے کے سامنے رکھیں۔ اس پر آفس کی مہر ہے، اس لیے بدلی ہوئی کتاب پکڑی جاتی ہے۔",
+  "کہنے پر آنکھ جھپکیں اور سر گھمائیں۔ فون سے صرف چہرے کے نمبر جاتے ہیں، تصویر کبھی نہیں۔",
+  "سب ٹھیک ہو تو فوراً منظوری۔ ورنہ پنشن افسر دیکھتا ہے۔ کمپیوٹر کبھی پنشن نہیں روکتا۔",
+];
+
+const WHO = [
+  { icon: "user" as const, en: "Pensioners and widows", ur: "پنشنر اور بیوائیں", text: "Prove you are alive once a year from home, by voice in Urdu, without reading or typing.", textUr: "سال میں ایک بار گھر بیٹھے ثبوتِ حیات دیں، اردو میں بول کر، پڑھنے یا لکھنے کے بغیر۔" },
+  { icon: "users" as const, en: "Helpers and family", ur: "مددگار اور گھر والے", text: "One phone, many families. Act only for those who gave permission; everything is recorded.", textUr: "ایک فون، کئی خاندان۔ صرف ان کے لیے کام کریں جنہوں نے اجازت دی ہے۔ ہر کام ریکارڈ ہوتا ہے۔" },
+  { icon: "store" as const, en: "Local shops", ur: "محلے کی دکان", text: "A trusted shop counter can help an elderly person do the check, with the shop on record.", textUr: "محلے کی بھروسے والی دکان بزرگوں کی جانچ میں مدد کر سکتی ہے، اور دکان کا نام ریکارڈ ہوتا ہے۔" },
+  { icon: "building" as const, en: "Pension office", ur: "پنشن آفس", text: "Officers see only the hard cases, sorted by risk, with every check and its reason laid out.", textUr: "افسر صرف مشکل کیس دیکھتے ہیں، خطرے کے حساب سے ترتیب میں، ہر جانچ اور اس کی وجہ کے ساتھ۔" },
+];
+
+const TRUST = [
+  { icon: "user" as const, en: "An officer decides the hard cases", text: "If anything looks wrong, a trained pension officer checks it. Only an officer can stop a pension, and must write why.", ur: "اگر کچھ غلط لگے تو تربیت یافتہ پنشن افسر خود دیکھتا ہے۔ پنشن صرف افسر روک سکتا ہے، اور اسے وجہ لکھنی ہوتی ہے۔" },
+  { icon: "lock" as const, en: "Your data, your permission", text: "See who can see your information and take permission back at any time. Only numbers describing your face are kept, never the photo.", ur: "دیکھیں کون آپ کی معلومات دیکھ سکتا ہے، اور کسی بھی وقت اجازت واپس لیں۔ صرف چہرے کے نمبر رکھے جاتے ہیں، تصویر کبھی نہیں۔" },
+  { icon: "wifi" as const, en: "Works without internet", text: "Every step is saved on the phone and sent when the signal returns. Urdu voice guides those who cannot read.", ur: "ہر قدم فون پر محفوظ ہوتا ہے اور سگنل آنے پر بھیج دیا جاتا ہے۔ اردو آواز ان کی رہنمائی کرتی ہے جو پڑھ نہیں سکتے۔" },
+];
+
+const FAQ = [
+  { q: "What if I cannot read or write?", qUr: "اگر میں پڑھ لکھ نہیں سکتی تو؟", a: "Turn on Voice at the top. Every button speaks in Urdu, and you can answer by speaking. A helper or a local shop can also do it with you.", aUr: "اوپر آواز کا بٹن چالو کریں۔ ہر بٹن اردو میں بولتا ہے، اور آپ بول کر جواب دے سکتی ہیں۔ کوئی مددگار یا محلے کی دکان بھی آپ کے ساتھ یہ کر سکتی ہے۔" },
+  { q: "Do I have to go to the pension office?", qUr: "کیا مجھے پنشن آفس جانا ہوگا؟", a: "No. With your permission, your face is matched to your CNIC photo (simulated NADRA in this prototype). Only if that photo is missing does an officer enrol you, at the office or on a home visit.", aUr: "نہیں۔ آپ کی اجازت سے آپ کا چہرہ شناختی کارڈ کی تصویر سے ملایا جاتا ہے۔ اگر تصویر نہ ملے تو افسر آفس میں یا گھر آ کر چہرہ رجسٹر کرتا ہے۔" },
+  { q: "Can the computer stop my pension?", qUr: "کیا کمپیوٹر میری پنشن روک سکتا ہے؟", a: "Never. If something looks wrong, a pension officer checks your case. Only an officer can stop a pension, and must write the reason, which you can see.", aUr: "کبھی نہیں۔ کچھ غلط لگے تو پنشن افسر آپ کا کیس دیکھتا ہے۔ پنشن صرف افسر روک سکتا ہے، اور اسے وجہ لکھنی ہوتی ہے جو آپ دیکھ سکتی ہیں۔" },
+  { q: "Who can see my information?", qUr: "میری معلومات کون دیکھ سکتا ہے؟", a: "Only the pension office, and helpers you allow. Open \"My data\" to see who has access and take permission back at any time.", aUr: "صرف پنشن آفس، اور وہ مددگار جنہیں آپ اجازت دیں۔ میری معلومات کھول کر دیکھیں اور کسی بھی وقت اجازت واپس لیں۔" },
+  { q: "What if there is no internet?", qUr: "اگر انٹرنیٹ نہ ہو تو؟", a: "Each step is saved on the phone and sent automatically when the signal returns.", aUr: "ہر قدم فون پر محفوظ ہو جاتا ہے اور سگنل آنے پر خود بھیج دیا جاتا ہے۔" },
+  { q: "Someone called asking for my PIN. Is it real?", qUr: "کسی نے فون کر کے میرا پن مانگا۔ کیا یہ اصلی ہے؟", a: "No. The pension office never asks for a PIN, OTP or fee. Use \"Check a message\" to test any SMS or WhatsApp you receive.", aUr: "نہیں۔ پنشن آفس کبھی پن، کوڈ یا فیس نہیں مانگتا۔ کوئی بھی پیغام آئے تو پیغام جانچیں والا بٹن استعمال کریں۔" },
+];
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -279,12 +309,23 @@ export default function LoginPage() {
         <p className="eyebrow">Online services · آن لائن خدمات</p>
         <h2>What would you like to do?</h2>
         <div className="gov-svc-grid">
-          <button type="button" className="gov-svc" data-say="میں پنشنر ہوں۔" data-say-en="I get a pension" onClick={openPensioner}><span className="gov-svc-ic"><Icon e="👵🏽" size={26} /></span><b className="en">Prove I am alive</b><span className="ur">ثبوتِ حیات دیں</span><small>Face check and pension book, from home</small></button>
-          <button type="button" className="gov-svc" onClick={() => open("register")}><span className="gov-svc-ic"><Icon e="📝" size={26} /></span><b className="en">Create an account</b><span className="ur">اکاؤنٹ بنائیں</span><small>For widows, helpers and shops</small></button>
-          <button type="button" className="gov-svc" onClick={() => open("helper")}><span className="gov-svc-ic"><Icon e="🤝" size={26} /></span><b className="en">Helper log in</b><span className="ur">مددگار</span><small>Act for families who gave permission</small></button>
-          <button type="button" className="gov-svc" onClick={() => open("shopkeeper")}><span className="gov-svc-ic"><Icon e="🏪" size={26} /></span><b className="en">Shop counter</b><span className="ur">دکان</span><small>Assisted proof of life at a local shop</small></button>
-          <a className="gov-svc" href="/check-message"><span className="gov-svc-ic"><Icon e="🛡️" size={26} /></span><b className="en">Is this message a scam?</b><span className="ur">پیغام جانچیں</span><small>Check an SMS or WhatsApp before you reply</small></a>
-          <button type="button" className="gov-svc" onClick={() => open("staff")}><span className="gov-svc-ic"><Icon e="🏛️" size={26} /></span><b className="en">Staff log in</b><span className="ur">عملہ</span><small>Officers, administrators and auditors</small></button>
+          {[
+            { icon: "user" as const, en: "Prove I am alive", ur: "ثبوتِ حیات دیں", hint: "Face check and pension book, from home", hintUr: "چہرے کی جانچ اور پنشن بک، گھر بیٹھے", go: openPensioner },
+            { icon: "doc" as const, en: "Create an account", ur: "اکاؤنٹ بنائیں", hint: "For widows, helpers and shops", hintUr: "بیواؤں، مددگاروں اور دکانداروں کے لیے", go: () => open("register") },
+            { icon: "users" as const, en: "Helper log in", ur: "مددگار لاگ اِن", hint: "Act for families who gave permission", hintUr: "ان خاندانوں کے لیے کام کریں جنہوں نے اجازت دی", go: () => open("helper") },
+            { icon: "store" as const, en: "Shop counter", ur: "دکان", hint: "Assisted proof of life at a local shop", hintUr: "محلے کی دکان پر مدد کے ساتھ ثبوتِ حیات", go: () => open("shopkeeper") },
+            { icon: "shield" as const, en: "Is this message a scam?", ur: "کیا یہ پیغام دھوکہ ہے؟", hint: "Check an SMS or WhatsApp before you reply", hintUr: "جواب دینے سے پہلے پیغام جانچیں", go: () => router.push("/check-message") },
+            { icon: "building" as const, en: "Staff log in", ur: "عملہ لاگ اِن", hint: "Officers, administrators and auditors", hintUr: "افسر، ایڈمن اور آڈیٹر", go: () => open("staff") },
+          ].map((c) => (
+            <div key={c.en} className="card-wrap">
+              <button type="button" className="gov-svc" data-say={c.ur} data-say-en={c.en} onClick={c.go}>
+                <span className="gov-svc-ic"><Icon name={c.icon} size={26} /></span>
+                <b className="en">{c.en}</b><span className="ur">{c.ur}</span>
+                <small className="en">{c.hint}</small><small className="ur">{c.hintUr}</small>
+              </button>
+              <SayButton ur={`${c.ur}۔ ${c.hintUr}۔`} en={`${c.en}. ${c.hint}.`} />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -292,10 +333,14 @@ export default function LoginPage() {
         <p className="eyebrow">Who it is for · کس کے لیے</p>
         <h2>One service, four kinds of people</h2>
         <div className="who-grid">
-          <div className="who-card"><Icon name="user" size={30} /><h3>Pensioners and widows</h3><p className="ur">پنشنر اور بیوائیں</p><p>Prove you are alive once a year from home, by voice in Urdu, without reading or typing.</p></div>
-          <div className="who-card"><Icon name="users" size={30} /><h3>Helpers and family</h3><p className="ur">مددگار اور گھر والے</p><p>One phone, many families. Act only for those who gave permission; everything is recorded.</p></div>
-          <div className="who-card"><Icon name="store" size={30} /><h3>Local shops</h3><p className="ur">محلے کی دکان</p><p>A trusted shop counter can help an elderly person do the check, with the shop on record.</p></div>
-          <div className="who-card"><Icon name="building" size={30} /><h3>Pension office</h3><p className="ur">پنشن آفس</p><p>Officers see only the hard cases, sorted by risk, with every check and its reason laid out.</p></div>
+          {WHO.map((w) => (
+            <div key={w.en} className="who-card">
+              <Icon name={w.icon} size={30} />
+              <h3 className="en">{w.en}</h3><p className="ur who-ur">{w.ur}</p>
+              <p className="en">{w.text}</p><p className="ur who-text-ur">{w.textUr}</p>
+              <SayButton ur={`${w.ur}۔ ${w.textUr}`} en={`${w.en}. ${w.text}`} />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -303,9 +348,14 @@ export default function LoginPage() {
         <p className="eyebrow">Safe and fair · محفوظ اور منصفانہ</p>
         <h2>A computer never stops a pension</h2>
         <div className="trust-grid">
-          <div><Icon name="user" size={34} /><h3>An officer decides the hard cases</h3><p>If anything looks wrong, a trained pension officer checks it. Only an officer can stop a pension, and must write why.</p><p className="ur">مشکل کیس افسر خود دیکھتا ہے۔</p></div>
-          <div><Icon name="lock" size={34} /><h3>Your data, your permission</h3><p>See who can see your information and take permission back at any time. Only numbers describing your face are kept, never the photo.</p><p className="ur">آپ کی معلومات، آپ کی اجازت۔</p></div>
-          <div><Icon name="wifi" size={34} /><h3>Works without internet</h3><p>Every step is saved on the phone and sent when the signal returns. Urdu voice guides those who cannot read.</p><p className="ur">انٹرنیٹ کے بغیر بھی کام کرتا ہے۔</p></div>
+          {TRUST.map((t) => (
+            <div key={t.en}>
+              <Icon name={t.icon} size={34} />
+              <h3 className="en">{t.en}</h3>
+              <p className="en">{t.text}</p><p className="ur">{t.ur}</p>
+              <SayButton light ur={t.ur} en={`${t.en}. ${t.text}`} />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -319,7 +369,9 @@ export default function LoginPage() {
               <div className="how-ic"><Icon e={h.icon} size={30} /></div>
               <div className="ur text-lg font-semibold" style={{ lineHeight: 1.9 }}>{h.ur}</div>
               <div className="en font-semibold">{h.en}</div>
-              <p className="text-sm muted">{HOW_MORE[i]}</p>
+              <p className="text-sm muted en">{HOW_MORE[i]}</p>
+              <p className="ur muted how-more-ur">{HOW_MORE_UR[i]}</p>
+              <SayButton ur={`قدم ${i + 1}۔ ${h.ur}۔ ${HOW_MORE_UR[i]}`} en={`Step ${i + 1}. ${h.en}. ${HOW_MORE[i]}`} />
             </div>
           ))}
         </div>
@@ -329,12 +381,13 @@ export default function LoginPage() {
         <p className="eyebrow">Common questions · عام سوالات</p>
         <h2>Questions people ask</h2>
         <div className="faq">
-          <details><summary>What if I cannot read or write?</summary><p>Turn on Voice at the top. Every button speaks in Urdu, and you can answer by speaking. A helper or a local shop can also do it with you.</p></details>
-          <details><summary>Do I have to go to the pension office?</summary><p>No. With your permission, your face is matched to your CNIC photo (simulated NADRA in this prototype). Only if that photo is missing does an officer enrol you, at the office or on a home visit.</p></details>
-          <details><summary>Can the computer stop my pension?</summary><p>Never. If something looks wrong, a pension officer checks your case. Only an officer can stop a pension, and must write the reason, which you can see.</p></details>
-          <details><summary>Who can see my information?</summary><p>Only the pension office, and helpers you allow. Open &quot;My data&quot; to see who has access and take permission back at any time.</p></details>
-          <details><summary>What if there is no internet?</summary><p>Each step is saved on the phone and sent automatically when the signal returns.</p></details>
-          <details><summary>Someone called asking for my PIN. Is it real?</summary><p>No. The pension office never asks for a PIN, OTP or fee. Use &quot;Check a message&quot; to test any SMS or WhatsApp you receive.</p></details>
+          {FAQ.map((f) => (
+            <details key={f.q}>
+              <summary><span><span className="en">{f.q}</span><span className="ur faq-ur">{f.qUr}</span></span></summary>
+              <p className="en">{f.a}</p><p className="ur faq-a-ur">{f.aUr}</p>
+              <div className="pb-5"><SayButton ur={`${f.qUr} ${f.aUr}`} en={`${f.q} ${f.a}`} /></div>
+            </details>
+          ))}
         </div>
       </section>
 
