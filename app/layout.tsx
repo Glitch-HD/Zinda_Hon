@@ -13,6 +13,7 @@ import GovFooter from "@/components/gov/GovFooter";
 import PageListen from "@/components/PageListen";
 import OfflineBanner from "@/components/OfflineBanner";
 import GuidedTour from "@/components/GuidedTour";
+import NavProgress from "@/components/NavProgress";
 
 export const metadata: Metadata = {
   title: "Zinda Hon (prototype)",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen">
+        <NavProgress />
         <TopBar />
         <GovMasthead />
         <OfflineBanner />
