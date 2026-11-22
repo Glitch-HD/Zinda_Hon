@@ -109,6 +109,48 @@ export default function GuidedTour() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const lit = useRef<Element | null>(null);
+  // Where the card sits: a corner (right or left), or wherever it was dragged. Remembered on this browser.
+  const [side, setSide] = useState<"right" | "left">("right");
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const card = useRef<HTMLElement | null>(null);
+  const drag = useRef<{ dx: number; dy: number } | null>(null);
+  useEffect(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem("zh_tour_place") ?? "null");
+      if (v?.side === "left") setSide("left");
+      if (v?.pos && typeof v.pos.x === "number") setPos(clamp(v.pos));
+    } catch { /* ignore */ }
+    const onResize = () => setPos((p) => (p ? clamp(p) : p));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  function clamp(p: { x: number; y: number }) {
+    const w = card.current?.offsetWidth ?? 420, h = card.current?.offsetHeight ?? 300;
+    return { x: Math.max(4, Math.min(p.x, window.innerWidth - w - 4)), y: Math.max(4, Math.min(p.y, window.innerHeight - Math.min(h, 120))) };
+  }
+  function savePlace(next: { side: "right" | "left"; pos: { x: number; y: number } | null }) {
+    try { localStorage.setItem("zh_tour_place", JSON.stringify(next)); } catch { /* ignore */ }
+  }
+  function onDown(e: React.PointerEvent) {
+    if ((e.target as HTMLElement).closest("button") || !card.current) return;
+    const r = card.current.getBoundingClientRect();
+    drag.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+  function onMove(e: React.PointerEvent) {
+    if (!drag.current) return;
+    setPos(clamp({ x: e.clientX - drag.current.dx, y: e.clientY - drag.current.dy }));
+  }
+  function onUp() {
+    if (!drag.current) return;
+    drag.current = null;
+    setPos((p) => { savePlace({ side, pos: p }); return p; });
+  }
+  function flip() {
+    const n = side === "right" ? "left" : "right";
+    setSide(n); setPos(null); savePlace({ side: n, pos: null });
+  }
 
   useEffect(() => {
     const v = read(KEY);
@@ -198,10 +240,12 @@ export default function GuidedTour() {
     </button>
   );
   return (
-    <aside className="tour-card" aria-label="Guided tour" data-no-voice>
-      <div className="tour-top">
-        <span className="tour-k">Guided tour · stop {step + 1} of {STOPS.length}</span>
+    <aside ref={card} className={`tour-card ${side === "left" && !pos ? "tour-left" : ""}`} aria-label="Guided tour" data-no-voice
+      style={pos ? { left: pos.x, top: pos.y, right: "auto", bottom: "auto" } : undefined}>
+      <div className="tour-top tour-handle" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} title="Drag to move">
+        <span className="tour-k"><span aria-hidden="true" className="tour-grip">⠿</span> Stop {step + 1} of {STOPS.length} · drag to move</span>
         <span className="flex gap-1">
+          <button type="button" className="tour-x" onClick={flip} aria-label="Move the tour card to the other side" title="Move to the other side">⇄</button>
           <button type="button" className="tour-x" onClick={() => setSmall(true)} aria-label="Make the tour card small">–</button>
           <button type="button" className="tour-x" onClick={end} aria-label="End the tour">×</button>
         </span>
