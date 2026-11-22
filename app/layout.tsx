@@ -12,6 +12,7 @@ import GovMasthead from "@/components/gov/GovMasthead";
 import GovFooter from "@/components/gov/GovFooter";
 import PageListen from "@/components/PageListen";
 import OfflineBanner from "@/components/OfflineBanner";
+import GuidedTour from "@/components/GuidedTour";
 
 export const metadata: Metadata = {
   title: "Zinda Hon (prototype)",
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GovMasthead />
         <OfflineBanner />
         <main className="mx-auto max-w-6xl px-4 py-5 md:px-8 md:py-8"><PageListen />{children}</main>
+        <GuidedTour />
         <GovFooter />
         <VoiceGuide />
         <RegisterSW />

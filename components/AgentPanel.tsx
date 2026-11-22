@@ -106,7 +106,7 @@ export default function AgentPanel({ caseId, initial }: { caseId: string; initia
 
   const r = done?.report;
   return (
-    <section className="card mt-4" aria-labelledby="agent-h">
+    <section className="card mt-4" aria-labelledby="agent-h" data-tour="agent">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 id="agent-h" className="font-semibold text-lg">AI case assistant <span className="ur">اے آئی معاون</span></h3>

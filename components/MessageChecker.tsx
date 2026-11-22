@@ -30,7 +30,7 @@ export default function MessageChecker() {
     : { icon: "🧑‍💼", color: "var(--warn)", ur: "ہمیں یقین نہیں، افسر دیکھے گا", en: "Not sure: sent to an officer" };
 
   return (
-    <div className="space-y-4 w-full max-w-2xl mx-auto">
+    <div className="space-y-4 w-full max-w-2xl mx-auto" data-tour="checker">
       <div className="card space-y-3" style={{ padding: 20 }}>
         <div className="flex items-start justify-between gap-2"><h2 className="text-xl font-bold"><span className="ur">کیا یہ پیغام اصلی ہے؟</span><span className="both-only"> </span><span className="en">Is this message real?</span></h2><Info en="Paste the message, or tap the microphone and read it out. We check it against known scam signs and the real pension rules. Real messages never ask for a PIN, OTP or a fee." ur="پیغام یہاں لکھیں یا مائیک دبا کر پڑھ کر سنائیں۔ اصلی پیغام کبھی پن، او ٹی پی یا فیس نہیں مانگتا۔" /></div>
         <textarea className="input" style={{ minHeight: 120, paddingTop: 8 }} placeholder="Paste or speak the message here / پیغام یہاں لکھیں" value={text} onChange={(e) => setText(e.target.value)} />

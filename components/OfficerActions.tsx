@@ -38,7 +38,7 @@ export default function OfficerActions({ caseId, closed, closedAs, closedAt, aiS
     </div>
   );
   return (
-    <div className="mt-4 space-y-2">
+    <div className="mt-4 space-y-2" data-tour="decide">
       <textarea id="officer-notes" aria-label="Officer notes" className="input" style={{ minHeight: 80, paddingTop: 8 }} placeholder="Your notes (required to stop a pension)" value={note} onChange={(e) => setNote(e.target.value)} />
       {aiSaysInvestigate && <p className="text-sm" style={{ color: "var(--danger)" }}>The AI assistant advised investigating before paying. Approving needs your own written check (not the pasted AI notes) and a second officer to confirm.</p>}
       {secondOfficerNeeded && <p className="text-sm" style={{ color: "var(--warn)" }}>Another officer has proposed approving this case. If you have checked it yourself, you can confirm (Approve) or refuse (Stop / Ask for more proof).</p>}

@@ -584,3 +584,30 @@ html[data-lite="1"] .gov-hero, html[data-lite="1"] .hero { background-image: non
 .bar-row > span:first-child .ur { font-size: .78rem; color: var(--muted); }
 .mini-chart h4 .ur { display: block; font-size: .85rem; font-weight: 500; color: var(--muted); }
 .cols > div { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+
+/* Guided tour for judges */
+.tour-fab { position: fixed; right: 20px; bottom: 20px; z-index: 90; display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-radius: 999px; background: #B5541C; color: #fff; border: 0; text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.25); cursor: pointer; max-width: calc(100vw - 40px); }
+.tour-fab b { display: block; font-size: 1rem; }
+.tour-fab small { display: block; font-size: .75rem; opacity: .92; }
+.tour-card { position: fixed; right: 20px; bottom: 20px; z-index: 90; width: 420px; max-width: calc(100vw - 32px); max-height: min(70vh, 640px); overflow-y: auto; background: #fff; color: #13233F; border-radius: 16px; padding: 16px 18px; box-shadow: 0 18px 44px rgba(0,0,0,.3); border: 1px solid var(--line); font-size: .92rem; }
+.tour-card h3 { margin: 4px 0 4px; font-size: 1.15rem; font-weight: 800; }
+.tour-card p { margin: 6px 0; line-height: 1.55; }
+.tour-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tour-k { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #B5541C; }
+.tour-x { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font-size: 1.1rem; line-height: 1; cursor: pointer; color: inherit; }
+.tour-who { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 2px; }
+.tour-who span { font-size: .7rem; padding: 2px 8px; border-radius: 99px; background: #EEF3FA; color: #1B365D; font-weight: 700; }
+.tour-who span.on { background: #1B365D; color: #fff; }
+.tour-as { font-size: .78rem; color: var(--muted); }
+.tour-try { background: #FFF6E0; border-radius: 8px; padding: 6px 10px; }
+.tour-ur { direction: rtl; text-align: right; line-height: 2 !important; color: #475569; white-space: normal; }
+.tour-err { color: #B3261E; font-weight: 600; }
+.tour-bar { height: 6px; border-radius: 99px; background: #E2E8F0; overflow: hidden; margin: 10px 0 8px; }
+.tour-bar > span { display: block; height: 100%; background: #1B365D; }
+.tour-row { display: flex; gap: 8px; justify-content: space-between; }
+.tour-row button { flex: 1; min-height: 42px; border-radius: 10px; font-weight: 700; border: 1px solid #1B365D; background: #fff; color: #1B365D; cursor: pointer; }
+.tour-row button.p { background: #1B365D; color: #fff; }
+.tour-row button:disabled { opacity: .45; cursor: default; }
+.tour-target { outline: 4px solid #F4B400 !important; outline-offset: 6px; border-radius: 12px; scroll-margin: 120px; }
+@media (max-width: 640px) { .tour-card { left: 8px; right: 8px; bottom: 8px; width: auto; max-width: none; max-height: 52vh; } .tour-fab { right: 12px; bottom: 12px; } }
+html[data-lite="1"] .tour-fab, html[data-lite="1"] .tour-card { box-shadow: none !important; }

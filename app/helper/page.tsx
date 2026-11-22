@@ -37,7 +37,7 @@ export default async function HelperHome() {
       {warning && <div className="mb-4"><AreaWarning w={warning} /></div>}
       <div className="mb-4"><FacePrep who="families" /></div>
       {links.length === 0 && <EmptyState icon="users" en="No families linked yet" ur="ابھی کوئی خاندان نہیں جڑا" hint="A pension officer links you to a family, with the family's permission." />}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-tour="families">
         {links.map(({ pensioner: p }) => {
           const consent = p.consents[0];
           const c = p.cases[0];
