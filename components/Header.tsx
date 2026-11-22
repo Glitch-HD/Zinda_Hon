@@ -36,6 +36,7 @@ export default function Header({ user, links = [] }: { user: SessionUser; links?
             <b className="block truncate">{user.name}</b>
             <span className="hud-role"><span className="en">{role.en}</span><span className="ur">{role.ur}</span></span>
           </span>
+          {user.role !== "PENSIONER" && <Link href="/account" className="btn btn-ghost btn-sm" data-say="پاس ورڈ بدلیں" data-say-en="Change password" title="Change password"><span className="en">Password</span><span className="ur">پاس ورڈ</span></Link>}
           <LogoutButton />
         </div>
       </div>

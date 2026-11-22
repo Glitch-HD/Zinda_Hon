@@ -67,6 +67,7 @@ model User {
   phone             String   @unique
   passwordHash      String
   pinHash           String? // 4-digit PIN, the backup login for pensioners when the face check fails
+  sessionVersion    Int      @default(0) // raised when the password or PIN changes: every older login stops working
   preferredLanguage String   @default("ur")
   area              String?
   active            Boolean  @default(true)

@@ -245,6 +245,36 @@ check((await widow.post(`/api/cases/${zainab.id}/evidence`, { type: "liveness", 
     check(enr.ok && r.status === 401, "Sister who looks alike logs in as the widow with her own face", `enrol ${enr.status}, login ${r.status}`);
   }
 }
+// Change PIN / change password.
+{
+  const zRow = (await q(`select "enrolledFaceDescriptor" as d from "Pensioner" where id=$1`, [zainab.pensionerId]))[0];
+  let face = zRow?.d?.length === 128 ? zRow.d : null;
+  if (!face) { face = vec(5); await sana.post(`/api/pensioners/${zainab.pensionerId}/enroll-face`, { descriptor: face }); }
+  const fresh = await login("03026619470", "Zainab786");
+  const pinTry = async (u, body) => { const t = await (await u.post("/api/account/pin/challenge")).json(); return { t, r: await u.post("/api/account/pin", { descriptor: face, livenessPassed: true, ticket: t.token, challenges: doneAll(t), ...body }) }; };
+  const son = await pinTry(fresh, { currentPin: "4826", newPin: "5739", descriptor: vec(99) });
+  check(son.r.status === 401, "Son who saw her PIN changes it with his own face", `got ${son.r.status}`);
+  const weak = await pinTry(fresh, { currentPin: "4826", newPin: "1234" });
+  check(weak.r.status === 400, "Set an easy PIN like 1234", `got ${weak.r.status}`);
+  const wrongOld = await pinTry(fresh, { currentPin: "0000", newPin: "5739" });
+  check(wrongOld.r.status === 401, "Change her PIN without knowing the old one", `got ${wrongOld.r.status}`);
+  check((await fresh.post("/api/account/password", { current: "Zainab786", next: "NewPass12345" })).status === 403, "Pensioner changes password instead (skipping the face check)");
+  const good = await pinTry(fresh, { currentPin: "4826", newPin: "5739" });
+  const fresh2 = await login("03026619470", "Zainab786");
+  const replay = await fresh2.post("/api/account/pin", { currentPin: "5739", newPin: "6284", descriptor: face, livenessPassed: true, ticket: good.t.token, challenges: doneAll(good.t) });
+  check(good.r.ok && replay.status === 401, "Reuse a finished face check to change the PIN again", `first ${good.r.status}, replay ${replay.status}`);
+  const meId = async (u) => (await (await u.call("/api/auth/me")).json()).id;
+  check((await meId(widow)) === null && (await meId(fresh)) === null && (await meId(fresh2)) !== null, "Keep using an older login after the PIN was changed");
+  check((await rubina.post("/api/account/pin", { currentPin: "4826", newPin: "5739", descriptor: face, livenessPassed: true, challenges: [] })).status === 403, "Helper changes a pensioner's PIN");
+  const f1 = await login("03349182746", "Farhan%Help6"), f2 = await login("03349182746", "Farhan%Help6");
+  check((await f1.post("/api/account/password", { current: "wrong-one", next: "Brand9NewPass" })).status === 401, "Change a helper's password without the old one");
+  check((await f1.post("/api/account/password", { current: "Farhan%Help6", next: "short1" })).status === 400, "Set a weak new password");
+  const pc = await f1.post("/api/account/password", { current: "Farhan%Help6", next: "Brand9NewPass" });
+  check(pc.ok && (await meId(f2)) === null, "Stolen second login keeps working after the password change", `change ${pc.status}`);
+  const f3 = await login("03349182746", "Brand9NewPass");
+  const cross = await fetch(`${B}/api/account/password`, { method: "POST", headers: { "content-type": "application/json", origin: "https://evil.example", cookie: f3.cookie }, body: JSON.stringify({ current: "Brand9NewPass", next: "Another9Pass" }) });
+  check(cross.status === 403, "Another website changes the password in the background (CSRF)", `got ${cross.status}`);
+}
 const hdr = await fetch(`${B}/login`);
 check(hdr.headers.get("x-frame-options") === "DENY" && Boolean(hdr.headers.get("x-content-type-options")) && /frame-ancestors 'none'/.test(hdr.headers.get("content-security-policy") ?? ""), "Load the site inside another site's frame (clickjacking)");
 

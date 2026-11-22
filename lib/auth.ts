@@ -22,10 +22,11 @@ export type SessionUser = {
   role: Role;
   name: string;
   actingForPensionerId?: string | null; // Helper Mode: which pensioner the helper is currently serving
+  sv?: number; // session version: a password or PIN change raises it and ends every older login
 };
 
 export async function createSessionToken(user: SessionUser) {
-  return new SignJWT({ tid: user.tenantId, role: user.role, name: user.name, af: user.actingForPensionerId ?? null })
+  return new SignJWT({ tid: user.tenantId, role: user.role, name: user.name, af: user.actingForPensionerId ?? null, sv: user.sv ?? 0 })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
     .setIssuedAt()
@@ -43,6 +44,7 @@ export async function readSessionToken(token: string | undefined): Promise<Sessi
       role: payload.role as Role,
       name: String(payload.name),
       actingForPensionerId: (payload.af as string | null) ?? null,
+      sv: typeof payload.sv === "number" ? payload.sv : 0,
     };
   } catch {
     return null;
@@ -50,7 +52,9 @@ export async function readSessionToken(token: string | undefined): Promise<Sessi
 }
 
 export async function setSessionCookie(user: SessionUser) {
-  const token = await createSessionToken(user);
+  // Always stamp the current session version from the database, so a new login is valid and old ones are not.
+  const sv = user.sv ?? (await prisma.user.findUnique({ where: { id: user.id }, select: { sessionVersion: true } }))?.sessionVersion ?? 0;
+  const token = await createSessionToken({ ...user, sv });
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -71,9 +75,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const jar = await cookies();
   const session = await readSessionToken(jar.get(SESSION_COOKIE)?.value);
   if (!session) return null;
-  const dbUser = await prisma.user.findUnique({ where: { id: session.id }, select: { active: true, role: true, tenantId: true } });
+  const dbUser = await prisma.user.findUnique({ where: { id: session.id }, select: { active: true, role: true, tenantId: true, sessionVersion: true } });
   if (!dbUser || !dbUser.active) return null;
-  return { ...session, role: dbUser.role, tenantId: dbUser.tenantId };
+  // A password or PIN change since this login was made: this login no longer works.
+  if ((session.sv ?? 0) !== dbUser.sessionVersion) return null;
+  return { ...session, role: dbUser.role, tenantId: dbUser.tenantId, sv: dbUser.sessionVersion };
 }
 
 export class HttpError extends Error {
