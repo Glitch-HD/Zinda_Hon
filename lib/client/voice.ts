@@ -144,6 +144,16 @@ export async function speakUrdu(ur: string, en?: string) {
   return any;
 }
 
+/** Speaks Urdu (and English) when Urdu words exist, else only the English words. Used for buttons
+ *  and messages that have no Urdu text, so nothing tapped is ever silent. */
+export async function speakAny(ur: string | undefined, en: string | undefined) {
+  if (ur) return speakUrdu(ur, en);
+  if (!en) return false;
+  stopSpeaking();
+  const my = ++token;
+  try { return await sayOne("en", en, my); } catch { return false; }
+}
+
 /** Speaks and resolves when the speech has finished (or after maxMs), so the microphone does not hear it. */
 export async function speakUrduAndWait(ur: string, maxMs = 8000, en?: string) {
   await Promise.race([speakUrdu(ur, en), new Promise((r) => setTimeout(r, en && getLang() === "both" ? maxMs * 2 : maxMs))]);

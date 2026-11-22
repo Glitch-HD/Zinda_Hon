@@ -1,4 +1,5 @@
 "use client";
+import EmptyState from "@/components/ui/EmptyState";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -127,7 +128,7 @@ export default function FamiliesDesk({ rows, helpers, corrections, noCase, year 
   return (
     <>
       <SectionHead id="corrections" title="Correct-my-data requests" count={corrections.length} sub="Nothing changes until an officer accepts it. Bank account and CNIC changes need two different officers." />
-      {corrections.length === 0 ? <div className="card muted text-center">No requests waiting.</div> : <div className="space-y-3">{corrections.map((c) => <Correction key={c.id} c={c} />)}</div>}
+      {corrections.length === 0 ? <EmptyState icon="file" en="No requests waiting" ur="کوئی درخواست نہیں" /> : <div className="space-y-3">{corrections.map((c) => <Correction key={c.id} c={c} />)}</div>}
 
       <SectionHead id="families" title="Families" count={rows.length} sub={`Open this year's proof-of-life case, and link helpers. ${noCase} active pensioner(s) have no ${year} case yet.`} />
       <div className="flex flex-wrap gap-2 mb-3 items-center">

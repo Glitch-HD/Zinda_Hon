@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getLang, setLang, voiceOn, setVoice, onPrefsChange, type Lang } from "@/lib/client/prefs";
+import { getLang, setLang, voiceOn, setVoice, onPrefsChange, liteOn, setLite, getTextSize, setTextSize, type Lang, type TextSize } from "@/lib/client/prefs";
 import { speakUrdu, stopSpeaking, getVoiceChoice, setVoiceChoice, type VoiceChoice } from "@/lib/client/voice";
 import Info from "./ui/Info";
 
@@ -10,6 +10,8 @@ export default function TopBar() {
   const [voice, setV] = useState(false);
   const [who, setWho] = useState<VoiceChoice>("female");
   const [noVoice, setNoVoice] = useState(false);
+  const [lite, setLiteS] = useState(false);
+  const [size, setSize] = useState<TextSize>("md");
 
   useEffect(() => {
     setWho(getVoiceChoice());
@@ -19,7 +21,7 @@ export default function TopBar() {
   }, []);
 
   useEffect(() => {
-    const sync = () => { setL(getLang()); setV(voiceOn()); };
+    const sync = () => { setL(getLang()); setV(voiceOn()); setLiteS(liteOn()); setSize(getTextSize()); };
     sync();
     return onPrefsChange(sync);
   }, []);
@@ -70,6 +72,18 @@ export default function TopBar() {
             }}
           >
             <span className="en">{who === "female" ? "Female voice" : "Male voice"}</span><span className="ur" style={{ lineHeight: 1.4 }}>{who === "female" ? "خاتون" : "مرد"}</span>
+          </button>
+          <div className="seg" role="group" aria-label="Text size / لکھائی کا سائز">
+            {(["md", "lg", "xl"] as TextSize[]).map((t) => (
+              <button key={t} type="button" aria-pressed={size === t} aria-label={t === "md" ? "Normal text" : t === "lg" ? "Large text" : "Extra large text"} className={size === t ? "on" : ""}
+                onClick={() => { setTextSize(t); void speakUrdu(t === "md" ? "عام لکھائی" : t === "lg" ? "بڑی لکھائی" : "بہت بڑی لکھائی", t === "md" ? "Normal text" : t === "lg" ? "Large text" : "Extra large text"); }}>
+                {t === "md" ? "A" : t === "lg" ? "A+" : "A++"}
+              </button>
+            ))}
+          </div>
+          <button type="button" className={`voice-toggle ${lite ? "on" : ""}`} aria-pressed={lite} title="Lite mode: no photos or animations, for slow 2G phones"
+            onClick={() => { const n = !lite; setLite(n); void speakUrdu(n ? "ہلکا موڈ چالو ہے۔ تصویریں اور حرکت بند، صفحے جلدی کھلیں گے۔" : "ہلکا موڈ بند ہے۔", n ? "Lite mode is on. No photos or animations, pages open faster." : "Lite mode is off."); }}>
+            <span className="en">Lite</span><span className="ur" style={{ lineHeight: 1.4 }}>ہلکا</span>
           </button>
           <Info align="left" en="Voice help reads out every button you tap, in Urdu. Made for people who cannot read." ur="آواز کی مدد چالو کریں تو ہر بٹن دبانے پر وہ اردو میں بتائے گا کہ وہ کیا کرتا ہے۔" />
         </div>

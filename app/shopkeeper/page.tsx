@@ -1,3 +1,4 @@
+import EmptyState from "@/components/ui/EmptyState";
 import Header from "@/components/Header";
 import MessageChecker from "@/components/MessageChecker";
 import { pageUser } from "@/lib/page-auth";
@@ -21,7 +22,7 @@ export default async function Shopkeeper() {
         <MessageChecker />
         <div className="card">
           <h3 className="font-semibold mb-2"><span className="en">Your recent checks</span><span className="ur">آپ کی حالیہ جانچ</span></h3>
-          {mine.length === 0 ? <p className="muted text-sm">Nothing checked yet.</p> : (
+          {mine.length === 0 ? <EmptyState icon="search" en="Nothing checked yet" ur="ابھی کوئی پیغام نہیں جانچا" hint="Messages you check will be listed here." /> : (
             <ul className="text-sm space-y-2">{mine.map((m) => (
               <li key={m.id} className="flex gap-2 items-start">
                 <span className={`badge ${m.label === "scam" ? "badge-danger" : m.label === "genuine" ? "badge-ok" : "badge-warn"}`}>{m.label}</span>

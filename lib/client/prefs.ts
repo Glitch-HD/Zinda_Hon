@@ -48,3 +48,20 @@ export function onPrefsChange(fn: () => void) {
   return () => window.removeEventListener(EVT, fn);
 }
 
+
+// Lite mode (weak 2G phones): no photos, no animations, no extra downloads such as the book reader.
+export function liteOn(): boolean { return read("zh_lite") === "1"; }
+export function setLite(on: boolean) {
+  write("zh_lite", on ? "1" : "0");
+  document.documentElement.dataset.lite = on ? "1" : "0";
+  window.dispatchEvent(new Event(EVT));
+}
+
+// Bigger text for weak eyesight: normal, large (A+) or extra large (A++).
+export type TextSize = "md" | "lg" | "xl";
+export function getTextSize(): TextSize { const v = read("zh_text"); return v === "lg" || v === "xl" ? v : "md"; }
+export function setTextSize(t: TextSize) {
+  write("zh_text", t);
+  document.documentElement.dataset.text = t;
+  window.dispatchEvent(new Event(EVT));
+}

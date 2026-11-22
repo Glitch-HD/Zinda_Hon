@@ -1,3 +1,4 @@
+import EmptyState from "@/components/ui/EmptyState";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
@@ -103,7 +104,7 @@ async function Risky({ tenantId }: { tenantId: string }) {
       return true;
     })
     .slice(0, 100);
-  if (!rows.length) return <div className="card"><p className="muted">No risky actions recorded.</p></div>;
+  if (!rows.length) return <EmptyState icon="shield" en="No risky actions recorded" ur="کوئی خطرناک کارروائی نہیں" />;
   return (
     <div className="card overflow-x-auto">
       <p className="text-sm muted mb-2">Everything a dishonest insider would need to do, in one list. The audit log cannot be edited or deleted, even from the database.</p>
@@ -126,7 +127,7 @@ async function Risky({ tenantId }: { tenantId: string }) {
 // and whether the safety rules had to correct it.
 async function AgentRuns({ tenantId }: { tenantId: string }) {
   const runs = await prisma.agentRun.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 50, include: { case: { select: { year: true, pensioner: { select: { pensionNo: true } } } } } });
-  if (!runs.length) return <div className="card"><p className="muted">No officer has used the AI case assistant yet.</p></div>;
+  if (!runs.length) return <EmptyState icon="user" en="No officer has used the AI case assistant yet" />;
   return (
     <div className="card overflow-x-auto">
       <p className="text-sm muted mb-2">The assistant only reads records and advises. Each tool it called is also a separate AGENT row in the audit log.</p>

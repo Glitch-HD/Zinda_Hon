@@ -5,6 +5,7 @@ import FaceCapture, { type FaceResult, type Ticket } from "./FaceCapture";
 import { isSlowNetwork } from "@/lib/client/prefetch";
 import QrScanner from "./QrScanner";
 import { readPrintedText } from "@/lib/client/ocr";
+import { liteOn } from "@/lib/client/prefs";
 import { enqueue, flush, newActionId, pendingCount } from "@/lib/client/queue";
 import { speakUrdu } from "@/lib/client/voice";
 import { voiceOn } from "@/lib/client/prefs";
@@ -102,7 +103,7 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
   async function onQr(text: string | null, photo?: Blob | null) {
     setBusy(true);
     // Also read the printed name on the book (OCR), unless the signal is weak: it is extra evidence only.
-    const ocr = text && photo && !isSlowNetwork() ? await readPrintedText(photo).catch(() => null) : null;
+    const ocr = text && photo && !isSlowNetwork() && !liteOn() ? await readPrintedText(photo).catch(() => null) : null;
     await enqueue(`/api/cases/${caseId}/evidence`, { type: "document", clientActionId: newActionId(), qrText: text, ...(ocr ? { ocrText: ocr.text, ocrConfidence: ocr.confidence } : {}) });
     setBusy(false);
     setQueued(pendingCount());
@@ -137,17 +138,22 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
     go(askFor.includes("selfie") || askFor.includes("liveness") ? "face" : askFor.includes("document") ? "document" : "submit");
   }
 
-  const stepsDone = { intro: 0, face: 1, document: 2, submit: 3, result: 3 }[step];
 
   if (initialStatus === "VERIFIED") {
     return <div className="card text-center max-w-2xl mx-auto space-y-2" style={{ padding: 28 }}><div className="text-7xl"></div><p className="ur text-2xl">آپ کا اس سال کا ثبوتِ حیات مکمل ہے۔</p><p className="en">Your proof-of-life for this year is complete.</p></div>;
   }
 
-  const STEPS = [
-    { icon: "🙂", ur: "تصویر", en: "Photo" },
-    { icon: "📖", ur: "پنشن بک", en: "Book" },
-    { icon: "📨", ur: "بھیجیں", en: "Send" },
+  // Four step pictures, so someone who cannot read still sees where she is. The face step covers both
+  // "look" and "blink / turn", because the camera asks for both together.
+  const STEPS: { icon: "face" | "eye" | "book" | "send"; ur: string; en: string }[] = [
+    { icon: "face", ur: "دیکھیں", en: "Look" },
+    { icon: "eye", ur: "جھپکیں، مڑیں", en: "Blink, turn" },
+    { icon: "book", ur: "پنشن بک", en: "Book" },
+    { icon: "send", ur: "بھیجیں", en: "Send" },
   ];
+  const done4 = { intro: 0, face: 0, document: 2, submit: 3, result: 4 }[step];
+  const now4 = step === "face" ? [0, 1] : step === "document" ? [2] : step === "submit" ? [3] : step === "intro" ? [0] : [];
+  const shown = Math.min(4, done4 + (now4.length ? 1 : 0));
 
   return (
     <div className="space-y-5 max-w-2xl mx-auto">
@@ -155,13 +161,20 @@ export default function CaseFlow({ caseId, pensionerId, pensionerName, enrolled:
         <span>{online ? <><span className="en">Online</span><span className="both-only"> · </span><span className="ur">آن لائن</span></> : <><span className="en">Offline: steps are saved on this phone</span><span className="ur">انٹرنیٹ نہیں، قدم محفوظ ہیں</span></>}</span>
         {queued > 0 && <span className="badge badge-warn">{queued} <span className="en">step(s) waiting to send</span><span className="ur">قدم بھیجنے باقی</span></span>}
       </div>
-      <div className="grid grid-cols-3 gap-3" aria-label={`Step ${stepsDone} of 3`}>
-        {STEPS.map((st, i) => (
-          <div key={st.en} className="text-center rounded-2xl py-3" style={{ background: i < stepsDone ? "var(--brand)" : "var(--card)", color: i < stepsDone ? "var(--brand-ink)" : "var(--ink)", border: "1px solid var(--line)" }}>
-            <div className="flex justify-center"><Icon e={i < stepsDone ? "" : st.icon} size={28} /></div>
-            <div className="text-xs font-semibold"><span className="ur" style={{ lineHeight: 1.8 }}>{st.ur}</span><span className="both-only"> </span><span className="en">{st.en}</span></div>
-          </div>
-        ))}
+      <div>
+        <div className="flex justify-between text-sm font-semibold mb-1"><span><span className="en">Step {Math.max(1, shown)} of 4</span> <span className="ur" dir="rtl">قدم {Math.max(1, shown)}/4</span></span>{step === "result" && <span className="en">Done</span>}</div>
+        <div className="step-bar" aria-hidden="true"><span style={{ width: `${(done4 / 4) * 100}%` }} /></div>
+        <div className="step-pics" role="list" aria-label={`Step ${Math.max(1, shown)} of 4`}>
+          {STEPS.map((st, i) => {
+            const cls = i < done4 ? "done" : now4.includes(i) ? "now" : "";
+            return (
+              <div key={st.en} role="listitem" className={`step-pic ${cls}`} data-say={st.ur} aria-current={cls === "now" ? "step" : undefined}>
+                <Icon name={i < done4 ? "check" : st.icon} size={30} />
+                <span><span className="ur" style={{ lineHeight: 1.7 }}>{st.ur}</span><span className="both-only"> </span><span className="en">{st.en}</span></span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {step === "intro" && (

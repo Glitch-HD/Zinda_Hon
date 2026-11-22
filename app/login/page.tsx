@@ -20,6 +20,8 @@ type View = "choose" | "pensioner" | "helper" | "shopkeeper" | "staff" | "regist
 
 const GREETING = "زندہ ہوں میں خوش آمدید۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا نیلا بٹن دبائیں، یا مائیک دبا کر بولیں۔";
 
+const FIRST_GREETING = "السلام علیکم، زندہ ہوں میں خوش آمدید۔ یہ ایپ آپ سے بات کرتی ہے، پڑھنا ضروری نہیں۔ کسی بھی بٹن کو چھوئیں تو وہ بتائے گا کہ وہ کیا کرتا ہے۔ اگر آپ پنشن لیتی ہیں تو سب سے بڑا نیلا بٹن دبائیں۔ اگر آپ کسی اور کی مدد کرتے ہیں تو مددگار والا خانہ دبائیں۔";
+const FIRST_GREETING_EN = "Hello, welcome to Zinda Hon. This app talks to you, you do not need to read. Touch any button and it will tell you what it does. If you receive a pension, press the big blue button. If you help someone else, press the helper box.";
 const GREETING_EN = "Welcome to Zinda Hon. If you receive a pension, press the big blue button, or press the mic and speak.";
 
 const FORM_TITLE: Record<Exclude<View, "choose" | "pensioner" | "register">, { en: string; ur: string; icon: string }> = {
@@ -113,7 +115,11 @@ export default function LoginPage() {
   useEffect(() => {
     setPrefsRole("guest");
     if (!voiceOn()) return;
-    const t = setTimeout(() => void speakUrdu(GREETING, GREETING_EN), 700);
+    // The very first visit on this phone gets a fuller welcome that explains how the page works;
+    // later visits get the short one.
+    let first = false;
+    try { first = !localStorage.getItem("zh_greeted"); localStorage.setItem("zh_greeted", "1"); } catch { /* private mode */ }
+    const t = setTimeout(() => void (first ? speakUrdu(FIRST_GREETING, FIRST_GREETING_EN) : speakUrdu(GREETING, GREETING_EN)), 700);
     return () => clearTimeout(t);
   }, []);
 

@@ -10,6 +10,8 @@ import VoiceGuide from "@/components/VoiceGuide";
 import { PREFS_BOOT_SCRIPT } from "@/lib/prefs-boot";
 import GovMasthead from "@/components/gov/GovMasthead";
 import GovFooter from "@/components/gov/GovFooter";
+import PageListen from "@/components/PageListen";
+import OfflineBanner from "@/components/OfflineBanner";
 
 export const metadata: Metadata = {
   title: "Zinda Hon (prototype)",
@@ -37,7 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         <TopBar />
         <GovMasthead />
-        <main className="mx-auto max-w-6xl px-4 py-5 md:px-8 md:py-8">{children}</main>
+        <OfflineBanner />
+        <main className="mx-auto max-w-6xl px-4 py-5 md:px-8 md:py-8"><PageListen />{children}</main>
         <GovFooter />
         <VoiceGuide />
         <RegisterSW />

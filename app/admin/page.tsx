@@ -1,3 +1,4 @@
+import OfficeCharts from "@/components/OfficeCharts";
 import Header from "@/components/Header";
 import ResetDemo from "@/components/ResetDemo";
 import RuleEditor from "@/components/RuleEditor";
@@ -44,6 +45,8 @@ export default async function Admin() {
         <Stat n={errors.total} label="Errors in the last 24 h" icon="🩺" tone={errors.total ? "danger" : "ok"} />
         <Stat n={trusts.filter((t) => t.level !== "good").length} label="Helpers to watch" icon="🤝" tone={trusts.some((t) => t.level === "risky") ? "danger" : "warn"} />
       </div>
+      <OfficeCharts tenantId={user.tenantId} />
+
       <nav className="pillnav" aria-label="Sections">
         <a href="#rules">Rules</a><a href="#approvals">Approvals</a><a href="#health">Health</a><a href="#history">History</a><a href="#helpers">Helpers</a><a href="#users">Users</a><a href="#reset">Reset demo</a><a href="#keys">API keys</a>
       </nav>

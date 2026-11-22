@@ -1,4 +1,7 @@
+import EmptyState from "@/components/ui/EmptyState";
 import Icon from "@/components/ui/Icon";
+import SayButton from "@/components/ui/SayButton";
+import { TrafficDot } from "@/components/TrafficLight";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
@@ -33,6 +36,7 @@ export default async function HelperHome() {
       </div>
       {warning && <div className="mb-4"><AreaWarning w={warning} /></div>}
       <div className="mb-4"><FacePrep who="families" /></div>
+      {links.length === 0 && <EmptyState icon="users" en="No families linked yet" ur="ابھی کوئی خاندان نہیں جڑا" hint="A pension officer links you to a family, with the family's permission." />}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {links.map(({ pensioner: p }) => {
           const consent = p.consents[0];
@@ -47,6 +51,7 @@ export default async function HelperHome() {
                   {p.nameUr && <div className="ur text-lg" style={{ lineHeight: 1.8 }}>{p.nameUr}</div>}
                   <div className="text-sm muted">{p.pensionNo} · {c ? (c.status === "VERIFIED" ? "approved, case closed" : c.status === "STOPPED" ? "pension stopped, case closed" : c.status.replaceAll("_", " ").toLowerCase()) : "no case"}</div>
                   <div className="text-xs muted mt-1">{consent ? `Permission: ${consent.fields.join(", ")}` : "Permission withdrawn"}</div>
+                  <div className="flex items-center gap-3 mt-2 flex-wrap"><TrafficDot status={c?.status} /><SayButton ur={sayUr(p.nameUr ?? p.name, c?.status)} en={sayEn(p.name, c?.status)} /></div>
                 </div>
               </div>
               {canAct && c && c.status !== "VERIFIED" && c.status !== "STOPPED"
@@ -58,4 +63,13 @@ export default async function HelperHome() {
       </div>
     </div>
   );
+}
+
+function sayUr(name: string, status?: string) {
+  const t = status === "VERIFIED" ? "اس سال کا ثبوتِ حیات مکمل ہے" : status === "STOPPED" ? "پنشن رکی ہوئی ہے، دفتر سے دوبارہ کھلوائیں" : status === "WITH_OFFICER" ? "افسر کیس دیکھ رہا ہے" : status === "NEEDS_PROOF" ? "افسر کو مزید ثبوت چاہیے" : status ? "ثبوتِ حیات باقی ہے" : "کوئی کیس نہیں";
+  return `${name}: ${t}۔`;
+}
+function sayEn(name: string, status?: string) {
+  const t = status === "VERIFIED" ? "this year's proof of life is done" : status === "STOPPED" ? "pension stopped, ask the office to reopen" : status === "WITH_OFFICER" ? "an officer is checking the case" : status === "NEEDS_PROOF" ? "the officer needs more proof" : status ? "proof of life is still due" : "no case";
+  return `${name}: ${t}.`;
 }

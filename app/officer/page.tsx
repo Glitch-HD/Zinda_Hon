@@ -1,3 +1,6 @@
+import EmptyState from "@/components/ui/EmptyState";
+import OfficeCharts from "@/components/OfficeCharts";
+import SayButton from "@/components/ui/SayButton";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
@@ -96,12 +99,14 @@ export default async function OfficerQueue() {
         <Stat n={notEnrolled.length} label="Need a face visit" icon="📷" tone={notEnrolled.length ? "warn" : "ok"} />
       </div>
 
+      <OfficeCharts tenantId={user.tenantId} />
+
       {notes.length > 0 && (
-        <div className="card card-soft mb-4 text-sm"><b>{notes.length} new:</b> {notes.map((n) => n.body).join(" · ")}</div>
+        <div className="card card-soft mb-4 text-sm bubble-say"><div><b>{notes.length} new:</b> {notes.map((n) => n.body).join(" · ")}</div><SayButton ur="" en={notes.map((n) => `${n.title}. ${n.body}`).join(" ")} /></div>
       )}
 
       <SectionHead title="Review queue" count={queue.length} sub="Sorted by risk, then lowest confidence. Only an officer can approve or stop these." />
-      {queue.length === 0 && <div className="card text-center muted" style={{ padding: 28 }}>Nothing waiting. Cases the AI is not sure about will appear here.</div>}
+      {queue.length === 0 && <EmptyState icon="check" en="Nothing waiting" ur="کوئی کیس انتظار میں نہیں" hint="Cases the AI is not sure about will appear here." />}
       {queue.map((c) => (
         <div key={c.id} className="qcard" style={{ borderInlineStartColor: c.priority >= 10 ? "var(--danger)" : "var(--accent)" }}>
           <div className="avatar">{initials(c.pensioner.name)}</div>

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { speakUrduAndWait, stopSpeaking } from "@/lib/client/voice";
+import { speakAny, speakUrduAndWait, stopSpeaking } from "@/lib/client/voice";
 import Icon from "./Icon";
 
 // Reads a card aloud (Urdu first, English if the device has no Urdu voice), for people who cannot read.
@@ -16,7 +16,7 @@ export default function SayButton({ ur, en, light = false, big = false }: { ur: 
         e.preventDefault(); e.stopPropagation();
         if (on) { stopSpeaking(); setOn(false); return; }
         setOn(true);
-        try { await speakUrduAndWait(ur, 20000, en); } finally { setOn(false); }
+        try { if (ur) await speakUrduAndWait(ur, 20000, en); else await speakAny(undefined, en); } finally { setOn(false); }
       }}
     >
       <Icon name={on ? "stop" : "speaker"} size={big ? 26 : 18} />

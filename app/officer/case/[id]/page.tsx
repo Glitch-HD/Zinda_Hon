@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
+import SayButton from "@/components/ui/SayButton";
 import OfficerActions from "@/components/OfficerActions";
 import AgentPanel from "@/components/AgentPanel";
 import { pageUser } from "@/lib/page-auth";
@@ -93,7 +94,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
           <thead><tr><th>When</th><th>Outcome</th><th>By</th><th>Rule</th><th>Reason given to pensioner</th></tr></thead>
           <tbody>
             {c.decisions.map((d) => (
-              <tr key={d.id}><td>{d.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td><td>{d.outcome}</td><td>{d.decidedBy === "ai" ? "AI engine" : "Officer"}</td><td>v{d.ruleVersion.version}</td><td className="text-sm">{d.reasonEn}<br /><span className="ur">{d.reasonUr}</span></td></tr>
+              <tr key={d.id}><td>{d.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td><td>{d.outcome}</td><td>{d.decidedBy === "ai" ? "AI engine" : "Officer"}</td><td>v{d.ruleVersion.version}</td><td className="text-sm">{d.reasonEn}<br /><span className="ur">{d.reasonUr}</span><div className="mt-1"><SayButton ur={d.reasonUr} en={d.reasonEn} /></div></td></tr>
             ))}
           </tbody>
         </table>
