@@ -6,6 +6,17 @@
 
 Built for Coder's Cup '26, Hagrid's Hackathon: *The Last Mile: AI on Public Rails*.
 
+## Team
+
+| Member | Role |
+| --- | --- |
+| Hammad Ahmed (team lead) | Product design, AI prompting, system architecture and security design |
+| Manahil Sadiq | Quality testing of every role, scam-check testing and documentation |
+| Tihaam Tanweer | AI-assisted development, deployment and demo video |
+| Aaliyaan Ameen | Research and user needs (pensioner, shopkeeper, helper), slides |
+
+Built with AI coding assistance, directed and tested by the team.
+
 ## The three people we serve
 
 | Person in the brief | In Zinda Hon | What they do |
