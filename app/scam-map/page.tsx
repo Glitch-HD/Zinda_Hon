@@ -1,3 +1,4 @@
+import { pktDay } from "@/lib/time";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
@@ -17,7 +18,7 @@ export default async function ScamMap({ searchParams }: { searchParams: Promise<
   };
   const areas = by((m) => m.area ?? "Unknown");
   const types = by((m) => ((m.reasons as { ai?: { scam_type?: string } }).ai?.scam_type ?? "unclassified").replaceAll("_", " "));
-  const days = by((m) => m.createdAt.toISOString().slice(0, 10)).sort((a, b) => a[0].localeCompare(b[0]));
+  const days = by((m) => pktDay(m.createdAt)).sort((a, b) => a[0].localeCompare(b[0]));
   const max = Math.max(1, ...areas.map((a) => a[1]), ...types.map((t) => t[1]), ...days.map((d) => d[1]));
   const Bars = ({ rows }: { rows: [string, number][] }) => (
     <div className="space-y-1">{rows.map(([k, v]) => (

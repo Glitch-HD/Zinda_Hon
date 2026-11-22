@@ -1,3 +1,4 @@
+import { pktDay } from "@/lib/time";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
 import { prisma } from "@/lib/db";
@@ -35,7 +36,7 @@ export default async function Families() {
     const highRisk = c.field === "bankAccountNo" || c.field === "cnicMock";
     const mask = (v: string | null) => (v && highRisk ? `••••${v.slice(-4)}` : v ?? "");
     return { id: c.id, pensioner: `${c.pensioner.name} (${c.pensioner.pensionNo})`, field: c.field, oldValue: mask(c.oldValue), newValue: c.newValue, status: c.status, highRisk,
-      requestedBy: who(c.requestedBy)?.name ?? "her", proposedBy: prop ? who(prop.actorId)?.name ?? "an officer" : null, proposedByMe: prop?.actorId === user.id, createdAt: c.createdAt.toISOString().slice(0, 10) };
+      requestedBy: who(c.requestedBy)?.name ?? "her", proposedBy: prop ? who(prop.actorId)?.name ?? "an officer" : null, proposedByMe: prop?.actorId === user.id, createdAt: pktDay(c.createdAt) };
   });
   const noCase = rows.filter((r) => r.active && !r.caseId).length;
 

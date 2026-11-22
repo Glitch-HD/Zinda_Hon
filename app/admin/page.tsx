@@ -1,3 +1,4 @@
+import { pkt, pktDay, pktTime } from "@/lib/time";
 import OfficeCharts from "@/components/OfficeCharts";
 import Header from "@/components/Header";
 import ResetDemo from "@/components/ResetDemo";
@@ -69,13 +70,13 @@ export default async function Admin() {
         </div>
         {errors.groups.length > 0 ? (
           <table className="data mt-3"><thead><tr><th>Where</th><th>Error</th><th>Times</th><th>Last</th></tr></thead>
-            <tbody>{errors.groups.map((g, i) => <tr key={i}><td>{g.source === "client" ? "phone" : "server"} {g.route ?? ""}</td><td className="text-sm">{g.message}</td><td>{g.count}</td><td>{g.last?.toISOString().slice(11, 16)} UTC</td></tr>)}</tbody></table>
+            <tbody>{errors.groups.map((g, i) => <tr key={i}><td>{g.source === "client" ? "phone" : "server"} {g.route ?? ""}</td><td className="text-sm">{g.message}</td><td>{g.count}</td><td>{(g.last ? pktTime(g.last) : "")} PKT</td></tr>)}</tbody></table>
         ) : <p className="text-sm muted mt-2">No errors recorded. Server errors and crashes on people&apos;s phones show up here automatically.</p>}
       </div>
       <div className="card overflow-x-auto">
         <h3 className="font-semibold" id="history">Rule history</h3>
         <table className="data"><thead><tr><th>Version</th><th>Published</th><th>By</th><th>Note</th><th>Decisions made with it</th></tr></thead>
-          <tbody>{versions.map((v) => <tr key={v.id}><td>v{v.version}</td><td>{v.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td><td>{v.createdBy === "system" ? "system" : nameOf.get(v.createdBy) ?? "admin"}</td><td>{v.note}</td><td>{v._count.decisions}</td></tr>)}</tbody>
+          <tbody>{versions.map((v) => <tr key={v.id}><td>v{v.version}</td><td>{pkt(v.createdAt)}</td><td>{v.createdBy === "system" ? "system" : nameOf.get(v.createdBy) ?? "admin"}</td><td>{v.note}</td><td>{v._count.decisions}</td></tr>)}</tbody>
         </table>
       </div>
       <div className="card">
@@ -91,7 +92,7 @@ export default async function Admin() {
       </div>
       <div className="card">
         <h3 className="font-semibold" id="keys">API keys for outside systems</h3>
-        <ul className="text-sm mb-2">{keys.map((k) => <li key={k.id}>{k.name} · {k.prefix}… · {k.scopes.join(", ")} · {k.revokedAt ? "revoked" : "active"} · last used {k.lastUsedAt?.toISOString().slice(0, 10) ?? "never"}</li>)}</ul>
+        <ul className="text-sm mb-2">{keys.map((k) => <li key={k.id}>{k.name} · {k.prefix}… · {k.scopes.join(", ")} · {k.revokedAt ? "revoked" : "active"} · last used {(k.lastUsedAt ? pktDay(k.lastUsedAt) : null) ?? "never"}</li>)}</ul>
         <ApiKeyCreator />
       </div>
       <div className="mt-10"><ResetDemo /></div>

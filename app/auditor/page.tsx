@@ -1,3 +1,4 @@
+import { pkt, pktDay } from "@/lib/time";
 import EmptyState from "@/components/ui/EmptyState";
 import Header from "@/components/Header";
 import { pageUser } from "@/lib/page-auth";
@@ -50,7 +51,7 @@ async function Decisions({ tenantId }: { tenantId: string }) {
             <span className={`badge ${OUTCOME_CLS[d.outcome] ?? ""}`}>{d.outcome.replaceAll("_", " ").toLowerCase()}</span>
             <span className="badge">{d.decidedBy === "ai" ? "AI engine" : "officer"}</span>
             <span className="muted text-sm">confidence {(d.confidence * 100).toFixed(2)}% · rule v{d.ruleVersion.version}</span>
-            <span className="muted text-sm" style={{ marginInlineStart: "auto" }}>{d.createdAt.toISOString().slice(0, 16).replace("T", " ")}</span>
+            <span className="muted text-sm" style={{ marginInlineStart: "auto" }}>{pkt(d.createdAt)}</span>
           </summary>
           <p className="mt-2"><b>What the user was told:</b> {d.reasonEn} <span className="ur">{d.reasonUr}</span></p>
           <p className="mt-2"><b>Full trace</b> (input, rule version, confidence, result):</p>
@@ -72,9 +73,9 @@ async function Log({ tenantId, actor }: { tenantId: string; actor?: string }) {
         <a href="?tab=log" className={`badge mr-1 ${only ? "" : "badge-ok"}`}>everyone</a>
         {ACTORS.map((a) => <a key={a} href={`?tab=log&actor=${a}`} className={`badge mr-1 ${only === a ? "badge-ok" : ""}`}>{a === "USER" ? "people" : a === "AI" ? "AI engine" : a === "AGENT" ? "AI case assistant" : a === "SYSTEM" ? "system" : "API clients"}</a>)}
       </p>
-      <table className="data"><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+      <table className="data"><thead><tr><th>When (PKT)</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
         <tbody>{rows.map((r) => (
-          <tr key={r.id}><td className="text-sm">{r.createdAt.toISOString().slice(0, 19).replace("T", " ")}</td><td>{r.actorType}{r.actorRole ? ` (${r.actorRole.toLowerCase()})` : ""}{r.actorType === "AGENT" || r.actorType === "AI" ? <div className="text-xs muted">{r.actorId}</div> : null}</td><td>{r.action}</td><td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td><td className="text-xs" style={{ maxWidth: 360 }}>{r.details ? JSON.stringify(r.details).slice(0, 220) : ""}</td></tr>
+          <tr key={r.id}><td className="text-sm">{pkt(r.createdAt, true)}</td><td>{r.actorType}{r.actorRole ? ` (${r.actorRole.toLowerCase()})` : ""}{r.actorType === "AGENT" || r.actorType === "AI" ? <div className="text-xs muted">{r.actorId}</div> : null}</td><td>{r.action}</td><td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td><td className="text-xs" style={{ maxWidth: 360 }}>{r.details ? JSON.stringify(r.details).slice(0, 220) : ""}</td></tr>
         ))}</tbody>
       </table>
     </div>
@@ -108,10 +109,10 @@ async function Risky({ tenantId }: { tenantId: string }) {
   return (
     <div className="card overflow-x-auto">
       <p className="text-sm muted mb-2">Everything a dishonest insider would need to do, in one list. The audit log cannot be edited or deleted, even from the database.</p>
-      <table className="data"><thead><tr><th>When</th><th>What</th><th>Who</th><th>Target</th><th>Details</th></tr></thead>
+      <table className="data"><thead><tr><th>When (PKT)</th><th>What</th><th>Who</th><th>Target</th><th>Details</th></tr></thead>
         <tbody>{rows.map((r) => (
           <tr key={r.id}>
-            <td className="text-sm">{r.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td>
+            <td className="text-sm">{pkt(r.createdAt)}</td>
             <td><span className="badge badge-warn" style={{ whiteSpace: "normal" }}>{RISKY[r.action]}</span></td>
             <td className="text-sm">{r.actorRole?.toLowerCase() ?? r.actorType.toLowerCase()}<div className="text-xs muted">{r.actorId?.slice(-6)}</div></td>
             <td className="text-sm">{r.targetType ? `${r.targetType}:${r.targetId?.slice(-6)}` : ""}</td>
@@ -131,13 +132,13 @@ async function AgentRuns({ tenantId }: { tenantId: string }) {
   return (
     <div className="card overflow-x-auto">
       <p className="text-sm muted mb-2">The assistant only reads records and advises. Each tool it called is also a separate AGENT row in the audit log.</p>
-      <table className="data"><thead><tr><th>When</th><th>Case</th><th>Mode</th><th>Checks it ran</th><th>Suggested</th><th>Safety corrections</th></tr></thead>
+      <table className="data"><thead><tr><th>When (PKT)</th><th>Case</th><th>Mode</th><th>Checks it ran</th><th>Suggested</th><th>Safety corrections</th></tr></thead>
         <tbody>{runs.map((r) => {
           const steps = (Array.isArray(r.steps) ? r.steps : []) as { tool?: string }[];
           const rep = (r.report ?? {}) as { recommendation?: string; confidence?: number; guardrails?: { rule: string }[] };
           return (
             <tr key={r.id}>
-              <td className="text-sm">{r.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td>
+              <td className="text-sm">{pkt(r.createdAt)}</td>
               <td>{r.case.pensioner.pensionNo} · {r.case.year}</td>
               <td className="text-sm">{r.mode === "ai" ? `AI (${r.model})` : r.model ? `checklist after ${r.model.replace(" → checklist", "")}` : "checklist"}{r.status !== "done" ? <span className="badge badge-danger ml-1">{r.status}</span> : null}</td>
               <td className="text-xs">{steps.map((s) => s.tool?.replaceAll("_", " ")).join(", ")}</td>
@@ -156,7 +157,7 @@ async function Consents({ tenantId }: { tenantId: string }) {
   return (
     <div className="card overflow-x-auto">
       <table className="data"><thead><tr><th>Pensioner</th><th>Shared with</th><th>Fields</th><th>Granted</th><th>Withdrawn</th></tr></thead>
-        <tbody>{rows.map((c) => <tr key={c.id}><td>{c.pensioner.pensionNo} {c.pensioner.name}</td><td>{c.granteeName} ({c.granteeType})</td><td>{c.fields.join(", ")}</td><td>{c.grantedAt.toISOString().slice(0, 10)}</td><td>{c.withdrawnAt?.toISOString().slice(0, 16).replace("T", " ") ?? "–"}</td></tr>)}</tbody>
+        <tbody>{rows.map((c) => <tr key={c.id}><td>{c.pensioner.pensionNo} {c.pensioner.name}</td><td>{c.granteeName} ({c.granteeType})</td><td>{c.fields.join(", ")}</td><td>{pktDay(c.grantedAt)}</td><td>{(c.withdrawnAt ? pkt(c.withdrawnAt) : null) ?? "–"}</td></tr>)}</tbody>
       </table>
     </div>
   );

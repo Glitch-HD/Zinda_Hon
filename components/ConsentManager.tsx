@@ -1,4 +1,5 @@
 "use client";
+import { pkt, pktDay } from "@/lib/time";
 import { useEffect, useState } from "react";
 import { speakUrdu } from "@/lib/client/voice";
 
@@ -43,7 +44,7 @@ export default function ConsentManager() {
         <div key={c.id} className="card space-y-2">
           <div className="flex justify-between items-center gap-2">
             <div><b>{c.granteeName}</b> <span className="badge">{c.granteeType}</span></div>
-            {c.withdrawnAt ? <span className="badge badge-danger">Withdrawn {c.withdrawnAt.slice(0, 10)}</span> : <span className="badge badge-ok">Active</span>}
+            {c.withdrawnAt ? <span className="badge badge-danger">Withdrawn {pktDay(c.withdrawnAt)}</span> : <span className="badge badge-ok">Active</span>}
           </div>
           {c.granteeType !== "nadra" && <div className="flex flex-wrap gap-2">
             {Object.keys(FIELD_LABEL).map((f) => (
@@ -71,14 +72,14 @@ export default function ConsentManager() {
         {reqs.length > 0 && (
           <ul className="text-sm mt-2 space-y-1">
             {reqs.map((r) => (
-              <li key={r.id}>{r.createdAt.slice(0, 10)} · {r.field === "bankAccountNo" ? "Bank account" : r.field === "cnicMock" ? "CNIC" : r.field === "dateOfBirth" ? "Date of birth" : r.field === "name" ? "Name" : "Husband / father's name"} → {r.newValue} · <span className={`badge ${r.status === "accepted" ? "badge-ok" : r.status === "rejected" ? "badge-danger" : "badge-warn"}`}>{r.status === "awaiting_second" ? "being checked by a second officer" : r.status}</span></li>
+              <li key={r.id}>{pktDay(r.createdAt)} · {r.field === "bankAccountNo" ? "Bank account" : r.field === "cnicMock" ? "CNIC" : r.field === "dateOfBirth" ? "Date of birth" : r.field === "name" ? "Name" : "Husband / father's name"} → {r.newValue} · <span className={`badge ${r.status === "accepted" ? "badge-ok" : r.status === "rejected" ? "badge-danger" : "badge-warn"}`}>{r.status === "awaiting_second" ? "being checked by a second officer" : r.status}</span></li>
             ))}
           </ul>
         )}
       </form>
       <div className="card">
         <h3 className="font-semibold">Recent access to my data</h3>
-        <ul className="text-sm">{data.accessLog.map((l) => <li key={l.id}>{l.createdAt.slice(0, 16).replace("T", " ")} · {l.action.replaceAll("_", " ")} {l.actorRole ? `(${l.actorRole.toLowerCase()})` : ""}</li>)}</ul>
+        <ul className="text-sm">{data.accessLog.map((l) => <li key={l.id}>{pkt(l.createdAt)} · {l.action.replaceAll("_", " ")} {l.actorRole ? `(${l.actorRole.toLowerCase()})` : ""}</li>)}</ul>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { pkt } from "@/lib/time";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import SayButton from "@/components/ui/SayButton";
@@ -30,7 +31,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
   const lastRun = await prisma.agentRun.findFirst({ where: { caseId: c.id, status: "done" }, orderBy: { createdAt: "desc" } });
   const saved = lastRun?.report as (Record<string, unknown> & { guardrails?: unknown[] }) | null;
   const initialAgent = lastRun && saved
-    ? { report: saved as never, guardrails: (saved.guardrails ?? []) as never, mode: lastRun.mode as "ai" | "checklist", model: lastRun.model, ms: lastRun.ms ?? 0, when: lastRun.createdAt.toISOString().slice(0, 16).replace("T", " ") + " UTC" }
+    ? { report: saved as never, guardrails: (saved.guardrails ?? []) as never, mode: lastRun.mode as "ai" | "checklist", model: lastRun.model, ms: lastRun.ms ?? 0, when: pkt(lastRun.createdAt) + " PKT" }
     : null;
   const trace = (latest?.auditTrace ?? {}) as { checks?: { check: string; status: string; score: number | null; detail: string }[]; confidence?: number; requiredConfidence?: number };
 
@@ -94,7 +95,7 @@ export default async function OfficerCase({ params }: { params: Promise<{ id: st
           <thead><tr><th>When</th><th>Outcome</th><th>By</th><th>Rule</th><th>Reason given to pensioner</th></tr></thead>
           <tbody>
             {c.decisions.map((d) => (
-              <tr key={d.id}><td>{d.createdAt.toISOString().slice(0, 16).replace("T", " ")}</td><td>{d.outcome}</td><td>{d.decidedBy === "ai" ? "AI engine" : "Officer"}</td><td>v{d.ruleVersion.version}</td><td className="text-sm">{d.reasonEn}<br /><span className="ur">{d.reasonUr}</span><div className="mt-1"><SayButton ur={d.reasonUr} en={d.reasonEn} /></div></td></tr>
+              <tr key={d.id}><td>{pkt(d.createdAt)}</td><td>{d.outcome}</td><td>{d.decidedBy === "ai" ? "AI engine" : "Officer"}</td><td>v{d.ruleVersion.version}</td><td className="text-sm">{d.reasonEn}<br /><span className="ur">{d.reasonUr}</span><div className="mt-1"><SayButton ur={d.reasonUr} en={d.reasonEn} /></div></td></tr>
             ))}
           </tbody>
         </table>

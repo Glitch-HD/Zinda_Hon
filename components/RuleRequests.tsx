@@ -1,4 +1,5 @@
 "use client";
+import { pkt } from "@/lib/time";
 import { useState } from "react";
 
 type Req = { id: string; baseVersion: number; note: string | null; loosened: string[]; proposedBy: string; proposerName: string; createdAt: string; mine: boolean };
@@ -18,7 +19,7 @@ export default function RuleRequests({ requests }: { requests: Req[] }) {
     <div className="space-y-3">
       {requests.map((r) => (
         <div key={r.id} className="card card-soft">
-          <p className="text-sm"><b>{r.proposerName}</b> proposed on {r.createdAt.slice(0, 16).replace("T", " ")} (against v{r.baseVersion}){r.note ? `: “${r.note}”` : ""}</p>
+          <p className="text-sm"><b>{r.proposerName}</b> proposed on {pkt(r.createdAt)} (against v{r.baseVersion}){r.note ? `: “${r.note}”` : ""}</p>
           <ul className="list-disc ms-5 text-sm mt-1">{r.loosened.map((l) => <li key={l}>{l}</li>)}</ul>
           <div className="flex flex-wrap gap-2 mt-2">
             {r.mine ? (

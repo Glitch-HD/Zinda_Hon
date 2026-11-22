@@ -1,3 +1,4 @@
+import { pkt } from "@/lib/time";
 import EmptyState from "@/components/ui/EmptyState";
 import Header from "@/components/Header";
 import MessageChecker from "@/components/MessageChecker";
@@ -26,7 +27,7 @@ export default async function Shopkeeper() {
             <ul className="text-sm space-y-2">{mine.map((m) => (
               <li key={m.id} className="flex gap-2 items-start">
                 <span className={`badge ${m.label === "scam" ? "badge-danger" : m.label === "genuine" ? "badge-ok" : "badge-warn"}`}>{m.label}</span>
-                <span className="flex-1"><span className="muted">{m.createdAt.toISOString().slice(0, 16).replace("T", " ")} · {(m.confidence * 100).toFixed(0)}%</span><br />{m.text.slice(0, 80)}…</span>
+                <span className="flex-1"><span className="muted">{pkt(m.createdAt)} · {(m.confidence * 100).toFixed(0)}%</span><br />{m.text.slice(0, 80)}…</span>
               </li>
             ))}</ul>
           )}

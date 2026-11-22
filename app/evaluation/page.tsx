@@ -1,3 +1,4 @@
+import { pkt } from "@/lib/time";
 import Header from "@/components/Header";
 import RunEvalButton from "@/components/RunEvalButton";
 import { pageUser } from "@/lib/page-auth";
@@ -76,7 +77,7 @@ export default async function Evaluation() {
       <div className="card">
         <h3 className="font-semibold">Scam checker ({msgs.length} labelled messages: {scams.length} scams, {genuine.length} genuine)</h3>
         <p className="text-sm muted">
-          {runId ? `Latest run ${msgs[0]?.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC` : "No run yet"}
+          {runId ? `Latest run ${msgs[0] ? pkt(msgs[0].createdAt) : ""} PKT` : "No run yet"}
           {runId && msgs.length < EVAL_MESSAGES.length ? ` · partial: ${msgs.length} of ${EVAL_MESSAGES.length} finished` : ""}
           {msgs.length > 0 && ` · model: ${models.join(", ")}`}
         </p>
@@ -144,7 +145,7 @@ async function AgentEval({ tenantId, isAdmin }: { tenantId: string; isAdmin: boo
   return (
     <div className="card">
       <h3 className="font-semibold">AI case assistant ({AGENT_EVAL_CASES.length} labelled cases: {AGENT_EVAL_CASES.filter((c) => c.planted).length} with a planted problem, {AGENT_EVAL_CASES.filter((c) => !c.planted).length} clean)</h3>
-      <p className="text-sm muted">The demo data hides real-world problems on purpose. We check whether the assistant finds them by itself, and whether its suggestion is safe. {runId ? `Latest run ${last?.createdAt.toISOString().slice(0, 16).replace("T", " ")} UTC${rows.length < AGENT_EVAL_CASES.length ? `, partial: ${rows.length} of ${AGENT_EVAL_CASES.length}` : ""}.` : "Not run yet."}</p>
+      <p className="text-sm muted">The demo data hides real-world problems on purpose. We check whether the assistant finds them by itself, and whether its suggestion is safe. {runId ? `Latest run ${last ? pkt(last.createdAt) : ""} PKT${rows.length < AGENT_EVAL_CASES.length ? `, partial: ${rows.length} of ${AGENT_EVAL_CASES.length}` : ""}.` : "Not run yet."}</p>
       {ran.length > 0 && (
         <>
           <table className="data"><tbody>

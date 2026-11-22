@@ -1,3 +1,4 @@
+import { pktDate } from "@/lib/time";
 import AppealButton from "@/components/AppealButton";
 import TrafficLight from "@/components/TrafficLight";
 import SayButton from "@/components/ui/SayButton";
@@ -30,7 +31,7 @@ export default async function PensionerHome() {
       ) : (
         <div className="space-y-6">
           <TrafficLight status={c.status} ur={statusUr} en={`${c.year}: ${statusEn}`}>
-            {(c.status === "VERIFIED" || c.status === "STOPPED") && c.closedAt && <p className="text-sm muted">Closed on {c.closedAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>}
+            {(c.status === "VERIFIED" || c.status === "STOPPED") && c.closedAt && <p className="text-sm muted">Closed on {pktDate(c.closedAt)}</p>}
           </TrafficLight>
           {c.status === "STOPPED" && (
             <div className="card p-3" style={{ background: "color-mix(in srgb, var(--danger) 8%, transparent)" }}>
